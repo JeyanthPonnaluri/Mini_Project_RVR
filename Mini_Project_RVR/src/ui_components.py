@@ -541,14 +541,20 @@ def render_version_selector():
         }
     }
     
+    # Initialize session state
+    if 'selected_version' not in st.session_state:
+        st.session_state.selected_version = "VERSION-1"
+    
     # Create columns for version cards
     cols = st.columns(2)
-    
-    selected_version = None
     
     for idx, (version_key, version_info) in enumerate(versions.items()):
         col_idx = idx % 2
         with cols[col_idx]:
+            # Determine button type based on selection
+            is_selected = st.session_state.selected_version == version_key
+            button_type = "primary" if is_selected else "secondary"
+            
             # Create a container for each version
             container = st.container()
             with container:
@@ -556,9 +562,10 @@ def render_version_selector():
                     f"{version_info['icon']} {version_key}",
                     key=f"btn_{version_key}",
                     use_container_width=True,
-                    type="primary" if idx == 0 else "secondary"
+                    type=button_type
                 ):
-                    selected_version = version_key
+                    st.session_state.selected_version = version_key
+                    st.rerun()
                 
                 st.markdown(f"**{version_info['title']}**")
                 st.caption(version_info['description'])
@@ -569,12 +576,4 @@ def render_version_selector():
                 
                 st.markdown("")  # Spacing
     
-    # If no button clicked, use session state or default
-    if selected_version is None:
-        if 'selected_version' not in st.session_state:
-            st.session_state.selected_version = "VERSION-1"
-        selected_version = st.session_state.selected_version
-    else:
-        st.session_state.selected_version = selected_version
-    
-    return selected_version
+    return st.session_state.selected_version

@@ -1,0 +1,16 @@
+{
+  "version": "VERSION-5",
+  "analysis": "contribution",
+  "num_hospitals": 5,
+  "partition_type": "equal",
+  "alpha": null,
+  "algorithm": "fedavg",
+  "mu": 0.0,
+  "rounds": 30,
+  "epochs": 5,
+  "lr": 0.1,
+  "random_seed": 42,
+  "experiment_id": "exp_20260301_133027_14f73058",
+  "timestamp": "20260301_133027",
+  "config_hash": "14f73058"
+}
