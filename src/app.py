@@ -977,10 +977,8 @@ def main():
                         
                         # Partition data
                         if partition_type_v5 == 'equal':
-                            from federated import partition_equal
                             hospitals = partition_equal(X_train, y_train, num_hospitals_v5, RANDOM_SEED)
                         elif partition_type_v5 == 'imbalanced':
-                            from federated import partition_imbalanced, generate_imbalanced_distribution
                             distribution = generate_imbalanced_distribution(num_hospitals_v5, RANDOM_SEED)
                             hospitals = partition_imbalanced(X_train, y_train, distribution, RANDOM_SEED)
                         else:  # dirichlet
