@@ -1,0 +1,77 @@
+======================================================================
+PARTITION COMPARISON: STATISTICAL TEST RESULTS
+======================================================================
+
+Paired t-test comparing Equal vs Imbalanced partitions
+Null hypothesis: No difference in performance
+Significance level: α = 0.05
+
+======================================================================
+
+K = 2 Hospitals
+--------------------------------------------------
+Global AUC (FedAvg):
+  Equal:      0.7861 ± 0.0028
+  Imbalanced: 0.7860 ± 0.0029
+  Difference: 0.0001
+  p-value:    0.2789
+
+Free-Rider AUC:
+  Equal:      0.7999 ± 0.0151
+  Imbalanced: 0.7942 ± 0.0175
+  Difference: 0.0057
+  p-value:    0.1691
+
+======================================================================
+
+K = 4 Hospitals
+--------------------------------------------------
+Global AUC (FedAvg):
+  Equal:      0.7872 ± 0.0032
+  Imbalanced: 0.7873 ± 0.0032
+  Difference: -0.0001
+  p-value:    0.5911
+
+Free-Rider AUC:
+  Equal:      0.8048 ± 0.0409
+  Imbalanced: 0.7801 ± 0.0452
+  Difference: 0.0247
+  p-value:    0.2226
+
+======================================================================
+
+K = 6 Hospitals
+--------------------------------------------------
+Global AUC (FedAvg):
+  Equal:      0.7863 ± 0.0030
+  Imbalanced: 0.7863 ± 0.0030
+  Difference: 0.0000
+  p-value:    1.0000
+
+Free-Rider AUC:
+  Equal:      0.7767 ± 0.0525
+  Imbalanced: 0.7846 ± 0.0516
+  Difference: -0.0079
+  p-value:    0.6757
+
+======================================================================
+
+
+RESEARCH INTERPRETATION:
+----------------------------------------------------------------------
+
+1. Global AUC Impact:
+   Average difference: 0.0000
+   → Equal partition performs BETTER on average
+   → Data heterogeneity degrades federated performance
+
+2. Free-Rider Impact:
+   Average difference: 0.0075
+   → Free-riders benefit MORE from equal partitions
+   → Imbalanced data reduces free-rider advantage
+
+3. Implications:
+   - Data heterogeneity is a key challenge in federated learning
+   - FedProx or personalized FL may be needed for imbalanced scenarios
+   - Free-rider problem persists but is affected by data distribution
+

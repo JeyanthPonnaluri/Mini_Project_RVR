@@ -34,6 +34,15 @@ from sustainability import (
     save_partition_comparison_results
 )
 
+# Import VERSION-4 modules
+from fedprox_experiments import (
+    run_fedavg_vs_fedprox_experiment,
+    plot_convergence_curves,
+    plot_stability_comparison,
+    save_fedprox_results
+)
+from federated import partition_dirichlet
+
 
 # Set random seed for reproducibility
 RANDOM_SEED = 42
@@ -81,7 +90,8 @@ def main():
         [
             "VERSION-1: Centralized (sklearn)",
             "VERSION-2: Federated Learning (FedAvg)",
-            "VERSION-3: Sustainability Analysis"
+            "VERSION-3: Sustainability Analysis",
+            "VERSION-4: FedProx & Non-IID Study"
         ],
         index=0
     )
@@ -667,6 +677,143 @@ def main():
                     st.session_state['lc_df'],
                     st.session_state['fr_df']
                 )
+        
+        # VERSION-4: FedProx & Non-IID Study
+        elif "VERSION-4" in version:
+            st.markdown("---")
+            st.subheader("🔬 FedProx & Non-IID Heterogeneity Study")
+            
+            st.markdown("""
+            Study how **FedProx** handles data heterogeneity compared to FedAvg:
+            - **Proximal regularization** prevents client drift
+            - **Dirichlet non-IID** simulates realistic heterogeneity
+            - **Convergence analysis** shows stability improvements
+            """)
+            
+            # Configuration
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                num_hospitals_v4 = st.slider("Number of Hospitals", min_value=3, max_value=10, value=5, step=1, key="v4_hospitals")
+                partition_type_v4 = st.selectbox("Partition Strategy", ["equal", "imbalanced", "dirichlet"], key="v4_partition")
+                
+                if partition_type_v4 == "dirichlet":
+                    alpha_v4 = st.slider("Dirichlet Alpha (α)", min_value=0.1, max_value=10.0, value=0.5, step=0.1, key="v4_alpha")
+                    st.caption(f"α={alpha_v4:.1f}: {'Strong non-IID' if alpha_v4 < 1 else 'Moderate' if alpha_v4 < 5 else 'Nearly IID'}")
+                else:
+                    alpha_v4 = None
+            
+            with col2:
+                rounds_v4 = st.slider("Communication Rounds", min_value=20, max_value=100, value=50, step=10, key="v4_rounds")
+                epochs_v4 = st.slider("Local Epochs", min_value=1, max_value=10, value=5, step=1, key="v4_epochs")
+                lr_v4 = st.number_input("Learning Rate", min_value=0.001, max_value=1.0, value=0.1, step=0.01, format="%.3f", key="v4_lr")
+            
+            # Mu values for FedProx
+            st.markdown("### FedProx Configuration")
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                mu1 = st.number_input("μ₁ (small)", min_value=0.001, max_value=1.0, value=0.01, step=0.001, format="%.3f", key="v4_mu1")
+            with col2:
+                mu2 = st.number_input("μ₂ (medium)", min_value=0.001, max_value=1.0, value=0.1, step=0.01, format="%.2f", key="v4_mu2")
+            with col3:
+                mu3 = st.number_input("μ₃ (large)", min_value=0.001, max_value=1.0, value=0.5, step=0.1, format="%.1f", key="v4_mu3")
+            
+            mu_values_v4 = [mu1, mu2, mu3]
+            
+            st.info(f"📊 Will compare: FedAvg vs FedProx with μ = {mu_values_v4}")
+            
+            st.markdown("---")
+            
+            # Run comparison button
+            if st.button("🚀 Run FedAvg vs FedProx Comparison", type="primary", key="run_v4_comparison"):
+                with st.spinner(f"Running comparison experiment..."):
+                    try:
+                        # Run experiment
+                        results_df = run_fedavg_vs_fedprox_experiment(
+                            X_train, y_train, X_test, y_test,
+                            num_hospitals=num_hospitals_v4,
+                            partition_type=partition_type_v4,
+                            alpha=alpha_v4,
+                            mu_values=mu_values_v4,
+                            rounds=rounds_v4,
+                            epochs=epochs_v4,
+                            lr=lr_v4,
+                            random_seed=RANDOM_SEED
+                        )
+                        
+                        st.session_state['v4_results'] = results_df
+                        
+                        st.success("✅ Comparison complete!")
+                        
+                        # Display results
+                        st.markdown("### 📊 Performance Comparison")
+                        
+                        # Summary table
+                        summary_df = results_df[['algorithm', 'mu', 'final_auc', 'convergence_std', 'avg_weight_drift']].copy()
+                        summary_df['mu'] = summary_df['mu'].apply(lambda x: f"{x:.3f}")
+                        summary_df['final_auc'] = summary_df['final_auc'].apply(lambda x: f"{x:.4f}")
+                        summary_df['convergence_std'] = summary_df['convergence_std'].apply(lambda x: f"{x:.4f}")
+                        summary_df['avg_weight_drift'] = summary_df['avg_weight_drift'].apply(lambda x: f"{x:.4f}")
+                        
+                        st.dataframe(summary_df, use_container_width=True)
+                        
+                        # Convergence curves
+                        st.markdown("### 📈 Convergence Analysis")
+                        fig_conv = plot_convergence_curves(results_df, save_path='reports/version4_fedprox/convergence_plot.png')
+                        st.pyplot(fig_conv)
+                        
+                        # Stability comparison
+                        st.markdown("### 📊 Stability Comparison")
+                        fig_stab = plot_stability_comparison(results_df, save_path='reports/version4_fedprox/stability_plot.png')
+                        st.pyplot(fig_stab)
+                        
+                        # Key insights
+                        st.markdown("### 💡 Key Insights")
+                        
+                        fedavg_row = results_df[results_df['algorithm'] == 'FedAvg'].iloc[0]
+                        fedprox_rows = results_df[results_df['algorithm'] == 'FedProx']
+                        best_fedprox = fedprox_rows.loc[fedprox_rows['final_auc'].idxmax()]
+                        
+                        col1, col2, col3 = st.columns(3)
+                        
+                        with col1:
+                            st.metric("FedAvg Final AUC", f"{fedavg_row['final_auc']:.4f}")
+                        
+                        with col2:
+                            improvement = best_fedprox['final_auc'] - fedavg_row['final_auc']
+                            st.metric("Best FedProx AUC", f"{best_fedprox['final_auc']:.4f}", 
+                                     delta=f"{improvement:.4f}", delta_color="normal")
+                            st.caption(f"μ = {best_fedprox['mu']:.3f}")
+                        
+                        with col3:
+                            stability_improvement = fedavg_row['convergence_std'] - best_fedprox['convergence_std']
+                            st.metric("Stability Improvement", f"{stability_improvement:.4f}")
+                            st.caption("Lower std = more stable")
+                        
+                        # Interpretation
+                        st.markdown("""
+                        **Research Interpretation:**
+                        
+                        1. **Performance**: FedProx with optimal μ typically improves AUC under non-IID settings
+                        2. **Stability**: Proximal term reduces oscillations in convergence
+                        3. **Weight Drift**: FedProx controls how far local models deviate from global
+                        4. **Optimal μ**: Balance between local adaptation and global consistency
+                        
+                        **When to use FedProx:**
+                        - Strong data heterogeneity (Dirichlet α < 1)
+                        - Unstable FedAvg convergence
+                        - Need for convergence guarantees
+                        """)
+                        
+                        # Save results
+                        save_fedprox_results(results_df)
+                        st.success("Results saved to reports/version4_fedprox/")
+                        
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+                        import traceback
+                        st.code(traceback.format_exc())
     
     else:
         st.info("👈 Please upload clinical dataset to begin")
