@@ -190,35 +190,25 @@ def render_divider():
 
 def render_info_box(content: str, box_type: str = 'info'):
     """
-    Render an information box.
+    Render an information box using native Streamlit components.
     
     Parameters:
     -----------
     content : str
-        Box content (markdown)
+        Box content (plain text or markdown)
     box_type : str
         'info', 'success', 'warning', 'error'
     """
-    colors = {
-        'info': ('#e3f2fd', '#1976d2'),
-        'success': ('#e8f5e9', '#388e3c'),
-        'warning': ('#fff3e0', '#f57c00'),
-        'error': ('#ffebee', '#d32f2f')
-    }
-    
-    bg_color, border_color = colors.get(box_type, colors['info'])
-    
-    st.markdown(f"""
-        <div style="
-            background: {bg_color};
-            border-left: 4px solid {border_color};
-            padding: 1rem 1.5rem;
-            border-radius: 4px;
-            margin: 1rem 0;
-        ">
-            {content}
-        </div>
-    """, unsafe_allow_html=True)
+    if box_type == 'info':
+        st.info(content)
+    elif box_type == 'success':
+        st.success(content)
+    elif box_type == 'warning':
+        st.warning(content)
+    elif box_type == 'error':
+        st.error(content)
+    else:
+        st.info(content)
 
 
 def render_experiment_status(status: str, message: str = None):
@@ -367,51 +357,17 @@ def render_progress_indicator(progress: float, message: str = ""):
 
 def render_key_findings(findings: List[str]):
     """
-    Render key findings in a styled list.
+    Render key findings using native Streamlit components.
     
     Parameters:
     -----------
     findings : List[str]
-        List of finding strings
+        List of finding strings (plain text)
     """
-    st.markdown("""
-        <style>
-        .findings-list {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin: 1rem 0;
-        }
-        .finding-item {
-            display: flex;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
-            align-items: flex-start;
-        }
-        .finding-bullet {
-            color: #1f77b4;
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-        .finding-text {
-            flex: 1;
-            color: #333;
-            line-height: 1.6;
-        }
-        </style>
-        
-        <div class="findings-list">
-    """, unsafe_allow_html=True)
-    
     for i, finding in enumerate(findings, 1):
-        st.markdown(f"""
-            <div class="finding-item">
-                <span class="finding-bullet">{i}.</span>
-                <span class="finding-text">{finding}</span>
-            </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown(f"{i}. {finding}")
+        if i < len(findings):
+            st.markdown("")  # Add spacing
 
 
 def apply_custom_css():
@@ -478,5 +434,147 @@ def apply_custom_css():
             font-weight: 500;
             font-size: 1rem;
         }
+        
+        /* Version card styling */
+        .version-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .version-card:hover {
+            border-color: #1f77b4;
+            box-shadow: 0 4px 12px rgba(31, 119, 180, 0.15);
+            transform: translateY(-2px);
+        }
+        
+        .version-card.active {
+            border-color: #1f77b4;
+            background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+            box-shadow: 0 4px 12px rgba(31, 119, 180, 0.2);
+        }
+        
+        .version-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .version-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin: 0.5rem 0 0.25rem 0;
+        }
+        
+        .version-description {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        .version-tags {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+        
+        .version-tag {
+            background: #f0f0f0;
+            color: #555;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
         </style>
     """, unsafe_allow_html=True)
+
+
+def render_version_selector():
+    """
+    Render an interactive version selector with cards.
+    Returns the selected version string.
+    """
+    st.markdown("### Select Research Version")
+    
+    versions = {
+        "VERSION-1": {
+            "title": "Centralized Learning",
+            "description": "Traditional machine learning with sklearn's LogisticRegression for baseline performance",
+            "tags": ["Baseline", "sklearn", "Centralized"],
+            "icon": "🖥️"
+        },
+        "VERSION-2": {
+            "title": "Federated Learning (FedAvg)",
+            "description": "Distributed training across hospitals using Federated Averaging algorithm",
+            "tags": ["FedAvg", "Distributed", "NumPy"],
+            "icon": "🌐"
+        },
+        "VERSION-3": {
+            "title": "Sustainability Analysis",
+            "description": "Study scalability, free-rider behavior, and data heterogeneity effects",
+            "tags": ["Scalability", "Free-Rider", "Monte Carlo"],
+            "icon": "🔬"
+        },
+        "VERSION-4": {
+            "title": "FedProx & Non-IID Study",
+            "description": "Compare FedAvg vs FedProx under data heterogeneity with Dirichlet partitioning",
+            "tags": ["FedProx", "Non-IID", "Convergence"],
+            "icon": "⚡"
+        },
+        "VERSION-5": {
+            "title": "Research Lab",
+            "description": "Advanced analysis with contribution measurement and experiment management",
+            "tags": ["Contribution", "Multi-Modal", "Publication-Ready"],
+            "icon": "🧬"
+        }
+    }
+    
+    # Create columns for version cards
+    cols = st.columns(2)
+    
+    selected_version = None
+    
+    for idx, (version_key, version_info) in enumerate(versions.items()):
+        col_idx = idx % 2
+        with cols[col_idx]:
+            # Create a container for each version
+            container = st.container()
+            with container:
+                if st.button(
+                    f"{version_info['icon']} {version_key}",
+                    key=f"btn_{version_key}",
+                    use_container_width=True,
+                    type="primary" if idx == 0 else "secondary"
+                ):
+                    selected_version = version_key
+                
+                st.markdown(f"**{version_info['title']}**")
+                st.caption(version_info['description'])
+                
+                # Display tags
+                tag_text = " • ".join(version_info['tags'])
+                st.markdown(f"<small style='color: #888;'>{tag_text}</small>", unsafe_allow_html=True)
+                
+                st.markdown("")  # Spacing
+    
+    # If no button clicked, use session state or default
+    if selected_version is None:
+        if 'selected_version' not in st.session_state:
+            st.session_state.selected_version = "VERSION-1"
+        selected_version = st.session_state.selected_version
+    else:
+        st.session_state.selected_version = selected_version
+    
+    return selected_version

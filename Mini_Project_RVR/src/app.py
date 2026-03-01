@@ -62,6 +62,7 @@ from ui_components import (
     render_footer,
     render_sidebar_section,
     render_key_findings,
+    render_version_selector,
     apply_custom_css
 )
 
@@ -118,23 +119,12 @@ def main():
     # Render professional header
     render_header()
     
+    # Version selector in main area
+    version = render_version_selector()
+    
+    render_divider()
+    
     # Sidebar configuration
-    render_sidebar_section("🔬 Experiment Selection", "")
-    
-    # Version selector
-    version = st.sidebar.radio(
-        "Select Version:",
-        [
-            "VERSION-1: Centralized (sklearn)",
-            "VERSION-2: Federated Learning (FedAvg)",
-            "VERSION-3: Sustainability Analysis",
-            "VERSION-4: FedProx & Non-IID Study",
-            "VERSION-5: Research Lab"
-        ],
-        index=0,
-        label_visibility="collapsed"
-    )
-    
     render_sidebar_section("📁 Data Upload", "")
     st.sidebar.markdown("Upload TCGA-PRAD clinical TSV file:")
     
@@ -206,7 +196,7 @@ def main():
                 render_metrics_row(metrics, columns=3)
                 
             except ValueError as e:
-                render_info_box(f"Error creating target: {str(e)}<br>Please ensure your clinical file contains 'ajcc_pathologic_t.diagnoses' column", 'error')
+                render_info_box(f"Error creating target: {str(e)}\n\nPlease ensure your clinical file contains 'ajcc_pathologic_t.diagnoses' column", 'error')
                 return
             except Exception as e:
                 render_info_box(f"Error: {str(e)}", 'error')
@@ -500,11 +490,11 @@ def main():
             render_section_header("🔬 Sustainability & Free-Rider Analysis", 
                                  "Study scalability and free-rider behavior in federated learning")
             
-            render_info_box("""
-            Study how federated learning performance changes with:<br>
-            - <strong>Number of hospitals</strong> (scalability)<br>
-            - <strong>Free-rider scenarios</strong> (non-participating hospitals)
-            """, 'info')
+            st.markdown("""
+            Study how federated learning performance changes with:
+            - **Number of hospitals** (scalability)
+            - **Free-rider scenarios** (non-participating hospitals)
+            """)
             
             # Configuration
             with st.expander("⚙️ Experiment Configuration", expanded=True):
@@ -762,12 +752,12 @@ def main():
             render_section_header("🔬 FedProx & Non-IID Heterogeneity Study", 
                                  "Compare FedAvg vs FedProx under data heterogeneity")
             
-            render_info_box("""
-            Study how <strong>FedProx</strong> handles data heterogeneity compared to FedAvg:<br>
-            - <strong>Proximal regularization</strong> prevents client drift<br>
-            - <strong>Dirichlet non-IID</strong> simulates realistic heterogeneity<br>
-            - <strong>Convergence analysis</strong> shows stability improvements
-            """, 'info')
+            st.markdown("""
+            Study how **FedProx** handles data heterogeneity compared to FedAvg:
+            - **Proximal regularization** prevents client drift
+            - **Dirichlet non-IID** simulates realistic heterogeneity
+            - **Convergence analysis** shows stability improvements
+            """)
             
             # Configuration
             with st.expander("⚙️ Experiment Configuration", expanded=True):
@@ -903,12 +893,12 @@ def main():
             render_section_header("🔬 Research Lab - Advanced Analysis", 
                                  "Publication-quality research tools for federated learning")
             
-            render_info_box("""
-            <strong>VERSION-5</strong> provides publication-quality research tools:<br>
-            🏥 <strong>Hospital Contribution Analysis:</strong> Measure each hospital's impact<br>
-            📊 <strong>Experiment Management:</strong> Reproducible research with automatic logging<br>
-            🧬 <strong>Multi-Modal Support:</strong> Clinical + Protein data (backend ready)
-            """, 'info')
+            st.markdown("""
+            **VERSION-5** provides publication-quality research tools:
+            - 🏥 **Hospital Contribution Analysis**: Measure each hospital's impact
+            - 📊 **Experiment Management**: Reproducible research with automatic logging
+            - 🧬 **Multi-Modal Support**: Clinical + Protein data (backend ready)
+            """)
             
             # Configuration
             render_divider()
@@ -1047,19 +1037,19 @@ def main():
                         max_hospital = contribution_df.loc[contribution_df['contribution'].idxmax(), 'hospital_id']
                         
                         findings = [
-                            f"<strong>Contribution Range:</strong> {contribution_df['contribution'].min():.4f} to {contribution_df['contribution'].max():.4f}",
-                            f"<strong>Size-Contribution Correlation:</strong> {correlation:.3f} - {'Strong positive' if correlation > 0.7 else 'Moderate' if correlation > 0.3 else 'Weak'} correlation. {'Larger hospitals contribute more' if correlation > 0.5 else 'Contribution not strongly tied to size'}",
-                            f"<strong>Critical Hospitals:</strong> Hospital {int(max_hospital)} is most critical with contribution of {max_contrib:.4f}",
-                            f"<strong>Redundancy:</strong> {'Low redundancy - all hospitals important' if contribution_df['contribution'].min() > 0.001 else 'Some hospitals may be redundant'}"
+                            f"**Contribution Range**: {contribution_df['contribution'].min():.4f} to {contribution_df['contribution'].max():.4f}",
+                            f"**Size-Contribution Correlation**: {correlation:.3f} - {'Strong positive' if correlation > 0.7 else 'Moderate' if correlation > 0.3 else 'Weak'} correlation. {'Larger hospitals contribute more' if correlation > 0.5 else 'Contribution not strongly tied to size'}",
+                            f"**Critical Hospitals**: Hospital {int(max_hospital)} is most critical with contribution of {max_contrib:.4f}",
+                            f"**Redundancy**: {'Low redundancy - all hospitals important' if contribution_df['contribution'].min() > 0.001 else 'Some hospitals may be redundant'}"
                         ]
                         render_key_findings(findings)
                         
-                        render_info_box("""
-                        <strong>Implications:</strong><br>
-                        - Use this to prioritize hospital recruitment<br>
-                        - Identify critical vs redundant participants<br>
+                        st.markdown("""
+                        **Implications:**
+                        - Use this to prioritize hospital recruitment
+                        - Identify critical vs redundant participants
                         - Optimize consortium composition
-                        """, 'info')
+                        """)
                         
                         # Save results
                         exp.save_dataframe(contribution_df, 'hospital_contributions')
@@ -1082,31 +1072,31 @@ def main():
             render_divider()
             render_section_header("🚀 Additional VERSION-5 Features", "Backend modules ready for integration")
             
-            render_info_box("""
-            <strong>Backend Ready (UI Integration Pending):</strong><br><br>
+            st.markdown("""
+            **Backend Ready (UI Integration Pending):**
             
-            🧬 <strong>Multi-Modal Learning</strong><br>
-            - Clinical + Protein expression data<br>
-            - PCA dimensionality reduction<br>
-            - Feature selection methods<br><br>
+            🧬 **Multi-Modal Learning**
+            - Clinical + Protein expression data
+            - PCA dimensionality reduction
+            - Feature selection methods
             
-            📊 <strong>Experiment Management</strong><br>
-            - Automatic experiment logging<br>
-            - Reproducibility controls<br>
-            - Timestamped results<br><br>
+            📊 **Experiment Management**
+            - Automatic experiment logging
+            - Reproducibility controls
+            - Timestamped results
             
-            📈 <strong>Statistical Validation</strong><br>
-            - Bootstrap confidence intervals<br>
-            - Paired statistical tests<br>
-            - Effect size calculations<br><br>
+            📈 **Statistical Validation**
+            - Bootstrap confidence intervals
+            - Paired statistical tests
+            - Effect size calculations
             
-            ⚖️ <strong>Fairness Analysis</strong><br>
-            - Subgroup performance evaluation<br>
-            - Disparity metrics<br>
-            - Bias detection<br><br>
+            ⚖️ **Fairness Analysis**
+            - Subgroup performance evaluation
+            - Disparity metrics
+            - Bias detection
             
-            <em>These features are implemented in the backend and can be accessed programmatically.</em>
-            """, 'info')
+            *These features are implemented in the backend and can be accessed programmatically.*
+            """)
     
     else:
         render_info_box("👈 Please upload clinical dataset to begin", 'info')
@@ -1115,77 +1105,77 @@ def main():
         render_section_header("📖 About This Application", "Learn about each version and its capabilities")
         
         if "VERSION-1" in version:
-            render_info_box("""
-            <strong>VERSION-1: Centralized Learning</strong><br><br>
+            st.markdown("""
+            **VERSION-1: Centralized Learning**
             
-            This version uses traditional centralized machine learning with sklearn's LogisticRegression.<br><br>
+            This version uses traditional centralized machine learning with sklearn's LogisticRegression.
             
-            <strong>Task:</strong> Predict pathologic T stage (T3/T4 vs T1/T2)<br>
-            <strong>Model:</strong> Logistic Regression with balanced class weights<br>
-            <strong>Evaluation:</strong> AUC-ROC, Accuracy, Confusion Matrix
-            """, 'info')
+            - **Task**: Predict pathologic T stage (T3/T4 vs T1/T2)
+            - **Model**: Logistic Regression with balanced class weights
+            - **Evaluation**: AUC-ROC, Accuracy, Confusion Matrix
+            """)
         elif "VERSION-2" in version:
-            render_info_box("""
-            <strong>VERSION-2: Federated Learning (FedAvg)</strong><br><br>
+            st.markdown("""
+            **VERSION-2: Federated Learning (FedAvg)**
             
-            This version implements Federated Averaging (FedAvg) algorithm using manual NumPy-based logistic regression.<br><br>
+            This version implements Federated Averaging (FedAvg) algorithm using manual NumPy-based logistic regression.
             
-            <strong>FedAvg Algorithm:</strong><br>
-            1. Initialize global weights w_global<br>
-            2. For each communication round:<br>
-            &nbsp;&nbsp;&nbsp;- Send w_global to all hospitals<br>
-            &nbsp;&nbsp;&nbsp;- Each hospital trains locally<br>
-            &nbsp;&nbsp;&nbsp;- Aggregate weights: w_global = Σ(n_k/n_total × w_k)<br>
-            3. Return final w_global<br><br>
+            **FedAvg Algorithm:**
+            1. Initialize global weights w_global
+            2. For each communication round:
+               - Send w_global to all hospitals
+               - Each hospital trains locally
+               - Aggregate weights: w_global = Σ(n_k/n_total × w_k)
+            3. Return final w_global
             
-            <strong>Expected Results:</strong><br>
-            - FedAvg AUC ≈ Centralized AUC (with enough rounds)<br>
+            **Expected Results:**
+            - FedAvg AUC ≈ Centralized AUC (with enough rounds)
             - Local AUC < FedAvg AUC (benefits of collaboration)
-            """, 'info')
+            """)
         elif "VERSION-3" in version:
-            render_info_box("""
-            <strong>VERSION-3: Sustainability & Free-Rider Analysis</strong><br><br>
+            st.markdown("""
+            **VERSION-3: Sustainability & Free-Rider Analysis**
             
-            This version studies the sustainability and scalability of federated learning.<br><br>
+            This version studies the sustainability and scalability of federated learning.
             
-            <strong>Research Questions:</strong><br>
-            1. <strong>Scalability:</strong> How does performance change as we add more hospitals?<br>
-            2. <strong>Free-Riding:</strong> Can non-participating hospitals benefit from the global model?<br>
-            3. <strong>Sustainability:</strong> Is federated learning sustainable at scale?<br><br>
+            **Research Questions:**
+            1. **Scalability**: How does performance change as we add more hospitals?
+            2. **Free-Riding**: Can non-participating hospitals benefit from the global model?
+            3. **Sustainability**: Is federated learning sustainable at scale?
             
-            <strong>Why This Matters:</strong><br>
-            - Understanding free-rider benefits helps design participation incentives<br>
+            **Why This Matters:**
+            - Understanding free-rider benefits helps design participation incentives
             - Knowing performance limits helps plan federated deployments
-            """, 'info')
+            """)
         elif "VERSION-4" in version:
-            render_info_box("""
-            <strong>VERSION-4: FedProx & Non-IID Study</strong><br><br>
+            st.markdown("""
+            **VERSION-4: FedProx & Non-IID Study**
             
-            Study how FedProx handles data heterogeneity compared to FedAvg.<br><br>
+            Study how FedProx handles data heterogeneity compared to FedAvg.
             
-            <strong>Key Features:</strong><br>
-            - <strong>Proximal regularization</strong> prevents client drift<br>
-            - <strong>Dirichlet non-IID</strong> simulates realistic heterogeneity<br>
-            - <strong>Convergence analysis</strong> shows stability improvements<br><br>
+            **Key Features:**
+            - **Proximal regularization** prevents client drift
+            - **Dirichlet non-IID** simulates realistic heterogeneity
+            - **Convergence analysis** shows stability improvements
             
-            <strong>When to use FedProx:</strong><br>
-            - Strong data heterogeneity (Dirichlet α < 1)<br>
-            - Unstable FedAvg convergence<br>
+            **When to use FedProx:**
+            - Strong data heterogeneity (Dirichlet α < 1)
+            - Unstable FedAvg convergence
             - Need for convergence guarantees
-            """, 'info')
+            """)
         elif "VERSION-5" in version:
-            render_info_box("""
-            <strong>VERSION-5: Research Lab - Advanced Analysis</strong><br><br>
+            st.markdown("""
+            **VERSION-5: Research Lab - Advanced Analysis**
             
-            Publication-quality research tools for federated learning.<br><br>
+            Publication-quality research tools for federated learning.
             
-            <strong>Available Features:</strong><br>
-            🏥 <strong>Hospital Contribution Analysis:</strong> Measure each hospital's impact<br>
-            📊 <strong>Experiment Management:</strong> Reproducible research with automatic logging<br>
-            🧬 <strong>Multi-Modal Support:</strong> Clinical + Protein data (backend ready)<br>
-            ⚖️ <strong>Fairness Analysis:</strong> Subgroup performance evaluation<br>
-            📈 <strong>Statistical Validation:</strong> Bootstrap confidence intervals
-            """, 'info')
+            **Available Features:**
+            - 🏥 **Hospital Contribution Analysis**: Measure each hospital's impact
+            - 📊 **Experiment Management**: Reproducible research with automatic logging
+            - 🧬 **Multi-Modal Support**: Clinical + Protein data (backend ready)
+            - ⚖️ **Fairness Analysis**: Subgroup performance evaluation
+            - 📈 **Statistical Validation**: Bootstrap confidence intervals
+            """)
     
     # Render footer
     render_footer()
