@@ -27,7 +27,14 @@ from evaluation import evaluate_model, plot_roc_curve, plot_confusion_matrix
 
 # Import VERSION-2 modules
 from logistic_numpy import predict_proba as numpy_predict_proba
-from federated import partition_equal, fedavg_train, train_local_models
+from federated import (
+    partition_equal, 
+    fedavg_train, 
+    train_local_models,
+    partition_dirichlet,
+    partition_imbalanced,
+    generate_imbalanced_distribution
+)
 from experiments import centralized_train_numpy, save_fedavg_metrics, save_comparison_summary
 
 # Import VERSION-3 modules
@@ -49,7 +56,6 @@ from fedprox_experiments import (
     plot_stability_comparison,
     save_fedprox_results
 )
-from federated import partition_dirichlet
 
 # Import VERSION-5 modules
 from contribution import measure_hospital_contribution, plot_contribution_analysis
