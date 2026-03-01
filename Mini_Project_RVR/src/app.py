@@ -43,6 +43,10 @@ from fedprox_experiments import (
 )
 from federated import partition_dirichlet
 
+# Import VERSION-5 modules
+from contribution import measure_hospital_contribution, plot_contribution_analysis
+from experiment_manager import ExperimentManager, set_global_seed
+
 
 # Set random seed for reproducibility
 RANDOM_SEED = 42
@@ -91,7 +95,8 @@ def main():
             "VERSION-1: Centralized (sklearn)",
             "VERSION-2: Federated Learning (FedAvg)",
             "VERSION-3: Sustainability Analysis",
-            "VERSION-4: FedProx & Non-IID Study"
+            "VERSION-4: FedProx & Non-IID Study",
+            "VERSION-5: Research Lab"
         ],
         index=0
     )
@@ -814,6 +819,205 @@ def main():
                         st.error(f"Error: {str(e)}")
                         import traceback
                         st.code(traceback.format_exc())
+        
+        # VERSION-5: Research Lab
+        elif "VERSION-5" in version:
+            st.markdown("---")
+            st.subheader("🔬 Research Lab - Advanced Analysis")
+            
+            st.markdown("""
+            **VERSION-5** provides publication-quality research tools:
+            - 🏥 **Hospital Contribution Analysis**: Measure each hospital's impact
+            - 📊 **Experiment Management**: Reproducible research with automatic logging
+            - 🧬 **Multi-Modal Support**: Clinical + Protein data (backend ready)
+            """)
+            
+            # Configuration
+            st.markdown("### ⚙️ Configuration")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                num_hospitals_v5 = st.slider("Number of Hospitals", min_value=3, max_value=8, value=5, step=1, key="v5_hospitals")
+                partition_type_v5 = st.selectbox("Partition Strategy", ["equal", "imbalanced", "dirichlet"], key="v5_partition")
+                
+                if partition_type_v5 == "dirichlet":
+                    alpha_v5 = st.slider("Dirichlet Alpha (α)", min_value=0.1, max_value=10.0, value=0.5, step=0.1, key="v5_alpha")
+                else:
+                    alpha_v5 = None
+            
+            with col2:
+                rounds_v5 = st.slider("Communication Rounds", min_value=20, max_value=50, value=30, step=10, key="v5_rounds")
+                epochs_v5 = st.slider("Local Epochs", min_value=3, max_value=10, value=5, step=1, key="v5_epochs")
+                lr_v5 = st.number_input("Learning Rate", min_value=0.01, max_value=1.0, value=0.1, step=0.01, format="%.2f", key="v5_lr")
+            
+            # Algorithm selection
+            algorithm_v5 = st.selectbox("Algorithm", ["FedAvg", "FedProx"], key="v5_algorithm")
+            if algorithm_v5 == "FedProx":
+                mu_v5 = st.slider("Proximal Coefficient (μ)", min_value=0.01, max_value=1.0, value=0.1, step=0.01, key="v5_mu")
+            else:
+                mu_v5 = 0.0
+            
+            st.markdown("---")
+            
+            # Hospital Contribution Analysis
+            st.markdown("### 🏥 Hospital Contribution Analysis")
+            st.markdown("Measure each hospital's impact on federated learning performance using leave-one-out analysis.")
+            
+            if st.button("🔍 Run Contribution Analysis", type="primary", key="run_contribution"):
+                with st.spinner(f"Analyzing {num_hospitals_v5} hospitals..."):
+                    try:
+                        # Create experiment
+                        exp = ExperimentManager()
+                        exp_id = exp.create_experiment({
+                            'version': 'VERSION-5',
+                            'analysis': 'contribution',
+                            'num_hospitals': num_hospitals_v5,
+                            'partition_type': partition_type_v5,
+                            'alpha': alpha_v5,
+                            'algorithm': algorithm_v5.lower(),
+                            'mu': mu_v5,
+                            'rounds': rounds_v5,
+                            'epochs': epochs_v5,
+                            'lr': lr_v5,
+                            'random_seed': RANDOM_SEED
+                        })
+                        
+                        st.info(f"📝 Experiment ID: {exp_id}")
+                        
+                        # Partition data
+                        if partition_type_v5 == 'equal':
+                            from federated import partition_equal
+                            hospitals = partition_equal(X_train, y_train, num_hospitals_v5, RANDOM_SEED)
+                        elif partition_type_v5 == 'imbalanced':
+                            from federated import partition_imbalanced, generate_imbalanced_distribution
+                            distribution = generate_imbalanced_distribution(num_hospitals_v5, RANDOM_SEED)
+                            hospitals = partition_imbalanced(X_train, y_train, distribution, RANDOM_SEED)
+                        else:  # dirichlet
+                            hospitals = partition_dirichlet(X_train, y_train, num_hospitals_v5, alpha_v5, RANDOM_SEED)
+                        
+                        # Run contribution analysis
+                        contribution_df = measure_hospital_contribution(
+                            hospitals, X_test, y_test,
+                            rounds=rounds_v5,
+                            epochs=epochs_v5,
+                            lr=lr_v5,
+                            algorithm=algorithm_v5.lower(),
+                            mu=mu_v5,
+                            random_seed=RANDOM_SEED
+                        )
+                        
+                        st.session_state['v5_contribution'] = contribution_df
+                        
+                        st.success("✅ Contribution analysis complete!")
+                        
+                        # Display results
+                        st.markdown("### 📊 Contribution Results")
+                        
+                        # Summary metrics
+                        col1, col2, col3 = st.columns(3)
+                        
+                        with col1:
+                            st.metric("Baseline AUC", f"{contribution_df['baseline_auc'].iloc[0]:.4f}")
+                            st.caption("With all hospitals")
+                        
+                        with col2:
+                            max_contrib = contribution_df['contribution'].max()
+                            max_hospital = contribution_df.loc[contribution_df['contribution'].idxmax(), 'hospital_id']
+                            st.metric("Max Contribution", f"{max_contrib:.4f}")
+                            st.caption(f"Hospital {int(max_hospital)}")
+                        
+                        with col3:
+                            mean_contrib = contribution_df['contribution'].mean()
+                            st.metric("Mean Contribution", f"{mean_contrib:.4f}")
+                            st.caption("Average impact")
+                        
+                        # Contribution table
+                        st.markdown("#### Detailed Contributions")
+                        display_df = contribution_df[['hospital_id', 'num_samples', 'contribution', 'contribution_pct']].copy()
+                        display_df['hospital_id'] = display_df['hospital_id'].astype(int)
+                        display_df['contribution'] = display_df['contribution'].apply(lambda x: f"{x:.4f}")
+                        display_df['contribution_pct'] = display_df['contribution_pct'].apply(lambda x: f"{x:.2f}%")
+                        display_df.columns = ['Hospital ID', 'Samples', 'Contribution (ΔAUC)', 'Contribution %']
+                        
+                        st.dataframe(display_df, use_container_width=True)
+                        
+                        # Visualizations
+                        st.markdown("### 📈 Contribution Visualizations")
+                        fig = plot_contribution_analysis(
+                            contribution_df,
+                            save_path=exp.get_plot_path('contribution_analysis.png')
+                        )
+                        st.pyplot(fig)
+                        
+                        # Insights
+                        st.markdown("### 💡 Key Insights")
+                        
+                        # Correlation analysis
+                        correlation = contribution_df[['num_samples', 'contribution']].corr().iloc[0, 1]
+                        
+                        st.markdown(f"""
+                        **Findings:**
+                        
+                        1. **Contribution Range**: {contribution_df['contribution'].min():.4f} to {contribution_df['contribution'].max():.4f}
+                        2. **Size-Contribution Correlation**: {correlation:.3f}
+                           - {'Strong positive' if correlation > 0.7 else 'Moderate' if correlation > 0.3 else 'Weak'} correlation
+                           - {'Larger hospitals contribute more' if correlation > 0.5 else 'Contribution not strongly tied to size'}
+                        3. **Critical Hospitals**: Hospital {int(max_hospital)} is most critical
+                        4. **Redundancy**: {'Low redundancy - all hospitals important' if contribution_df['contribution'].min() > 0.001 else 'Some hospitals may be redundant'}
+                        
+                        **Implications:**
+                        - Use this to prioritize hospital recruitment
+                        - Identify critical vs redundant participants
+                        - Optimize consortium composition
+                        """)
+                        
+                        # Save results
+                        exp.save_dataframe(contribution_df, 'hospital_contributions')
+                        exp.log_results({
+                            'baseline_auc': float(contribution_df['baseline_auc'].iloc[0]),
+                            'max_contribution': float(max_contrib),
+                            'mean_contribution': float(mean_contrib),
+                            'size_contribution_correlation': float(correlation)
+                        })
+                        exp.generate_summary_report()
+                        
+                        st.success(f"Results saved to {exp.experiment_dir}")
+                        
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+                        import traceback
+                        st.code(traceback.format_exc())
+            
+            # Information about other VERSION-5 features
+            st.markdown("---")
+            st.markdown("### 🚀 Additional VERSION-5 Features")
+            
+            st.info("""
+            **Backend Ready (UI Integration Pending):**
+            
+            🧬 **Multi-Modal Learning**
+            - Clinical + Protein expression data
+            - PCA dimensionality reduction
+            - Feature selection methods
+            
+            📊 **Experiment Management**
+            - Automatic experiment logging
+            - Reproducibility controls
+            - Timestamped results
+            
+            📈 **Statistical Validation**
+            - Bootstrap confidence intervals
+            - Paired statistical tests
+            - Effect size calculations
+            
+            ⚖️ **Fairness Analysis**
+            - Subgroup performance evaluation
+            - Disparity metrics
+            - Bias detection
+            
+            *These features are implemented in the backend and can be accessed programmatically.*
+            """)
     
     else:
         st.info("👈 Please upload clinical dataset to begin")
