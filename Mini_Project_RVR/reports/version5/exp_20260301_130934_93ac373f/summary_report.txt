@@ -1,0 +1,31 @@
+======================================================================
+EXPERIMENT SUMMARY REPORT
+======================================================================
+
+CONFIGURATION:
+----------------------------------------------------------------------
+version: VERSION-5
+analysis: contribution
+num_hospitals: 5
+partition_type: equal
+alpha: None
+algorithm: fedprox
+mu: 0.1
+rounds: 30
+epochs: 5
+lr: 0.1
+random_seed: 42
+experiment_id: exp_20260301_130934_93ac373f
+timestamp: 20260301_130934
+config_hash: 93ac373f
+
+RESULTS:
+----------------------------------------------------------------------
+baseline_auc: 0.8052287581699347
+max_contribution: 0.016339869281045805
+mean_contribution: 0.0021568627450980317
+size_contribution_correlation: -0.4015743132074959
+
+======================================================================
+Report generated: 2026-03-01 13:09:46
+======================================================================

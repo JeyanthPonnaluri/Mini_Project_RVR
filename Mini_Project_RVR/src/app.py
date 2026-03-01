@@ -3,6 +3,8 @@ Streamlit application for TCGA-PRAD clinical stage classification.
 VERSION-1: Centralized sklearn model
 VERSION-2: Federated Learning with FedAvg
 VERSION-3: Sustainability & Free-Rider Analysis
+VERSION-4: FedProx & Non-IID Study
+VERSION-5: Research Lab - Advanced Analysis
 """
 
 import streamlit as st
@@ -47,6 +49,30 @@ from federated import partition_dirichlet
 from contribution import measure_hospital_contribution, plot_contribution_analysis
 from experiment_manager import ExperimentManager, set_global_seed
 
+# Import UI components
+from ui_components import (
+    render_header,
+    render_card,
+    render_metrics_row,
+    render_section_header,
+    render_divider,
+    render_info_box,
+    render_experiment_status,
+    render_comparison_table,
+    render_footer,
+    render_sidebar_section,
+    render_key_findings,
+    apply_custom_css
+)
+
+
+# Set page configuration
+st.set_page_config(
+    page_title="Federated Learning Research Lab",
+    page_icon="🧬",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # Set random seed for reproducibility
 RANDOM_SEED = 42
@@ -86,7 +112,14 @@ def plot_fedavg_convergence(round_aucs, round_losses):
 def main():
     """Main Streamlit application."""
     
-    st.title("🏥 TCGA-PRAD Clinical Stage Classification")
+    # Apply custom CSS
+    apply_custom_css()
+    
+    # Render professional header
+    render_header()
+    
+    # Sidebar configuration
+    render_sidebar_section("🔬 Experiment Selection", "")
     
     # Version selector
     version = st.sidebar.radio(
@@ -98,13 +131,11 @@ def main():
             "VERSION-4: FedProx & Non-IID Study",
             "VERSION-5: Research Lab"
         ],
-        index=0
+        index=0,
+        label_visibility="collapsed"
     )
     
-    st.markdown(f"### {version}")
-    st.markdown("---")
-    
-    st.sidebar.header("📁 Upload Clinical Data")
+    render_sidebar_section("📁 Data Upload", "")
     st.sidebar.markdown("Upload TCGA-PRAD clinical TSV file:")
     
     # File uploader
@@ -112,7 +143,21 @@ def main():
     
     if clinical_file:
         
-        st.success("✅ Clinical dataset uploaded successfully!")
+        # Current version badge
+        st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        color: white; padding: 1rem 1.5rem; border-radius: 8px; 
+                        margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <div style="font-size: 1.4rem; font-weight: 600; margin-bottom: 0.25rem;">
+                    {version}
+                </div>
+                <div style="font-size: 0.9rem; opacity: 0.9;">
+                    Active Experiment Configuration
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        render_experiment_status('running', 'Loading and preprocessing data...')
         
         # Load dataset
         with st.spinner("Loading clinical data..."):
@@ -125,10 +170,10 @@ def main():
                 
                 clinical_df = load_clinical(clinical_path)
                 
-                st.info(f"📊 Loaded: {clinical_df.shape[0]} patients, {clinical_df.shape[1]} features")
+                render_info_box(f"📊 Loaded: {clinical_df.shape[0]} patients, {clinical_df.shape[1]} features", 'success')
                 
             except Exception as e:
-                st.error(f"Error loading dataset: {str(e)}")
+                render_info_box(f"Error loading dataset: {str(e)}", 'error')
                 return
         
         # Create target variable
@@ -136,44 +181,49 @@ def main():
             try:
                 df_filtered, target = create_target(clinical_df)
                 
-                st.success(f"✅ Target created successfully! {len(df_filtered)} patients with valid stage")
+                render_divider()
+                render_section_header("🎯 Target Variable: Pathologic T Stage", 
+                                     "Binary classification: Early Stage (T1/T2) vs Advanced Stage (T3/T4)")
                 
-                # Display class distribution
-                st.markdown("### 🎯 Target Variable: Pathologic T Stage")
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.metric("Early Stage (T1/T2)", f"{(target == 0).sum()} patients")
-                
-                with col2:
-                    st.metric("Advanced Stage (T3/T4)", f"{(target == 1).sum()} patients")
-                
-                # Calculate class balance
-                class_ratio = (target == 1).sum() / len(target) * 100
-                st.info(f"📈 Class balance: {class_ratio:.1f}% advanced stage")
+                # Display class distribution in metrics row
+                metrics = [
+                    {
+                        'label': 'Early Stage (T1/T2)',
+                        'value': f"{(target == 0).sum()}",
+                        'help': 'Number of patients with early stage cancer'
+                    },
+                    {
+                        'label': 'Advanced Stage (T3/T4)',
+                        'value': f"{(target == 1).sum()}",
+                        'help': 'Number of patients with advanced stage cancer'
+                    },
+                    {
+                        'label': 'Class Balance',
+                        'value': f"{(target == 1).sum() / len(target) * 100:.1f}%",
+                        'help': 'Percentage of advanced stage patients'
+                    }
+                ]
+                render_metrics_row(metrics, columns=3)
                 
             except ValueError as e:
-                st.error(f"Error creating target: {str(e)}")
-                st.info("Please ensure your clinical file contains 'ajcc_pathologic_t.diagnoses' column")
+                render_info_box(f"Error creating target: {str(e)}<br>Please ensure your clinical file contains 'ajcc_pathologic_t.diagnoses' column", 'error')
                 return
             except Exception as e:
-                st.error(f"Error: {str(e)}")
+                render_info_box(f"Error: {str(e)}", 'error')
                 return
         
         # Preprocess features
-        st.markdown("---")
-        st.subheader("🔧 Feature Preprocessing")
+        render_divider()
+        render_section_header("🔧 Feature Preprocessing", "Handling missing values, encoding categorical variables, and scaling features")
         
         with st.spinner("Preprocessing features..."):
             try:
                 X, feature_names, preprocessor = preprocess_features(df_filtered)
                 
-                st.success(f"✅ Preprocessing complete!")
-                st.info(f"📊 Final feature matrix: {X.shape[0]} samples × {X.shape[1]} features")
+                render_info_box(f"✅ Preprocessing complete! Final feature matrix: {X.shape[0]} samples × {X.shape[1]} features", 'success')
                 
             except Exception as e:
-                st.error(f"Error preprocessing features: {str(e)}")
+                render_info_box(f"Error preprocessing features: {str(e)}", 'error')
                 import traceback
                 st.code(traceback.format_exc())
                 return
@@ -187,14 +237,22 @@ def main():
         y_train = np.array(y_train)
         y_test = np.array(y_test)
         
-        st.info(f"📊 Train: {X_train.shape[0]} samples | Test: {X_test.shape[0]} samples")
+        metrics = [
+            {'label': 'Training Samples', 'value': f"{X_train.shape[0]}"},
+            {'label': 'Test Samples', 'value': f"{X_test.shape[0]}"},
+            {'label': 'Train/Test Split', 'value': "80/20"}
+        ]
+        render_metrics_row(metrics, columns=3)
+        
+        render_divider()
         
         # VERSION-1: Centralized sklearn
         if "VERSION-1" in version:
-            st.markdown("---")
-            st.subheader("🚀 Model Training (sklearn)")
+            render_section_header("🚀 Model Training", "Centralized logistic regression using scikit-learn")
             
-            if st.button("Train Centralized Model (sklearn)", type="primary"):
+            if st.button("Train Centralized Model (sklearn)", type="primary", use_container_width=True):
+                
+                render_experiment_status('running', 'Training logistic regression model...')
                 
                 with st.spinner("Training logistic regression model..."):
                     try:
@@ -204,84 +262,99 @@ def main():
                         # Evaluate model
                         results = evaluate_model(model, X_test, y_test)
                         
+                        render_experiment_status('complete', 'Model training completed successfully!')
+                        
                         # Display results
-                        st.markdown("---")
-                        st.subheader("📊 Model Performance")
+                        render_divider()
+                        render_section_header("📊 Model Performance", "Evaluation metrics on test set")
                         
                         # Metrics
+                        metrics = [
+                            {
+                                'label': '🎯 AUC-ROC Score',
+                                'value': f"{results['auc']:.4f}",
+                                'help': 'Area Under the ROC Curve - measures discrimination ability'
+                            },
+                            {
+                                'label': '✅ Accuracy',
+                                'value': f"{results['accuracy']:.4f}",
+                                'help': 'Overall classification accuracy'
+                            }
+                        ]
+                        render_metrics_row(metrics, columns=2)
+                        
+                        # Confusion Matrix and ROC Curve
                         col1, col2 = st.columns(2)
                         
                         with col1:
-                            st.metric("🎯 AUC-ROC Score", f"{results['auc']:.4f}")
+                            st.markdown("#### 📈 Confusion Matrix")
+                            fig_cm = plot_confusion_matrix(results['confusion_matrix'], save_path='reports/confusion_matrix.png')
+                            st.pyplot(fig_cm)
                         
                         with col2:
-                            st.metric("✅ Accuracy", f"{results['accuracy']:.4f}")
-                        
-                        # Confusion Matrix
-                        st.markdown("### 📈 Confusion Matrix")
-                        fig_cm = plot_confusion_matrix(results['confusion_matrix'], save_path='reports/confusion_matrix.png')
-                        st.pyplot(fig_cm)
-                        
-                        # ROC Curve
-                        st.markdown("### 📈 ROC Curve")
-                        fig_roc = plot_roc_curve(y_test, results['y_pred_proba'], save_path='reports/roc_curve.png')
-                        st.pyplot(fig_roc)
-                        
-                        st.success("✅ Model training complete! Results saved to reports/")
+                            st.markdown("#### 📈 ROC Curve")
+                            fig_roc = plot_roc_curve(y_test, results['y_pred_proba'], save_path='reports/roc_curve.png')
+                            st.pyplot(fig_roc)
                         
                         # Additional insights
-                        st.markdown("---")
-                        st.markdown("### 💡 Model Insights")
+                        render_divider()
+                        render_section_header("💡 Model Insights", "Detailed performance metrics")
                         
                         tn, fp, fn, tp = results['confusion_matrix'].ravel()
                         
                         sensitivity = tp / (tp + fn) if (tp + fn) > 0 else 0
                         specificity = tn / (tn + fp) if (tn + fp) > 0 else 0
                         
-                        col1, col2 = st.columns(2)
+                        metrics = [
+                            {
+                                'label': 'Sensitivity (Recall)',
+                                'value': f"{sensitivity:.4f}",
+                                'help': 'Ability to detect advanced stage (T3/T4)'
+                            },
+                            {
+                                'label': 'Specificity',
+                                'value': f"{specificity:.4f}",
+                                'help': 'Ability to identify early stage (T1/T2)'
+                            }
+                        ]
+                        render_metrics_row(metrics, columns=2)
                         
-                        with col1:
-                            st.metric("Sensitivity (Recall)", f"{sensitivity:.4f}")
-                            st.caption("Ability to detect advanced stage (T3/T4)")
-                        
-                        with col2:
-                            st.metric("Specificity", f"{specificity:.4f}")
-                            st.caption("Ability to identify early stage (T1/T2)")
+                        render_info_box("✅ Model training complete! Results saved to reports/", 'success')
                         
                     except Exception as e:
-                        st.error(f"Error during training: {str(e)}")
+                        render_experiment_status('error', f'Training failed: {str(e)}')
                         import traceback
                         st.code(traceback.format_exc())
         
         # VERSION-2: Federated Learning
         elif "VERSION-2" in version:
-            st.markdown("---")
-            st.subheader("🌐 Federated Learning Configuration")
+            render_section_header("🌐 Federated Learning Configuration", "Distributed training across multiple hospitals using FedAvg")
             
             # Federated learning parameters
-            col1, col2 = st.columns(2)
+            with st.expander("⚙️ Federated Learning Parameters", expanded=True):
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    num_hospitals = st.slider("Number of Hospitals", min_value=2, max_value=10, value=5, step=1)
+                    rounds = st.slider("Communication Rounds", min_value=10, max_value=100, value=50, step=10)
+                
+                with col2:
+                    local_epochs = st.slider("Local Epochs per Round", min_value=1, max_value=10, value=5, step=1)
+                    lr = st.number_input("Learning Rate", min_value=0.001, max_value=1.0, value=0.1, step=0.01, format="%.3f")
             
-            with col1:
-                num_hospitals = st.slider("Number of Hospitals", min_value=2, max_value=10, value=5, step=1)
-                rounds = st.slider("Communication Rounds", min_value=10, max_value=100, value=50, step=10)
-            
-            with col2:
-                local_epochs = st.slider("Local Epochs per Round", min_value=1, max_value=10, value=5, step=1)
-                lr = st.number_input("Learning Rate", min_value=0.001, max_value=1.0, value=0.1, step=0.01, format="%.3f")
-            
-            st.markdown("---")
+            render_divider()
             
             # Buttons for different experiments
             col1, col2, col3 = st.columns(3)
             
             with col1:
-                run_centralized = st.button("🖥️ Run Centralized (NumPy)", type="secondary")
+                run_centralized = st.button("🖥️ Run Centralized (NumPy)", type="secondary", use_container_width=True)
             
             with col2:
-                run_fedavg = st.button("🌐 Run FedAvg", type="primary")
+                run_fedavg = st.button("🌐 Run FedAvg", type="primary", use_container_width=True)
             
             with col3:
-                run_local = st.button("🏥 Run Local Models", type="secondary")
+                run_local = st.button("🏥 Run Local Models", type="secondary", use_container_width=True)
             
             # Run Centralized NumPy
             if run_centralized:
@@ -424,45 +497,46 @@ def main():
         
         # VERSION-3: Sustainability Analysis
         elif "VERSION-3" in version:
-            st.markdown("---")
-            st.subheader("🔬 Sustainability & Free-Rider Analysis")
+            render_section_header("🔬 Sustainability & Free-Rider Analysis", 
+                                 "Study scalability and free-rider behavior in federated learning")
             
-            st.markdown("""
-            Study how federated learning performance changes with:
-            - **Number of hospitals** (scalability)
-            - **Free-rider scenarios** (non-participating hospitals)
-            """)
+            render_info_box("""
+            Study how federated learning performance changes with:<br>
+            - <strong>Number of hospitals</strong> (scalability)<br>
+            - <strong>Free-rider scenarios</strong> (non-participating hospitals)
+            """, 'info')
             
             # Configuration
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                max_hospitals = st.slider("Max Hospitals", min_value=2, max_value=15, value=10, step=1)
-                trials = st.slider("Monte Carlo Trials", min_value=5, max_value=20, value=10, step=5)
-                partition_type = st.selectbox("Partition Type", ["equal", "imbalanced"])
-            
-            with col2:
-                rounds = st.slider("Communication Rounds", min_value=10, max_value=50, value=30, step=10)
-                local_epochs = st.slider("Local Epochs", min_value=1, max_value=10, value=3, step=1)
-                lr = st.number_input("Learning Rate", min_value=0.001, max_value=1.0, value=0.1, step=0.01, format="%.3f")
+            with st.expander("⚙️ Experiment Configuration", expanded=True):
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    max_hospitals = st.slider("Max Hospitals", min_value=2, max_value=15, value=10, step=1)
+                    trials = st.slider("Monte Carlo Trials", min_value=5, max_value=20, value=10, step=5)
+                    partition_type = st.selectbox("Partition Type", ["equal", "imbalanced"])
+                
+                with col2:
+                    rounds = st.slider("Communication Rounds", min_value=10, max_value=50, value=30, step=10)
+                    local_epochs = st.slider("Local Epochs", min_value=1, max_value=10, value=3, step=1)
+                    lr = st.number_input("Learning Rate", min_value=0.001, max_value=1.0, value=0.1, step=0.01, format="%.3f")
             
             # Generate hospital counts
             hospital_counts = list(range(2, max_hospitals + 1, 2))  # [2, 4, 6, 8, ...]
             if max_hospitals not in hospital_counts:
                 hospital_counts.append(max_hospitals)
             
-            st.info(f"📊 Will test: {hospital_counts} hospitals")
+            render_info_box(f"📊 Will test: {hospital_counts} hospitals", 'info')
             
-            st.markdown("---")
+            render_divider()
             
             # Buttons
             col1, col2 = st.columns(2)
             
             with col1:
-                run_learning = st.button("📈 Run Learning Curve", type="primary")
+                run_learning = st.button("📈 Run Learning Curve", type="primary", use_container_width=True)
             
             with col2:
-                run_freerider = st.button("🎭 Run Free-Rider Experiment", type="primary")
+                run_freerider = st.button("🎭 Run Free-Rider Experiment", type="primary", use_container_width=True)
             
             # Run Learning Curve
             if run_learning:
@@ -685,53 +759,56 @@ def main():
         
         # VERSION-4: FedProx & Non-IID Study
         elif "VERSION-4" in version:
-            st.markdown("---")
-            st.subheader("🔬 FedProx & Non-IID Heterogeneity Study")
+            render_section_header("🔬 FedProx & Non-IID Heterogeneity Study", 
+                                 "Compare FedAvg vs FedProx under data heterogeneity")
             
-            st.markdown("""
-            Study how **FedProx** handles data heterogeneity compared to FedAvg:
-            - **Proximal regularization** prevents client drift
-            - **Dirichlet non-IID** simulates realistic heterogeneity
-            - **Convergence analysis** shows stability improvements
-            """)
+            render_info_box("""
+            Study how <strong>FedProx</strong> handles data heterogeneity compared to FedAvg:<br>
+            - <strong>Proximal regularization</strong> prevents client drift<br>
+            - <strong>Dirichlet non-IID</strong> simulates realistic heterogeneity<br>
+            - <strong>Convergence analysis</strong> shows stability improvements
+            """, 'info')
             
             # Configuration
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                num_hospitals_v4 = st.slider("Number of Hospitals", min_value=3, max_value=10, value=5, step=1, key="v4_hospitals")
-                partition_type_v4 = st.selectbox("Partition Strategy", ["equal", "imbalanced", "dirichlet"], key="v4_partition")
+            with st.expander("⚙️ Experiment Configuration", expanded=True):
+                col1, col2 = st.columns(2)
                 
-                if partition_type_v4 == "dirichlet":
-                    alpha_v4 = st.slider("Dirichlet Alpha (α)", min_value=0.1, max_value=10.0, value=0.5, step=0.1, key="v4_alpha")
-                    st.caption(f"α={alpha_v4:.1f}: {'Strong non-IID' if alpha_v4 < 1 else 'Moderate' if alpha_v4 < 5 else 'Nearly IID'}")
-                else:
-                    alpha_v4 = None
-            
-            with col2:
-                rounds_v4 = st.slider("Communication Rounds", min_value=20, max_value=100, value=50, step=10, key="v4_rounds")
-                epochs_v4 = st.slider("Local Epochs", min_value=1, max_value=10, value=5, step=1, key="v4_epochs")
-                lr_v4 = st.number_input("Learning Rate", min_value=0.001, max_value=1.0, value=0.1, step=0.01, format="%.3f", key="v4_lr")
+                with col1:
+                    num_hospitals_v4 = st.slider("Number of Hospitals", min_value=3, max_value=10, value=5, step=1, key="v4_hospitals")
+                    partition_type_v4 = st.selectbox("Partition Strategy", ["equal", "imbalanced", "dirichlet"], key="v4_partition")
+                    
+                    if partition_type_v4 == "dirichlet":
+                        alpha_v4 = st.slider("Dirichlet Alpha (α)", min_value=0.1, max_value=10.0, value=0.5, step=0.1, key="v4_alpha")
+                        st.caption(f"α={alpha_v4:.1f}: {'Strong non-IID' if alpha_v4 < 1 else 'Moderate' if alpha_v4 < 5 else 'Nearly IID'}")
+                    else:
+                        alpha_v4 = None
+                
+                with col2:
+                    rounds_v4 = st.slider("Communication Rounds", min_value=20, max_value=100, value=50, step=10, key="v4_rounds")
+                    epochs_v4 = st.slider("Local Epochs", min_value=1, max_value=10, value=5, step=1, key="v4_epochs")
+                    lr_v4 = st.number_input("Learning Rate", min_value=0.001, max_value=1.0, value=0.1, step=0.01, format="%.3f", key="v4_lr")
             
             # Mu values for FedProx
-            st.markdown("### FedProx Configuration")
-            col1, col2, col3 = st.columns(3)
+            with st.expander("🔧 FedProx Configuration", expanded=True):
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    mu1 = st.number_input("μ₁ (small)", min_value=0.001, max_value=1.0, value=0.01, step=0.001, format="%.3f", key="v4_mu1")
+                with col2:
+                    mu2 = st.number_input("μ₂ (medium)", min_value=0.001, max_value=1.0, value=0.1, step=0.01, format="%.2f", key="v4_mu2")
+                with col3:
+                    mu3 = st.number_input("μ₃ (large)", min_value=0.001, max_value=1.0, value=0.5, step=0.1, format="%.1f", key="v4_mu3")
+                
+                mu_values_v4 = [mu1, mu2, mu3]
             
-            with col1:
-                mu1 = st.number_input("μ₁ (small)", min_value=0.001, max_value=1.0, value=0.01, step=0.001, format="%.3f", key="v4_mu1")
-            with col2:
-                mu2 = st.number_input("μ₂ (medium)", min_value=0.001, max_value=1.0, value=0.1, step=0.01, format="%.2f", key="v4_mu2")
-            with col3:
-                mu3 = st.number_input("μ₃ (large)", min_value=0.001, max_value=1.0, value=0.5, step=0.1, format="%.1f", key="v4_mu3")
+            render_info_box(f"📊 Will compare: FedAvg vs FedProx with μ = {mu_values_v4}", 'info')
             
-            mu_values_v4 = [mu1, mu2, mu3]
-            
-            st.info(f"📊 Will compare: FedAvg vs FedProx with μ = {mu_values_v4}")
-            
-            st.markdown("---")
+            render_divider()
             
             # Run comparison button
-            if st.button("🚀 Run FedAvg vs FedProx Comparison", type="primary", key="run_v4_comparison"):
+            if st.button("🚀 Run FedAvg vs FedProx Comparison", type="primary", key="run_v4_comparison", use_container_width=True):
+                render_experiment_status('running', f'Running comparison with {num_hospitals_v4} hospitals...')
+                
                 with st.spinner(f"Running comparison experiment..."):
                     try:
                         # Run experiment
@@ -749,10 +826,11 @@ def main():
                         
                         st.session_state['v4_results'] = results_df
                         
-                        st.success("✅ Comparison complete!")
+                        render_experiment_status('complete', 'Comparison experiment completed successfully!')
                         
                         # Display results
-                        st.markdown("### 📊 Performance Comparison")
+                        render_divider()
+                        render_section_header("📊 Performance Comparison", "FedAvg vs FedProx results")
                         
                         # Summary table
                         summary_df = results_df[['algorithm', 'mu', 'final_auc', 'convergence_std', 'avg_weight_drift']].copy()
@@ -761,7 +839,7 @@ def main():
                         summary_df['convergence_std'] = summary_df['convergence_std'].apply(lambda x: f"{x:.4f}")
                         summary_df['avg_weight_drift'] = summary_df['avg_weight_drift'].apply(lambda x: f"{x:.4f}")
                         
-                        st.dataframe(summary_df, use_container_width=True)
+                        render_comparison_table(summary_df, highlight_best=True)
                         
                         # Convergence curves
                         st.markdown("### 📈 Convergence Analysis")
@@ -822,49 +900,54 @@ def main():
         
         # VERSION-5: Research Lab
         elif "VERSION-5" in version:
-            st.markdown("---")
-            st.subheader("🔬 Research Lab - Advanced Analysis")
+            render_section_header("🔬 Research Lab - Advanced Analysis", 
+                                 "Publication-quality research tools for federated learning")
             
-            st.markdown("""
-            **VERSION-5** provides publication-quality research tools:
-            - 🏥 **Hospital Contribution Analysis**: Measure each hospital's impact
-            - 📊 **Experiment Management**: Reproducible research with automatic logging
-            - 🧬 **Multi-Modal Support**: Clinical + Protein data (backend ready)
-            """)
+            render_info_box("""
+            <strong>VERSION-5</strong> provides publication-quality research tools:<br>
+            🏥 <strong>Hospital Contribution Analysis:</strong> Measure each hospital's impact<br>
+            📊 <strong>Experiment Management:</strong> Reproducible research with automatic logging<br>
+            🧬 <strong>Multi-Modal Support:</strong> Clinical + Protein data (backend ready)
+            """, 'info')
             
             # Configuration
-            st.markdown("### ⚙️ Configuration")
+            render_divider()
+            render_section_header("⚙️ Configuration", "Set up your federated learning experiment")
             
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                num_hospitals_v5 = st.slider("Number of Hospitals", min_value=3, max_value=8, value=5, step=1, key="v5_hospitals")
-                partition_type_v5 = st.selectbox("Partition Strategy", ["equal", "imbalanced", "dirichlet"], key="v5_partition")
+            with st.expander("🌐 Federated Learning Parameters", expanded=True):
+                col1, col2 = st.columns(2)
                 
-                if partition_type_v5 == "dirichlet":
-                    alpha_v5 = st.slider("Dirichlet Alpha (α)", min_value=0.1, max_value=10.0, value=0.5, step=0.1, key="v5_alpha")
-                else:
-                    alpha_v5 = None
-            
-            with col2:
-                rounds_v5 = st.slider("Communication Rounds", min_value=20, max_value=50, value=30, step=10, key="v5_rounds")
-                epochs_v5 = st.slider("Local Epochs", min_value=3, max_value=10, value=5, step=1, key="v5_epochs")
-                lr_v5 = st.number_input("Learning Rate", min_value=0.01, max_value=1.0, value=0.1, step=0.01, format="%.2f", key="v5_lr")
+                with col1:
+                    num_hospitals_v5 = st.slider("Number of Hospitals", min_value=3, max_value=8, value=5, step=1, key="v5_hospitals")
+                    partition_type_v5 = st.selectbox("Partition Strategy", ["equal", "imbalanced", "dirichlet"], key="v5_partition")
+                    
+                    if partition_type_v5 == "dirichlet":
+                        alpha_v5 = st.slider("Dirichlet Alpha (α)", min_value=0.1, max_value=10.0, value=0.5, step=0.1, key="v5_alpha")
+                    else:
+                        alpha_v5 = None
+                
+                with col2:
+                    rounds_v5 = st.slider("Communication Rounds", min_value=20, max_value=50, value=30, step=10, key="v5_rounds")
+                    epochs_v5 = st.slider("Local Epochs", min_value=3, max_value=10, value=5, step=1, key="v5_epochs")
+                    lr_v5 = st.number_input("Learning Rate", min_value=0.01, max_value=1.0, value=0.1, step=0.01, format="%.2f", key="v5_lr")
             
             # Algorithm selection
-            algorithm_v5 = st.selectbox("Algorithm", ["FedAvg", "FedProx"], key="v5_algorithm")
-            if algorithm_v5 == "FedProx":
-                mu_v5 = st.slider("Proximal Coefficient (μ)", min_value=0.01, max_value=1.0, value=0.1, step=0.01, key="v5_mu")
-            else:
-                mu_v5 = 0.0
+            with st.expander("🤖 Algorithm Selection", expanded=True):
+                algorithm_v5 = st.selectbox("Algorithm", ["FedAvg", "FedProx"], key="v5_algorithm")
+                if algorithm_v5 == "FedProx":
+                    mu_v5 = st.slider("Proximal Coefficient (μ)", min_value=0.01, max_value=1.0, value=0.1, step=0.01, key="v5_mu")
+                else:
+                    mu_v5 = 0.0
             
-            st.markdown("---")
+            render_divider()
             
             # Hospital Contribution Analysis
-            st.markdown("### 🏥 Hospital Contribution Analysis")
-            st.markdown("Measure each hospital's impact on federated learning performance using leave-one-out analysis.")
+            render_section_header("🏥 Hospital Contribution Analysis", 
+                                 "Measure each hospital's impact using leave-one-out analysis")
             
-            if st.button("🔍 Run Contribution Analysis", type="primary", key="run_contribution"):
+            if st.button("🔍 Run Contribution Analysis", type="primary", key="run_contribution", use_container_width=True):
+                render_experiment_status('running', f'Analyzing {num_hospitals_v5} hospitals...')
+                
                 with st.spinner(f"Analyzing {num_hospitals_v5} hospitals..."):
                     try:
                         # Create experiment
@@ -883,7 +966,7 @@ def main():
                             'random_seed': RANDOM_SEED
                         })
                         
-                        st.info(f"📝 Experiment ID: {exp_id}")
+                        render_info_box(f"📝 Experiment ID: {exp_id}", 'info')
                         
                         # Partition data
                         if partition_type_v5 == 'equal':
@@ -909,28 +992,31 @@ def main():
                         
                         st.session_state['v5_contribution'] = contribution_df
                         
-                        st.success("✅ Contribution analysis complete!")
+                        render_experiment_status('complete', 'Contribution analysis completed successfully!')
                         
                         # Display results
-                        st.markdown("### 📊 Contribution Results")
+                        render_divider()
+                        render_section_header("📊 Contribution Results", "Hospital-wise impact on federated learning performance")
                         
                         # Summary metrics
-                        col1, col2, col3 = st.columns(3)
-                        
-                        with col1:
-                            st.metric("Baseline AUC", f"{contribution_df['baseline_auc'].iloc[0]:.4f}")
-                            st.caption("With all hospitals")
-                        
-                        with col2:
-                            max_contrib = contribution_df['contribution'].max()
-                            max_hospital = contribution_df.loc[contribution_df['contribution'].idxmax(), 'hospital_id']
-                            st.metric("Max Contribution", f"{max_contrib:.4f}")
-                            st.caption(f"Hospital {int(max_hospital)}")
-                        
-                        with col3:
-                            mean_contrib = contribution_df['contribution'].mean()
-                            st.metric("Mean Contribution", f"{mean_contrib:.4f}")
-                            st.caption("Average impact")
+                        metrics = [
+                            {
+                                'label': 'Baseline AUC',
+                                'value': f"{contribution_df['baseline_auc'].iloc[0]:.4f}",
+                                'help': 'Performance with all hospitals'
+                            },
+                            {
+                                'label': 'Max Contribution',
+                                'value': f"{contribution_df['contribution'].max():.4f}",
+                                'help': f"Hospital {int(contribution_df.loc[contribution_df['contribution'].idxmax(), 'hospital_id'])}"
+                            },
+                            {
+                                'label': 'Mean Contribution',
+                                'value': f"{contribution_df['contribution'].mean():.4f}",
+                                'help': 'Average impact across all hospitals'
+                            }
+                        ]
+                        render_metrics_row(metrics, columns=3)
                         
                         # Contribution table
                         st.markdown("#### Detailed Contributions")
@@ -940,10 +1026,11 @@ def main():
                         display_df['contribution_pct'] = display_df['contribution_pct'].apply(lambda x: f"{x:.2f}%")
                         display_df.columns = ['Hospital ID', 'Samples', 'Contribution (ΔAUC)', 'Contribution %']
                         
-                        st.dataframe(display_df, use_container_width=True)
+                        render_comparison_table(display_df, highlight_best=False)
                         
                         # Visualizations
-                        st.markdown("### 📈 Contribution Visualizations")
+                        render_divider()
+                        render_section_header("📈 Contribution Visualizations", "Visual analysis of hospital contributions")
                         fig = plot_contribution_analysis(
                             contribution_df,
                             save_path=exp.get_plot_path('contribution_analysis.png')
@@ -951,151 +1038,157 @@ def main():
                         st.pyplot(fig)
                         
                         # Insights
-                        st.markdown("### 💡 Key Insights")
+                        render_divider()
+                        render_section_header("💡 Key Insights", "Research interpretation and implications")
                         
                         # Correlation analysis
                         correlation = contribution_df[['num_samples', 'contribution']].corr().iloc[0, 1]
+                        max_contrib = contribution_df['contribution'].max()
+                        max_hospital = contribution_df.loc[contribution_df['contribution'].idxmax(), 'hospital_id']
                         
-                        st.markdown(f"""
-                        **Findings:**
+                        findings = [
+                            f"<strong>Contribution Range:</strong> {contribution_df['contribution'].min():.4f} to {contribution_df['contribution'].max():.4f}",
+                            f"<strong>Size-Contribution Correlation:</strong> {correlation:.3f} - {'Strong positive' if correlation > 0.7 else 'Moderate' if correlation > 0.3 else 'Weak'} correlation. {'Larger hospitals contribute more' if correlation > 0.5 else 'Contribution not strongly tied to size'}",
+                            f"<strong>Critical Hospitals:</strong> Hospital {int(max_hospital)} is most critical with contribution of {max_contrib:.4f}",
+                            f"<strong>Redundancy:</strong> {'Low redundancy - all hospitals important' if contribution_df['contribution'].min() > 0.001 else 'Some hospitals may be redundant'}"
+                        ]
+                        render_key_findings(findings)
                         
-                        1. **Contribution Range**: {contribution_df['contribution'].min():.4f} to {contribution_df['contribution'].max():.4f}
-                        2. **Size-Contribution Correlation**: {correlation:.3f}
-                           - {'Strong positive' if correlation > 0.7 else 'Moderate' if correlation > 0.3 else 'Weak'} correlation
-                           - {'Larger hospitals contribute more' if correlation > 0.5 else 'Contribution not strongly tied to size'}
-                        3. **Critical Hospitals**: Hospital {int(max_hospital)} is most critical
-                        4. **Redundancy**: {'Low redundancy - all hospitals important' if contribution_df['contribution'].min() > 0.001 else 'Some hospitals may be redundant'}
-                        
-                        **Implications:**
-                        - Use this to prioritize hospital recruitment
-                        - Identify critical vs redundant participants
+                        render_info_box("""
+                        <strong>Implications:</strong><br>
+                        - Use this to prioritize hospital recruitment<br>
+                        - Identify critical vs redundant participants<br>
                         - Optimize consortium composition
-                        """)
+                        """, 'info')
                         
                         # Save results
                         exp.save_dataframe(contribution_df, 'hospital_contributions')
                         exp.log_results({
                             'baseline_auc': float(contribution_df['baseline_auc'].iloc[0]),
                             'max_contribution': float(max_contrib),
-                            'mean_contribution': float(mean_contrib),
+                            'mean_contribution': float(contribution_df['contribution'].mean()),
                             'size_contribution_correlation': float(correlation)
                         })
                         exp.generate_summary_report()
                         
-                        st.success(f"Results saved to {exp.experiment_dir}")
+                        render_info_box(f"✅ Results saved to {exp.experiment_dir}", 'success')
                         
                     except Exception as e:
-                        st.error(f"Error: {str(e)}")
+                        render_experiment_status('error', f'Analysis failed: {str(e)}')
                         import traceback
                         st.code(traceback.format_exc())
             
             # Information about other VERSION-5 features
-            st.markdown("---")
-            st.markdown("### 🚀 Additional VERSION-5 Features")
+            render_divider()
+            render_section_header("🚀 Additional VERSION-5 Features", "Backend modules ready for integration")
             
-            st.info("""
-            **Backend Ready (UI Integration Pending):**
+            render_info_box("""
+            <strong>Backend Ready (UI Integration Pending):</strong><br><br>
             
-            🧬 **Multi-Modal Learning**
-            - Clinical + Protein expression data
-            - PCA dimensionality reduction
-            - Feature selection methods
+            🧬 <strong>Multi-Modal Learning</strong><br>
+            - Clinical + Protein expression data<br>
+            - PCA dimensionality reduction<br>
+            - Feature selection methods<br><br>
             
-            📊 **Experiment Management**
-            - Automatic experiment logging
-            - Reproducibility controls
-            - Timestamped results
+            📊 <strong>Experiment Management</strong><br>
+            - Automatic experiment logging<br>
+            - Reproducibility controls<br>
+            - Timestamped results<br><br>
             
-            📈 **Statistical Validation**
-            - Bootstrap confidence intervals
-            - Paired statistical tests
-            - Effect size calculations
+            📈 <strong>Statistical Validation</strong><br>
+            - Bootstrap confidence intervals<br>
+            - Paired statistical tests<br>
+            - Effect size calculations<br><br>
             
-            ⚖️ **Fairness Analysis**
-            - Subgroup performance evaluation
-            - Disparity metrics
-            - Bias detection
+            ⚖️ <strong>Fairness Analysis</strong><br>
+            - Subgroup performance evaluation<br>
+            - Disparity metrics<br>
+            - Bias detection<br><br>
             
-            *These features are implemented in the backend and can be accessed programmatically.*
-            """)
+            <em>These features are implemented in the backend and can be accessed programmatically.</em>
+            """, 'info')
     
     else:
-        st.info("👈 Please upload clinical dataset to begin")
+        render_info_box("👈 Please upload clinical dataset to begin", 'info')
         
-        st.markdown("---")
-        st.markdown("### 📖 About This Application")
+        render_divider()
+        render_section_header("📖 About This Application", "Learn about each version and its capabilities")
         
         if "VERSION-1" in version:
-            st.markdown("""
-            **VERSION-1: Centralized Learning**
+            render_info_box("""
+            <strong>VERSION-1: Centralized Learning</strong><br><br>
             
-            This version uses traditional centralized machine learning with sklearn's LogisticRegression.
+            This version uses traditional centralized machine learning with sklearn's LogisticRegression.<br><br>
             
-            - **Task**: Predict pathologic T stage (T3/T4 vs T1/T2)
-            - **Model**: Logistic Regression with balanced class weights
-            - **Evaluation**: AUC-ROC, Accuracy, Confusion Matrix
-            """)
+            <strong>Task:</strong> Predict pathologic T stage (T3/T4 vs T1/T2)<br>
+            <strong>Model:</strong> Logistic Regression with balanced class weights<br>
+            <strong>Evaluation:</strong> AUC-ROC, Accuracy, Confusion Matrix
+            """, 'info')
         elif "VERSION-2" in version:
-            st.markdown("""
-            **VERSION-2: Federated Learning (FedAvg)**
+            render_info_box("""
+            <strong>VERSION-2: Federated Learning (FedAvg)</strong><br><br>
             
-            This version implements Federated Averaging (FedAvg) algorithm using manual NumPy-based logistic regression.
+            This version implements Federated Averaging (FedAvg) algorithm using manual NumPy-based logistic regression.<br><br>
             
-            **FedAvg Algorithm:**
-            1. Initialize global weights w_global
-            2. For each communication round:
-               - Send w_global to all hospitals
-               - Each hospital trains locally
-               - Aggregate weights: w_global = Σ(n_k/n_total × w_k)
-            3. Return final w_global
+            <strong>FedAvg Algorithm:</strong><br>
+            1. Initialize global weights w_global<br>
+            2. For each communication round:<br>
+            &nbsp;&nbsp;&nbsp;- Send w_global to all hospitals<br>
+            &nbsp;&nbsp;&nbsp;- Each hospital trains locally<br>
+            &nbsp;&nbsp;&nbsp;- Aggregate weights: w_global = Σ(n_k/n_total × w_k)<br>
+            3. Return final w_global<br><br>
             
-            **Why Manual Implementation?**
-            - Federated learning requires weight aggregation
-            - sklearn's .fit() doesn't expose weights directly
-            - NumPy implementation gives full control over training
-            
-            **Experiments:**
-            - **Centralized (NumPy)**: Train on all data (baseline)
-            - **FedAvg**: Federated training across hospitals
-            - **Local Models**: Each hospital trains independently
-            
-            **Expected Results:**
-            - FedAvg AUC ≈ Centralized AUC (with enough rounds)
+            <strong>Expected Results:</strong><br>
+            - FedAvg AUC ≈ Centralized AUC (with enough rounds)<br>
             - Local AUC < FedAvg AUC (benefits of collaboration)
-            """)
-        else:  # VERSION-3
-            st.markdown("""
-            **VERSION-3: Sustainability & Free-Rider Analysis**
+            """, 'info')
+        elif "VERSION-3" in version:
+            render_info_box("""
+            <strong>VERSION-3: Sustainability & Free-Rider Analysis</strong><br><br>
             
-            This version studies the sustainability and scalability of federated learning.
+            This version studies the sustainability and scalability of federated learning.<br><br>
             
-            **Research Questions:**
-            1. **Scalability**: How does performance change as we add more hospitals?
-            2. **Free-Riding**: Can non-participating hospitals benefit from the global model?
-            3. **Sustainability**: Is federated learning sustainable at scale?
+            <strong>Research Questions:</strong><br>
+            1. <strong>Scalability:</strong> How does performance change as we add more hospitals?<br>
+            2. <strong>Free-Riding:</strong> Can non-participating hospitals benefit from the global model?<br>
+            3. <strong>Sustainability:</strong> Is federated learning sustainable at scale?<br><br>
             
-            **Learning Curve Experiment:**
-            - Test different numbers of hospitals (K = 2, 4, 6, ..., max)
-            - Run multiple Monte Carlo trials for statistical significance
-            - Compare FedAvg vs Local models
-            - Analyze: Does more data (more hospitals) always help?
+            <strong>Why This Matters:</strong><br>
+            - Understanding free-rider benefits helps design participation incentives<br>
+            - Knowing performance limits helps plan federated deployments
+            """, 'info')
+        elif "VERSION-4" in version:
+            render_info_box("""
+            <strong>VERSION-4: FedProx & Non-IID Study</strong><br><br>
             
-            **Free-Rider Experiment:**
-            - Simulate hospitals that don't participate in training
-            - Train FedAvg on K-1 hospitals
-            - Evaluate global model on excluded hospital's data
-            - Question: Do free-riders benefit from collaboration without contributing?
+            Study how FedProx handles data heterogeneity compared to FedAvg.<br><br>
             
-            **Expected Insights:**
-            - **Learning Curve**: Performance improves with more hospitals, but with diminishing returns
-            - **Free-Rider**: Non-participants still benefit, but less than active participants
-            - **Sustainability**: Federated learning remains effective even at scale
+            <strong>Key Features:</strong><br>
+            - <strong>Proximal regularization</strong> prevents client drift<br>
+            - <strong>Dirichlet non-IID</strong> simulates realistic heterogeneity<br>
+            - <strong>Convergence analysis</strong> shows stability improvements<br><br>
             
-            **Why This Matters:**
-            - **Real-world**: Not all hospitals may participate equally
-            - **Incentives**: Understanding free-rider benefits helps design participation incentives
-            - **Scalability**: Knowing performance limits helps plan federated deployments
-            """)
+            <strong>When to use FedProx:</strong><br>
+            - Strong data heterogeneity (Dirichlet α < 1)<br>
+            - Unstable FedAvg convergence<br>
+            - Need for convergence guarantees
+            """, 'info')
+        elif "VERSION-5" in version:
+            render_info_box("""
+            <strong>VERSION-5: Research Lab - Advanced Analysis</strong><br><br>
+            
+            Publication-quality research tools for federated learning.<br><br>
+            
+            <strong>Available Features:</strong><br>
+            🏥 <strong>Hospital Contribution Analysis:</strong> Measure each hospital's impact<br>
+            📊 <strong>Experiment Management:</strong> Reproducible research with automatic logging<br>
+            🧬 <strong>Multi-Modal Support:</strong> Clinical + Protein data (backend ready)<br>
+            ⚖️ <strong>Fairness Analysis:</strong> Subgroup performance evaluation<br>
+            📈 <strong>Statistical Validation:</strong> Bootstrap confidence intervals
+            """, 'info')
+    
+    # Render footer
+    render_footer()
 
 
 if __name__ == "__main__":
