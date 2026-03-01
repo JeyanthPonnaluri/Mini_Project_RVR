@@ -1341,3 +1341,41 @@ This framework implements algorithms from:
 
 **VERSION-5 Status**: Core modules implemented (contribution analysis, experiment management, multi-modal preprocessing). Full Streamlit integration and statistical validation planned for next iteration.
 
+
+
+## Deployment (Streamlit Cloud)
+
+This project is configured for seamless deployment on Streamlit Cloud.
+
+### Requirements
+
+- **Python Version**: 3.10 (enforced via `runtime.txt`)
+- **Dependencies**: Simplified for cloud compatibility (see `requirements.txt`)
+- **Backend**: Matplotlib configured for headless environments (Agg backend)
+
+### Configuration Files
+
+- `runtime.txt`: Specifies Python 3.10 for consistent environment
+- `requirements.txt`: Simplified dependencies without version pinning
+- `.streamlit/config.toml`: Streamlit-specific configuration
+
+### Deployment Steps
+
+1. **Main file path**: `src/app.py`
+2. **Branch**: `main`
+3. **Python version**: Automatically set to 3.10 via `runtime.txt`
+
+### Why Python 3.10?
+
+- Stable compatibility with all scientific libraries
+- Proven track record with Streamlit Cloud
+- Avoids breaking changes in Python 3.11+
+
+### Cloud-Safe Features
+
+- ✅ Matplotlib uses Agg backend (no GUI required)
+- ✅ No strict version pinning (allows pip to resolve dependencies)
+- ✅ Minimal dependencies for faster deployment
+- ✅ Robust path handling for imports
+
+For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
