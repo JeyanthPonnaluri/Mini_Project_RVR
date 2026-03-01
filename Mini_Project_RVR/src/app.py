@@ -26,9 +26,12 @@ from experiments import centralized_train_numpy, save_fedavg_metrics, save_compa
 from sustainability import (
     run_learning_curve,
     run_free_rider_experiment,
+    compare_partitions,
     plot_learning_curve,
     plot_free_rider_curve,
-    save_sustainability_results
+    plot_partition_comparison,
+    save_sustainability_results,
+    save_partition_comparison_results
 )
 
 
@@ -538,6 +541,109 @@ def main():
                         # Save results
                         fr_df.to_csv('reports/version3/free_rider_results.csv', index=False)
                         st.success("Results saved to reports/version3/")
+                        
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+                        import traceback
+                        st.code(traceback.format_exc())
+            
+            # Partition Comparison Study
+            st.markdown("---")
+            st.markdown("### ⚖️ Partition Comparison Study")
+            st.markdown("Compare Equal vs Imbalanced data distribution across hospitals")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                comp_max_hospitals = st.slider("Max Hospitals (Comparison)", min_value=2, max_value=10, value=6, step=2, key="comp_max_hosp")
+                comp_trials = st.slider("Trials (Comparison)", min_value=5, max_value=15, value=10, step=5, key="comp_trials")
+            
+            with col2:
+                comp_rounds = st.slider("Rounds (Comparison)", min_value=10, max_value=40, value=20, step=10, key="comp_rounds")
+                comp_epochs = st.slider("Epochs (Comparison)", min_value=1, max_value=5, value=3, step=1, key="comp_epochs")
+                comp_lr = st.number_input("LR (Comparison)", min_value=0.001, max_value=1.0, value=0.1, step=0.01, format="%.3f", key="comp_lr")
+            
+            # Generate hospital counts for comparison
+            comp_hospital_counts = list(range(2, comp_max_hospitals + 1, 2))
+            if comp_max_hospitals not in comp_hospital_counts:
+                comp_hospital_counts.append(comp_max_hospitals)
+            
+            st.info(f"📊 Will compare: {comp_hospital_counts} hospitals")
+            
+            if st.button("⚖️ Run Partition Comparison", type="primary", key="run_comparison"):
+                with st.spinner(f"Running partition comparison ({comp_trials} trials per configuration)..."):
+                    try:
+                        comp_df = compare_partitions(
+                            X_train, y_train, X_test, y_test,
+                            hospital_counts=comp_hospital_counts,
+                            rounds=comp_rounds,
+                            epochs=comp_epochs,
+                            lr=comp_lr,
+                            trials=comp_trials,
+                            random_seed=RANDOM_SEED
+                        )
+                        
+                        st.session_state['comp_df'] = comp_df
+                        
+                        st.success("✅ Partition comparison complete!")
+                        
+                        # Plot comparison
+                        st.markdown("### 📊 Partition Comparison Results")
+                        fig = plot_partition_comparison(comp_df, save_path='reports/version3_partition_comparison/comparison_plot.png')
+                        st.pyplot(fig)
+                        
+                        # Summary table
+                        st.markdown("### 📋 Statistical Summary")
+                        
+                        # Format display dataframe
+                        display_df = comp_df.copy()
+                        display_df['Equal Global AUC'] = display_df.apply(
+                            lambda row: f"{row['equal_global_auc_mean']:.4f} ± {row['equal_global_auc_std']:.4f}", axis=1
+                        )
+                        display_df['Imbalanced Global AUC'] = display_df.apply(
+                            lambda row: f"{row['imbalanced_global_auc_mean']:.4f} ± {row['imbalanced_global_auc_std']:.4f}", axis=1
+                        )
+                        display_df['Global p-value'] = display_df['global_auc_pvalue'].apply(lambda x: f"{x:.4f}")
+                        display_df['Significant?'] = display_df['global_auc_pvalue'].apply(lambda x: "✓" if x < 0.05 else "✗")
+                        
+                        st.dataframe(display_df[['K', 'Equal Global AUC', 'Imbalanced Global AUC', 'Global p-value', 'Significant?']])
+                        
+                        # Interpretation
+                        st.markdown("### 💡 Research Interpretation")
+                        
+                        avg_diff = (comp_df['equal_global_auc_mean'] - comp_df['imbalanced_global_auc_mean']).mean()
+                        significant_count = (comp_df['global_auc_pvalue'] < 0.05).sum()
+                        
+                        st.markdown(f"""
+                        **Key Findings:**
+                        
+                        1. **Performance Gap**: Average difference = {avg_diff:.4f}
+                           - {'Equal partition performs BETTER' if avg_diff > 0 else 'Imbalanced partition performs BETTER'}
+                           - {significant_count}/{len(comp_df)} configurations show statistically significant differences (p < 0.05)
+                        
+                        2. **Data Heterogeneity Impact**:
+                           - Imbalanced data distribution affects federated convergence
+                           - Larger hospitals dominate the global model in imbalanced scenarios
+                           - Smaller hospitals may underfit due to limited local data
+                        
+                        3. **Implications for Real-World Deployment**:
+                           - Real hospitals have naturally imbalanced data sizes
+                           - FedAvg may not be optimal for heterogeneous settings
+                           - Consider: FedProx, FedNova, or personalized federated learning
+                        
+                        4. **Free-Rider Behavior**:
+                           - Free-riders benefit differently under equal vs imbalanced partitions
+                           - Data heterogeneity affects incentive structures
+                        
+                        **Next Steps:**
+                        - Implement FedProx to handle data heterogeneity
+                        - Study personalized federated learning approaches
+                        - Analyze convergence rates under different distributions
+                        """)
+                        
+                        # Save results
+                        save_partition_comparison_results(comp_df)
+                        st.success("Results saved to reports/version3_partition_comparison/")
                         
                     except Exception as e:
                         st.error(f"Error: {str(e)}")

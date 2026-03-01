@@ -94,6 +94,60 @@ def partition_equal(
     return hospitals
 
 
+# Default imbalanced distribution (long-tail)
+DEFAULT_IMBALANCED_DISTRIBUTION = [0.35, 0.25, 0.15, 0.10, 0.08, 0.05, 0.02]
+
+
+def normalize_distribution(distribution: List[float]) -> List[float]:
+    """
+    Normalize distribution to sum to 1.0.
+    
+    Parameters:
+    -----------
+    distribution : List[float]
+        Distribution values
+        
+    Returns:
+    --------
+    List[float]
+        Normalized distribution
+    """
+    total = sum(distribution)
+    if total == 0:
+        raise ValueError("Distribution sum cannot be zero")
+    return [d / total for d in distribution]
+
+
+def generate_imbalanced_distribution(K: int, random_seed: int = 42) -> List[float]:
+    """
+    Generate imbalanced distribution for K hospitals.
+    Uses default distribution if K <= 7, otherwise generates long-tail.
+    
+    Parameters:
+    -----------
+    K : int
+        Number of hospitals
+    random_seed : int
+        Random seed
+        
+    Returns:
+    --------
+    List[float]
+        Distribution that sums to 1.0
+    """
+    if K <= len(DEFAULT_IMBALANCED_DISTRIBUTION):
+        # Use truncated default distribution
+        distribution = DEFAULT_IMBALANCED_DISTRIBUTION[:K]
+        return normalize_distribution(distribution)
+    else:
+        # Generate long-tail distribution
+        np.random.seed(random_seed)
+        weights = np.random.exponential(scale=1.0, size=K)
+        # Sort descending for long-tail effect
+        weights = np.sort(weights)[::-1]
+        return normalize_distribution(weights.tolist())
+
+
 def partition_imbalanced(
     X: np.ndarray,
     y: np.ndarray,
@@ -102,6 +156,7 @@ def partition_imbalanced(
 ) -> List[Tuple[np.ndarray, np.ndarray]]:
     """
     Partition dataset with imbalanced distribution across hospitals.
+    Maintains stratified class distribution within each hospital.
     
     Parameters:
     -----------
@@ -110,8 +165,9 @@ def partition_imbalanced(
     y : np.ndarray
         Labels of shape (n_samples,)
     distribution : List[float]
-        Distribution of samples per hospital (must sum to 1.0)
-        Example: [0.30, 0.25, 0.15, 0.10, 0.10, 0.05, 0.05]
+        Distribution of samples per hospital
+        Will be automatically normalized if sum ≠ 1.0
+        Example: [0.35, 0.25, 0.15, 0.10, 0.08, 0.05, 0.02]
     random_seed : int
         Random seed for reproducibility
         
@@ -119,6 +175,11 @@ def partition_imbalanced(
     --------
     List[Tuple[np.ndarray, np.ndarray]]
         List of (X_k, y_k) tuples for each hospital
+        
+    Raises:
+    -------
+    ValueError
+        If distribution is empty or contains invalid values
     """
     np.random.seed(random_seed)
     
@@ -128,9 +189,17 @@ def partition_imbalanced(
     if not isinstance(y, np.ndarray):
         y = np.array(y)
     
-    # Validate distribution
+    # Validate and normalize distribution
+    if len(distribution) == 0:
+        raise ValueError("Distribution cannot be empty")
+    
+    if any(d < 0 for d in distribution):
+        raise ValueError("Distribution values must be non-negative")
+    
+    # Automatically normalize if sum ≠ 1.0
     if not np.isclose(sum(distribution), 1.0):
-        raise ValueError(f"Distribution must sum to 1.0, got {sum(distribution)}")
+        print(f"  Note: Distribution sum = {sum(distribution):.4f}, normalizing to 1.0")
+        distribution = normalize_distribution(distribution)
     
     num_hospitals = len(distribution)
     n_samples = len(y)

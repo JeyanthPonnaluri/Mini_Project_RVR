@@ -375,7 +375,71 @@ streamlit run src/app.py
 4. Run experiments:
    - Learning Curve
    - Free-Rider Analysis
+   - **Partition Comparison** (NEW)
 5. View plots and statistics
+
+## Equal vs Imbalanced Federated Sustainability
+
+### Why Data Heterogeneity Matters
+
+In real-world federated learning deployments, hospitals have **naturally imbalanced data sizes**:
+- Large academic medical centers: 1000s of patients
+- Community hospitals: 100s of patients
+- Rural clinics: 10s of patients
+
+This **data heterogeneity** significantly impacts:
+1. **Convergence**: Larger hospitals dominate the global model
+2. **Fairness**: Smaller hospitals may underfit
+3. **Free-Riding**: Incentive structures change with imbalance
+
+### Partition Comparison Experiment
+
+**Objective**: Quantify the impact of data heterogeneity on federated learning performance
+
+**Methodology**:
+- **Equal Partition**: All hospitals have equal data (baseline)
+- **Imbalanced Partition**: Long-tail distribution (realistic)
+  - Default: [35%, 25%, 15%, 10%, 8%, 5%, 2%]
+  - Automatically generated for K > 7 hospitals
+- **Statistical Testing**: Paired t-test for significance (α = 0.05)
+
+**Metrics Compared**:
+1. Global AUC (FedAvg performance)
+2. Free-Rider AUC (non-participant benefit)
+3. Variance across trials
+
+### Expected Research Findings
+
+**Under Imbalanced Partition**:
+1. **Global AUC**: Slightly decreased (2-5% typical)
+   - Larger hospitals dominate aggregation
+   - Smaller hospitals contribute less effectively
+   
+2. **Free-Rider AUC**: May decrease more significantly
+   - Free-riders with small data benefit less
+   - Global model biased toward large hospitals
+   
+3. **Variance**: Increased instability
+   - More sensitive to random initialization
+   - Convergence less predictable
+
+### Why FedProx is Needed Next
+
+**FedAvg Limitations with Heterogeneity**:
+- Assumes all hospitals converge to same optimum
+- No mechanism to handle statistical heterogeneity
+- Larger hospitals can cause divergence
+
+**FedProx Solution**:
+- Adds proximal term: `μ/2 ||w - w_global||²`
+- Limits local drift from global model
+- Better handles non-IID data
+- Improves convergence under heterogeneity
+
+**Other Approaches**:
+- **FedNova**: Normalized averaging to handle different local steps
+- **Personalized FL**: Allow hospital-specific models
+- **Clustered FL**: Group similar hospitals
 
 ## Output Files
 
@@ -385,6 +449,11 @@ reports/version3/
 ├── learning_curve_plot.png        # Visualization
 ├── free_rider_results.csv         # Detailed results
 └── free_rider_plot.png            # Visualization
+
+reports/version3_partition_comparison/
+├── comparison_results.csv         # Equal vs Imbalanced comparison
+├── comparison_plot.png            # Side-by-side visualization
+└── statistical_test_results.txt   # Paired t-test results & interpretation
 ```
 
 ## Research Implications
@@ -395,9 +464,12 @@ reports/version3/
 - Design mechanisms to encourage participation
 - Quantify benefits of contribution vs free-riding
 - Fair resource allocation
+- **NEW**: Account for data size heterogeneity in incentive design
 
 **Deployment Planning**:
 - Determine optimal consortium size
+- **NEW**: Assess impact of hospital size imbalance
+- **NEW**: Choose appropriate FL algorithm (FedAvg vs FedProx)
 - Predict performance with expected participants
 - Plan for non-participating institutions
 
