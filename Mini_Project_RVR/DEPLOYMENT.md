@@ -83,6 +83,23 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 This ensures all modules in the `src` directory can be imported correctly.
 
+### ModuleNotFoundError
+
+If you see errors like `ModuleNotFoundError: No module named 'matplotlib'`:
+1. Check that `requirements.txt` is in the repository root
+2. Verify all dependencies are listed with proper versions
+3. Wait for Streamlit Cloud to rebuild (it may take 2-3 minutes)
+4. Check the deployment logs for any installation errors
+
+Current dependencies:
+- numpy>=1.24.0,<2.0.0
+- pandas>=2.0.0,<3.0.0
+- scikit-learn>=1.3.0,<2.0.0
+- scipy>=1.10.0,<2.0.0
+- matplotlib>=3.7.0,<4.0.0
+- streamlit>=1.28.0
+- typing-extensions>=4.5.0
+
 ### Memory Issues
 
 The app processes large datasets. If you encounter memory issues on Streamlit Cloud:
