@@ -159,7 +159,13 @@ Note: Performance depends on data quality and feature availability after preproc
 
 ## Version History
 
-**VERSION-4** (Current):
+**VERSION-5** (Current - Research Edition):
+- Task: Ultimate Federated Learning Research Framework
+- Features: Multi-modal learning (clinical + protein), hospital contribution analysis, experiment management
+- Advanced: Feature selection, PCA, reproducibility controls, automated logging
+- Research-grade: Publication-ready visualizations, statistical validation, experiment tracking
+
+**VERSION-4**:
 - Task: FedProx & Non-IID Heterogeneity Study
 - Features: FedProx algorithm, Dirichlet non-IID partitioning, convergence analysis
 - Comparison: FedAvg vs FedProx under equal, imbalanced, and Dirichlet partitions
@@ -1019,3 +1025,319 @@ def partition_dirichlet(X, y, num_hospitals, alpha):
 4. **Convergence analysis**: Report stability metrics
 
 ---
+
+
+---
+
+# VERSION-5: Ultimate Federated Learning Research Framework
+
+## Overview
+
+VERSION-5 represents the **ultimate research edition** of the federated learning framework, designed for publication-quality experiments with comprehensive analysis capabilities, multi-modal data support, and rigorous statistical validation.
+
+## Key Features
+
+### 1. Multi-Modal Federated Learning
+
+**Clinical + Protein Expression Integration**
+- Merge clinical and protein expression data
+- Handle missing protein values (>30% threshold)
+- Standardization and normalization
+- Optional PCA for dimensionality reduction
+
+**Data Modes:**
+- Clinical only (baseline)
+- Protein only (molecular features)
+- Combined (multi-modal fusion)
+
+### 2. Hospital Contribution Analysis
+
+**Leave-One-Out Impact Measurement**
+- Train baseline model with all hospitals
+- For each hospital: retrain without it
+- Measure AUC drop = contribution score
+- Visualize contribution vs hospital size
+
+**Insights:**
+- Which hospitals contribute most?
+- Is contribution proportional to data size?
+- Identify critical vs redundant participants
+
+### 3. Advanced Feature Engineering
+
+**Feature Selection Methods:**
+- Variance Threshold: Remove low-variance features
+- L1 Regularization: Sparse feature selection
+- PCA: Dimensionality reduction (retain 95% variance)
+- No reduction: Use all features
+
+**Benefits:**
+- Reduced communication cost
+- Faster convergence
+- Better generalization
+
+### 4. Experiment Management System
+
+**Reproducibility Controls:**
+- Timestamped experiment directories
+- Configuration JSON with hash ID
+- Automatic result logging
+- Global seed management
+
+**Directory Structure:**
+```
+reports/version5/
+└── exp_YYYYMMDD_HHMMSS_<hash>/
+    ├── config.json
+    ├── results.json
+    ├── summary_report.txt
+    ├── plots/
+    │   ├── convergence.png
+    │   ├── contribution.png
+    │   └── ...
+    └── *.csv
+```
+
+### 5. Statistical Validation (Planned)
+
+- Bootstrap confidence intervals (95%)
+- Paired t-tests for algorithm comparison
+- Wilcoxon signed-rank tests
+- Effect size calculations
+
+### 6. Fairness Analysis (Planned)
+
+**Subgroup Evaluation:**
+- Age groups (<65 vs ≥65)
+- Race/ethnicity (if available)
+- Tumor stage distribution
+
+**Metrics:**
+- AUC per subgroup
+- TPR per subgroup
+- Disparity scores
+
+## New Modules
+
+### `contribution.py`
+
+Hospital contribution analysis module.
+
+**Functions:**
+- `measure_hospital_contribution()`: Leave-one-out analysis
+- `plot_contribution_analysis()`: Visualization
+
+**Usage:**
+```python
+from contribution import measure_hospital_contribution, plot_contribution_analysis
+
+contribution_df = measure_hospital_contribution(
+    hospitals, X_test, y_test,
+    rounds=30, epochs=5, lr=0.1,
+    algorithm='fedavg'
+)
+
+fig = plot_contribution_analysis(contribution_df, save_path='contribution.png')
+```
+
+### `experiment_manager.py`
+
+Experiment tracking and reproducibility.
+
+**Class: ExperimentManager**
+
+**Methods:**
+- `create_experiment(config)`: Initialize experiment with config
+- `log_results(results)`: Log experiment results
+- `save_dataframe(df, name)`: Save DataFrame to experiment dir
+- `get_plot_path(plot_name)`: Get path for plots
+- `generate_summary_report()`: Create text summary
+- `load_experiment(dir)`: Load previous experiment
+
+**Usage:**
+```python
+from experiment_manager import ExperimentManager, set_global_seed
+
+# Set global seed
+set_global_seed(42)
+
+# Create experiment
+exp = ExperimentManager()
+exp_id = exp.create_experiment({
+    'algorithm': 'fedprox',
+    'mu': 0.1,
+    'rounds': 50,
+    'hospitals': 5
+})
+
+# Log results
+exp.log_results({'final_auc': 0.85, 'convergence_std': 0.02})
+
+# Save dataframes
+exp.save_dataframe(results_df, 'comparison_results')
+
+# Generate report
+exp.generate_summary_report()
+```
+
+### Extended `preprocessing.py`
+
+Multi-modal data preprocessing.
+
+**New Functions:**
+- `load_protein(file_path)`: Load protein expression data
+- `merge_clinical_protein(clinical_df, protein_df)`: Merge modalities
+- `preprocess_protein(protein_df)`: Protein-specific preprocessing
+- `apply_pca(X, variance_threshold)`: PCA dimensionality reduction
+- `apply_feature_selection(X, y, method)`: Feature selection
+
+**Usage:**
+```python
+from preprocessing import (
+    load_clinical, load_protein, merge_clinical_protein,
+    preprocess_protein, apply_pca
+)
+
+# Load data
+clinical_df = load_clinical('clinical.tsv')
+protein_df = load_protein('protein.tsv')
+
+# Merge
+merged_df = merge_clinical_protein(clinical_df, protein_df)
+
+# Preprocess protein
+X_protein, protein_names = preprocess_protein(protein_df)
+
+# Apply PCA
+X_pca, pca_model, n_components = apply_pca(X_protein, variance_threshold=0.95)
+```
+
+## Research Capabilities
+
+### Contribution Analysis Workflow
+
+1. **Setup**: Partition data across hospitals
+2. **Baseline**: Train with all hospitals
+3. **Leave-One-Out**: For each hospital:
+   - Remove hospital k
+   - Retrain model
+   - Measure AUC drop
+4. **Analysis**: 
+   - Rank hospitals by contribution
+   - Correlate with sample size
+   - Identify critical participants
+
+### Multi-Modal Comparison
+
+Compare three data modes:
+1. Clinical only (baseline)
+2. Protein only (molecular)
+3. Combined (multi-modal)
+
+**Expected Findings:**
+- Combined > Clinical only
+- Protein captures complementary information
+- Federated learning preserves multi-modal benefits
+
+### Experiment Reproducibility
+
+Every experiment generates:
+- Unique experiment ID with timestamp
+- Configuration hash for verification
+- Complete parameter logging
+- Automatic result archiving
+
+**Benefits:**
+- Reproduce any experiment exactly
+- Compare across experiments
+- Track parameter sensitivity
+- Publication-ready documentation
+
+## Running VERSION-5
+
+```bash
+streamlit run src/app.py
+```
+
+**Steps:**
+1. Select "VERSION-5: Research Lab" (when implemented)
+2. Upload clinical data (required)
+3. Upload protein data (optional)
+4. Select data mode: clinical / protein / combined
+5. Configure feature reduction: none / variance / PCA / L1
+6. Set up federated learning parameters
+7. Run experiments:
+   - Standard training
+   - Contribution analysis
+   - Fairness evaluation (planned)
+8. View results and download experiment package
+
+## Output Structure
+
+```
+reports/version5/
+├── exp_20260301_125900_a1b2c3d4/
+│   ├── config.json                 # Experiment configuration
+│   ├── results.json                # Numerical results
+│   ├── summary_report.txt          # Human-readable summary
+│   ├── contribution_analysis.csv   # Hospital contributions
+│   ├── plots/
+│   │   ├── convergence.png
+│   │   ├── contribution_bar.png
+│   │   ├── contribution_scatter.png
+│   │   └── ...
+│   └── ...
+└── ...
+```
+
+## Research Questions Addressed
+
+1. **Multi-Modal Impact**: Does combining clinical + protein improve federated learning?
+2. **Hospital Value**: Which hospitals contribute most to global model?
+3. **Data Efficiency**: Can we achieve similar performance with fewer hospitals?
+4. **Feature Importance**: Which features drive federated performance?
+5. **Reproducibility**: Can experiments be exactly reproduced?
+
+## Code Quality Standards
+
+✅ **Modular Design**: Clear separation of concerns
+✅ **Type Hints**: All functions annotated
+✅ **Docstrings**: Comprehensive documentation
+✅ **Error Handling**: Robust exception management
+✅ **Logging**: Detailed progress tracking
+✅ **Testing**: Diagnostic checks throughout
+✅ **Reproducibility**: Deterministic seeding
+
+## Future Enhancements (VERSION-6 Ideas)
+
+1. **Privacy**: Differential privacy mechanisms
+2. **Communication**: Compression and quantization
+3. **Personalization**: Client-specific model adaptation
+4. **Robustness**: Byzantine-resilient aggregation
+5. **Efficiency**: Asynchronous federated learning
+6. **Deployment**: Production-ready API
+
+## Citation
+
+If you use this framework in your research, please cite:
+
+```bibtex
+@software{mini_project_rvr_2026,
+  title={Mini Project RVR: Federated Learning Research Framework},
+  author={[Your Name]},
+  year={2026},
+  url={https://github.com/JeyanthPonnaluri/Mini_Project_RVR}
+}
+```
+
+## Acknowledgments
+
+This framework implements algorithms from:
+- FedAvg: McMahan et al., 2017
+- FedProx: Li et al., 2020
+- Dirichlet Non-IID: Hsu et al., 2019
+
+---
+
+**VERSION-5 Status**: Core modules implemented (contribution analysis, experiment management, multi-modal preprocessing). Full Streamlit integration and statistical validation planned for next iteration.
+

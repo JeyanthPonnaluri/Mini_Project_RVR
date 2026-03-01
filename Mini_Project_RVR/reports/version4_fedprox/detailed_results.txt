@@ -1,0 +1,57 @@
+======================================================================
+FEDAVG VS FEDPROX COMPARISON RESULTS
+======================================================================
+
+
+FedAvg
+--------------------------------------------------
+Partition Type: dirichlet
+Dirichlet Alpha: 0.1
+Final AUC: 0.8127
+Convergence Std (last 10 rounds): 0.0016
+Average Weight Drift: 0.0000
+
+
+FedProx (μ=0.01)
+--------------------------------------------------
+Partition Type: dirichlet
+Dirichlet Alpha: 0.1
+Final AUC: 0.8127
+Convergence Std (last 10 rounds): 0.0016
+Average Weight Drift: 0.0405
+
+
+FedProx (μ=0.1)
+--------------------------------------------------
+Partition Type: dirichlet
+Dirichlet Alpha: 0.1
+Final AUC: 0.8114
+Convergence Std (last 10 rounds): 0.0015
+Average Weight Drift: 0.0400
+
+
+FedProx (μ=0.5)
+--------------------------------------------------
+Partition Type: dirichlet
+Dirichlet Alpha: 0.1
+Final AUC: 0.8095
+Convergence Std (last 10 rounds): 0.0007
+Average Weight Drift: 0.0379
+
+======================================================================
+ANALYSIS
+======================================================================
+
+FedAvg Final AUC: 0.8127
+Best FedProx Final AUC: 0.8127 (μ=0.01)
+Improvement: 0.0000
+
+FedAvg Convergence Std: 0.0016
+Best FedProx Convergence Std: 0.0016 (μ=0.01)
+Stability Improvement: -0.0000
+
+INTERPRETATION:
+----------------------------------------------------------------------
+✗ FedAvg achieves better final performance
+✗ FedAvg provides more stable convergence
+
