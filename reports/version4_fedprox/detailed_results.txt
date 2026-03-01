@@ -6,48 +6,48 @@ FEDAVG VS FEDPROX COMPARISON RESULTS
 FedAvg
 --------------------------------------------------
 Partition Type: imbalanced
-Final AUC: 0.7964
-Convergence Std (last 10 rounds): 0.0023
+Final AUC: 0.8186
+Convergence Std (last 10 rounds): 0.0019
 Average Weight Drift: 0.0000
 
 
 FedProx (μ=0.01)
 --------------------------------------------------
 Partition Type: imbalanced
-Final AUC: 0.7964
-Convergence Std (last 10 rounds): 0.0023
-Average Weight Drift: 0.0428
+Final AUC: 0.8190
+Convergence Std (last 10 rounds): 0.0019
+Average Weight Drift: 0.0481
 
 
 FedProx (μ=0.1)
 --------------------------------------------------
 Partition Type: imbalanced
-Final AUC: 0.7961
-Convergence Std (last 10 rounds): 0.0023
-Average Weight Drift: 0.0426
+Final AUC: 0.8190
+Convergence Std (last 10 rounds): 0.0019
+Average Weight Drift: 0.0476
 
 
 FedProx (μ=0.5)
 --------------------------------------------------
 Partition Type: imbalanced
-Final AUC: 0.7935
-Convergence Std (last 10 rounds): 0.0022
-Average Weight Drift: 0.0415
+Final AUC: 0.8163
+Convergence Std (last 10 rounds): 0.0018
+Average Weight Drift: 0.0452
 
 ======================================================================
 ANALYSIS
 ======================================================================
 
-FedAvg Final AUC: 0.7964
-Best FedProx Final AUC: 0.7964 (μ=0.01)
-Improvement: 0.0000
+FedAvg Final AUC: 0.8186
+Best FedProx Final AUC: 0.8190 (μ=0.01)
+Improvement: 0.0003
 
-FedAvg Convergence Std: 0.0023
-Best FedProx Convergence Std: 0.0023 (μ=0.01)
+FedAvg Convergence Std: 0.0019
+Best FedProx Convergence Std: 0.0019 (μ=0.01)
 Stability Improvement: -0.0000
 
 INTERPRETATION:
 ----------------------------------------------------------------------
-✗ FedAvg achieves better final performance
+✓ FedProx achieves better final performance
 ✗ FedAvg provides more stable convergence
 

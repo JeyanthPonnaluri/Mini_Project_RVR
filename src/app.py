@@ -20,9 +20,6 @@ import matplotlib.pyplot as plt
 
 from sklearn.model_selection import train_test_split
 
-# Add src directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-
 # Import VERSION-1 modules
 from preprocessing import load_clinical, create_target, preprocess_features
 from model import train_model, predict_model
