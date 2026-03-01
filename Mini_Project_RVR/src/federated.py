@@ -94,6 +94,100 @@ def partition_equal(
     return hospitals
 
 
+def partition_imbalanced(
+    X: np.ndarray,
+    y: np.ndarray,
+    distribution: List[float],
+    random_seed: int = 42
+) -> List[Tuple[np.ndarray, np.ndarray]]:
+    """
+    Partition dataset with imbalanced distribution across hospitals.
+    
+    Parameters:
+    -----------
+    X : np.ndarray
+        Feature matrix of shape (n_samples, n_features)
+    y : np.ndarray
+        Labels of shape (n_samples,)
+    distribution : List[float]
+        Distribution of samples per hospital (must sum to 1.0)
+        Example: [0.30, 0.25, 0.15, 0.10, 0.10, 0.05, 0.05]
+    random_seed : int
+        Random seed for reproducibility
+        
+    Returns:
+    --------
+    List[Tuple[np.ndarray, np.ndarray]]
+        List of (X_k, y_k) tuples for each hospital
+    """
+    np.random.seed(random_seed)
+    
+    # Convert to numpy arrays if needed
+    if not isinstance(X, np.ndarray):
+        X = np.array(X)
+    if not isinstance(y, np.ndarray):
+        y = np.array(y)
+    
+    # Validate distribution
+    if not np.isclose(sum(distribution), 1.0):
+        raise ValueError(f"Distribution must sum to 1.0, got {sum(distribution)}")
+    
+    num_hospitals = len(distribution)
+    n_samples = len(y)
+    
+    # Create stratified indices
+    indices = np.arange(n_samples)
+    
+    # Shuffle with stratification
+    class_0_indices = indices[y == 0]
+    class_1_indices = indices[y == 1]
+    
+    np.random.shuffle(class_0_indices)
+    np.random.shuffle(class_1_indices)
+    
+    hospitals = []
+    
+    start_0 = 0
+    start_1 = 0
+    
+    for k in range(num_hospitals):
+        # Calculate samples for this hospital based on distribution
+        n_samples_k = int(n_samples * distribution[k])
+        
+        # Calculate samples per class (maintain stratification)
+        n_class_0_k = int(len(class_0_indices) * distribution[k])
+        n_class_1_k = int(len(class_1_indices) * distribution[k])
+        
+        # Handle last hospital (take remaining samples)
+        if k == num_hospitals - 1:
+            end_0 = len(class_0_indices)
+            end_1 = len(class_1_indices)
+        else:
+            end_0 = start_0 + n_class_0_k
+            end_1 = start_1 + n_class_1_k
+        
+        # Get indices for this hospital
+        hospital_indices = np.concatenate([
+            class_0_indices[start_0:end_0],
+            class_1_indices[start_1:end_1]
+        ])
+        
+        # Shuffle hospital indices
+        np.random.shuffle(hospital_indices)
+        
+        X_k = X[hospital_indices]
+        y_k = y[hospital_indices]
+        
+        hospitals.append((X_k, y_k))
+        
+        print(f"Hospital {k+1}: {len(y_k)} samples ({distribution[k]*100:.1f}%), class distribution: {dict(zip(*np.unique(y_k, return_counts=True)))}")
+        
+        start_0 = end_0
+        start_1 = end_1
+    
+    return hospitals
+
+
 def fedavg_train(
     hospitals: List[Tuple[np.ndarray, np.ndarray]],
     X_test: np.ndarray,

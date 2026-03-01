@@ -159,7 +159,13 @@ Note: Performance depends on data quality and feature availability after preproc
 
 ## Version History
 
-**VERSION-2** (Current):
+**VERSION-3** (Current):
+- Task: Sustainability & Free-Rider Analysis
+- Features: Learning curve experiments, free-rider detection, scalability analysis
+- Insights: Performance vs number of hospitals, non-participant benefits
+- Tools: Monte Carlo trials, statistical analysis, visualization
+
+**VERSION-2**:
 - Task: Federated Learning with FedAvg algorithm
 - Implementation: Manual NumPy-based logistic regression
 - Features: Hospital data partitioning, weighted aggregation, convergence tracking
@@ -170,6 +176,274 @@ Note: Performance depends on data quality and feature availability after preproc
 - Data: TCGA-PRAD clinical features only
 - Model: Logistic Regression with balanced class weights (sklearn)
 - Status: Baseline implementation
+
+---
+
+# VERSION-3: Sustainability & Free-Rider Analysis
+
+## Overview
+
+VERSION-3 extends federated learning research to study **sustainability** and **scalability** through systematic experiments analyzing how performance changes with the number of participating hospitals and the impact of non-participating (free-rider) institutions.
+
+## Research Questions
+
+### 1. Scalability
+**Question**: How does federated learning performance scale with the number of hospitals?
+
+**Hypothesis**: More hospitals → more data → better performance, but with diminishing returns
+
+**Method**: Learning curve experiment
+
+### 2. Free-Riding
+**Question**: Can non-participating hospitals benefit from the global model without contributing their data?
+
+**Hypothesis**: Free-riders benefit from collaboration but achieve lower performance than active participants
+
+**Method**: Free-rider experiment
+
+### 3. Sustainability
+**Question**: Is federated learning sustainable and effective at scale?
+
+**Analysis**: Combined insights from scalability and free-rider experiments
+
+## Experiments
+
+### Learning Curve Experiment
+
+**Purpose**: Study performance vs number of hospitals
+
+**Algorithm**:
+```
+For each K in [2, 4, 6, 8, 10, ...]:
+    For trial in 1..N:
+        1. Partition data into K hospitals (stratified)
+        2. Train FedAvg on all K hospitals
+        3. Train K local models independently
+        4. Evaluate:
+           - global_auc (FedAvg on test set)
+           - avg_local_auc (average of local models)
+        5. Store results
+    
+    Compute statistics: mean, std, min, max
+```
+
+**Output**:
+- Learning curve plot: K vs AUC (with confidence intervals)
+- Summary table: statistics per K value
+- CSV: detailed results for all trials
+
+**Expected Pattern**:
+```
+AUC
+ │
+ │     ┌─────────  (plateau)
+ │    ╱
+ │   ╱
+ │  ╱
+ │ ╱
+ └─────────────────── K (hospitals)
+  2  4  6  8  10  12
+```
+
+**Interpretation**:
+- **Initial growth**: Performance improves rapidly with first few hospitals
+- **Diminishing returns**: Improvement slows as K increases
+- **Plateau**: Performance stabilizes after certain K
+- **Gap**: FedAvg consistently outperforms local models
+
+### Free-Rider Experiment
+
+**Purpose**: Analyze non-participant benefits
+
+**Scenario**: Hospital that doesn't contribute data but uses global model
+
+**Algorithm**:
+```
+For each K in [2, 4, 6, 8, 10, ...]:
+    For trial in 1..N:
+        1. Partition data into K hospitals
+        2. Randomly select 1 hospital as "free-rider"
+        3. Train FedAvg on remaining K-1 hospitals
+        4. Evaluate global model on:
+           - Test set (global_auc)
+           - Free-rider's data (free_rider_auc)
+        5. Store results
+    
+    Compute statistics: mean, std, min, max
+```
+
+**Output**:
+- Free-rider curve plot: K vs Free-Rider AUC
+- Comparison: Free-rider vs Participants
+- CSV: detailed results
+
+**Expected Pattern**:
+```
+AUC
+ │
+ │  Participants ──────────
+ │                    ╱
+ │  Free-Rider  ────╱
+ │                 ╱
+ │               ╱
+ │             ╱
+ └─────────────────── K (hospitals)
+  2  4  6  8  10  12
+```
+
+**Interpretation**:
+- **Free-rider benefits**: Non-participants still achieve reasonable performance
+- **Performance gap**: Free-riders perform worse than active participants
+- **Scaling effect**: Gap may narrow as K increases (more diverse global model)
+
+## Implementation Details
+
+### Monte Carlo Trials
+
+**Why**: Account for randomness in data partitioning and training
+
+**Method**:
+- Run each configuration N times (default: 10 trials)
+- Use deterministic seeds: `seed = base_seed + trial * 100 + K`
+- Compute statistics: mean, std, min, max
+
+**Benefits**:
+- Statistical significance
+- Confidence intervals
+- Robustness to random variations
+
+### Partition Types
+
+**Equal Partitioning**:
+- Each hospital receives equal number of samples
+- Maintains stratification (class balance)
+- Ideal scenario
+
+**Imbalanced Partitioning**:
+- Hospitals receive different amounts of data
+- Distribution: randomly generated, sums to 1.0
+- Realistic scenario (hospitals vary in size)
+
+### Visualization
+
+**Learning Curve Plot**:
+- X-axis: Number of hospitals (K)
+- Y-axis: AUC score
+- Lines: FedAvg (global) vs Local (average)
+- Shading: ±1 standard deviation (confidence interval)
+
+**Free-Rider Plot**:
+- X-axis: Number of hospitals (K)
+- Y-axis: AUC score
+- Lines: Free-rider vs Participants (global)
+- Shading: ±1 standard deviation
+
+## Key Findings (Expected)
+
+### Scalability Insights
+
+1. **Optimal K**: Performance plateaus around K=8-10 hospitals
+2. **Diminishing Returns**: Adding hospitals beyond plateau provides minimal benefit
+3. **Collaboration Benefit**: FedAvg consistently outperforms local models by 5-10%
+
+### Free-Rider Insights
+
+1. **Benefit Without Contribution**: Free-riders achieve 80-90% of participant performance
+2. **Incentive Problem**: Low cost of free-riding may discourage participation
+3. **Scaling Effect**: Free-rider performance improves with more participants
+
+### Sustainability Insights
+
+1. **Scalable**: Federated learning remains effective with 10+ hospitals
+2. **Robust**: Performance stable across different partitioning strategies
+3. **Practical**: Real-world deployment feasible despite free-riders
+
+## Running VERSION-3
+
+```bash
+streamlit run src/app.py
+```
+
+**Steps**:
+1. Select "VERSION-3: Sustainability Analysis"
+2. Upload clinical data
+3. Configure parameters:
+   - Max hospitals (2-15)
+   - Monte Carlo trials (5-20)
+   - Partition type (equal/imbalanced)
+   - Rounds, epochs, learning rate
+4. Run experiments:
+   - Learning Curve
+   - Free-Rider Analysis
+5. View plots and statistics
+
+## Output Files
+
+```
+reports/version3/
+├── learning_curve_results.csv     # Detailed results
+├── learning_curve_plot.png        # Visualization
+├── free_rider_results.csv         # Detailed results
+└── free_rider_plot.png            # Visualization
+```
+
+## Research Implications
+
+### For Healthcare
+
+**Collaboration Incentives**:
+- Design mechanisms to encourage participation
+- Quantify benefits of contribution vs free-riding
+- Fair resource allocation
+
+**Deployment Planning**:
+- Determine optimal consortium size
+- Predict performance with expected participants
+- Plan for non-participating institutions
+
+### For Federated Learning
+
+**Scalability Limits**:
+- Understand performance saturation
+- Optimize communication costs
+- Balance K vs performance
+
+**Robustness**:
+- Handle heterogeneous participation
+- Maintain performance with dropouts
+- Design fair aggregation schemes
+
+## Theoretical Background
+
+### Learning Curve Theory
+
+**Statistical Learning**: More data → better generalization (up to a point)
+
+**Federated Context**: More hospitals → more diverse data → better global model
+
+**Limitations**:
+- Data heterogeneity across hospitals
+- Communication overhead
+- Diminishing marginal utility
+
+### Free-Rider Problem
+
+**Game Theory**: Rational agents may choose not to contribute if they can benefit without cost
+
+**Federated Context**: Hospitals may use global model without sharing data
+
+**Solutions**:
+- Contribution-based access control
+- Performance-based incentives
+- Reputation systems
+
+## Future Extensions
+
+1. **Dynamic Participation**: Hospitals join/leave over time
+2. **Contribution Metrics**: Quantify each hospital's contribution
+3. **Incentive Mechanisms**: Reward active participants
+4. **Heterogeneity Analysis**: Impact of data quality differences
+5. **Communication Costs**: Trade-off between K and communication overhead
 
 ---
 

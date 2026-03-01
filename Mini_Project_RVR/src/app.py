@@ -2,6 +2,7 @@
 Streamlit application for TCGA-PRAD clinical stage classification.
 VERSION-1: Centralized sklearn model
 VERSION-2: Federated Learning with FedAvg
+VERSION-3: Sustainability & Free-Rider Analysis
 """
 
 import streamlit as st
@@ -21,6 +22,15 @@ from logistic_numpy import predict_proba as numpy_predict_proba
 from federated import partition_equal, fedavg_train, train_local_models
 from experiments import centralized_train_numpy, save_fedavg_metrics, save_comparison_summary
 
+# Import VERSION-3 modules
+from sustainability import (
+    run_learning_curve,
+    run_free_rider_experiment,
+    plot_learning_curve,
+    plot_free_rider_curve,
+    save_sustainability_results
+)
+
 
 # Set random seed for reproducibility
 RANDOM_SEED = 42
@@ -29,6 +39,7 @@ np.random.seed(RANDOM_SEED)
 # Create necessary directories
 os.makedirs('reports', exist_ok=True)
 os.makedirs('reports/version2', exist_ok=True)
+os.makedirs('reports/version3', exist_ok=True)
 os.makedirs('data', exist_ok=True)
 
 
@@ -64,7 +75,11 @@ def main():
     # Version selector
     version = st.sidebar.radio(
         "Select Version:",
-        ["VERSION-1: Centralized (sklearn)", "VERSION-2: Federated Learning (FedAvg)"],
+        [
+            "VERSION-1: Centralized (sklearn)",
+            "VERSION-2: Federated Learning (FedAvg)",
+            "VERSION-3: Sustainability Analysis"
+        ],
         index=0
     )
     
@@ -221,7 +236,7 @@ def main():
                         st.code(traceback.format_exc())
         
         # VERSION-2: Federated Learning
-        else:
+        elif "VERSION-2" in version:
             st.markdown("---")
             st.subheader("🌐 Federated Learning Configuration")
             
@@ -388,6 +403,164 @@ def main():
                 )
                 
                 st.success("✅ Comparison summary saved to reports/version2/")
+        
+        # VERSION-3: Sustainability Analysis
+        elif "VERSION-3" in version:
+            st.markdown("---")
+            st.subheader("🔬 Sustainability & Free-Rider Analysis")
+            
+            st.markdown("""
+            Study how federated learning performance changes with:
+            - **Number of hospitals** (scalability)
+            - **Free-rider scenarios** (non-participating hospitals)
+            """)
+            
+            # Configuration
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                max_hospitals = st.slider("Max Hospitals", min_value=2, max_value=15, value=10, step=1)
+                trials = st.slider("Monte Carlo Trials", min_value=5, max_value=20, value=10, step=5)
+                partition_type = st.selectbox("Partition Type", ["equal", "imbalanced"])
+            
+            with col2:
+                rounds = st.slider("Communication Rounds", min_value=10, max_value=50, value=30, step=10)
+                local_epochs = st.slider("Local Epochs", min_value=1, max_value=10, value=3, step=1)
+                lr = st.number_input("Learning Rate", min_value=0.001, max_value=1.0, value=0.1, step=0.01, format="%.3f")
+            
+            # Generate hospital counts
+            hospital_counts = list(range(2, max_hospitals + 1, 2))  # [2, 4, 6, 8, ...]
+            if max_hospitals not in hospital_counts:
+                hospital_counts.append(max_hospitals)
+            
+            st.info(f"📊 Will test: {hospital_counts} hospitals")
+            
+            st.markdown("---")
+            
+            # Buttons
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                run_learning = st.button("📈 Run Learning Curve", type="primary")
+            
+            with col2:
+                run_freerider = st.button("🎭 Run Free-Rider Experiment", type="primary")
+            
+            # Run Learning Curve
+            if run_learning:
+                with st.spinner(f"Running learning curve experiment ({trials} trials per configuration)..."):
+                    try:
+                        lc_df = run_learning_curve(
+                            X_train, y_train, X_test, y_test,
+                            hospital_counts=hospital_counts,
+                            rounds=rounds,
+                            epochs=local_epochs,
+                            lr=lr,
+                            trials=trials,
+                            partition_type=partition_type,
+                            random_seed=RANDOM_SEED
+                        )
+                        
+                        st.session_state['lc_df'] = lc_df
+                        
+                        st.success("✅ Learning curve experiment complete!")
+                        
+                        # Plot
+                        st.markdown("### 📈 Learning Curve")
+                        fig = plot_learning_curve(lc_df, save_path='reports/version3/learning_curve_plot.png')
+                        st.pyplot(fig)
+                        
+                        # Summary table
+                        st.markdown("### 📊 Summary Statistics")
+                        summary = lc_df.groupby('K').agg({
+                            'global_auc': ['mean', 'std', 'min', 'max'],
+                            'avg_local_auc': ['mean', 'std', 'min', 'max']
+                        }).round(4)
+                        st.dataframe(summary)
+                        
+                        # Save results
+                        lc_df.to_csv('reports/version3/learning_curve_results.csv', index=False)
+                        st.success("Results saved to reports/version3/")
+                        
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+                        import traceback
+                        st.code(traceback.format_exc())
+            
+            # Run Free-Rider Experiment
+            if run_freerider:
+                with st.spinner(f"Running free-rider experiment ({trials} trials per configuration)..."):
+                    try:
+                        fr_df = run_free_rider_experiment(
+                            X_train, y_train, X_test, y_test,
+                            hospital_counts=hospital_counts,
+                            rounds=rounds,
+                            epochs=local_epochs,
+                            lr=lr,
+                            trials=trials,
+                            random_seed=RANDOM_SEED
+                        )
+                        
+                        st.session_state['fr_df'] = fr_df
+                        
+                        st.success("✅ Free-rider experiment complete!")
+                        
+                        # Plot
+                        st.markdown("### 🎭 Free-Rider Analysis")
+                        fig = plot_free_rider_curve(fr_df, save_path='reports/version3/free_rider_plot.png')
+                        st.pyplot(fig)
+                        
+                        # Summary table
+                        st.markdown("### 📊 Summary Statistics")
+                        summary = fr_df.groupby('K').agg({
+                            'free_rider_auc': ['mean', 'std', 'min', 'max'],
+                            'global_auc': ['mean', 'std', 'min', 'max']
+                        }).round(4)
+                        st.dataframe(summary)
+                        
+                        # Insights
+                        st.markdown("### 💡 Key Insights")
+                        
+                        avg_fr_auc = fr_df.groupby('K')['free_rider_auc'].mean()
+                        avg_global_auc = fr_df.groupby('K')['global_auc'].mean()
+                        
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.metric("Avg Free-Rider AUC", f"{avg_fr_auc.mean():.4f}")
+                            st.caption("Average across all K values")
+                        
+                        with col2:
+                            gap = avg_global_auc.mean() - avg_fr_auc.mean()
+                            st.metric("Performance Gap", f"{gap:.4f}")
+                            st.caption("Global AUC - Free-Rider AUC")
+                        
+                        # Save results
+                        fr_df.to_csv('reports/version3/free_rider_results.csv', index=False)
+                        st.success("Results saved to reports/version3/")
+                        
+                    except Exception as e:
+                        st.error(f"Error: {str(e)}")
+                        import traceback
+                        st.code(traceback.format_exc())
+            
+            # Combined analysis
+            if 'lc_df' in st.session_state and 'fr_df' in st.session_state:
+                st.markdown("---")
+                st.markdown("### 🔬 Combined Analysis")
+                
+                st.markdown("""
+                **Key Findings:**
+                - **Scalability**: How does performance scale with more hospitals?
+                - **Free-Riding**: Can non-participating hospitals benefit from the global model?
+                - **Sustainability**: Is federated learning sustainable at scale?
+                """)
+                
+                # Save combined results
+                save_sustainability_results(
+                    st.session_state['lc_df'],
+                    st.session_state['fr_df']
+                )
     
     else:
         st.info("👈 Please upload clinical dataset to begin")
@@ -405,7 +578,7 @@ def main():
             - **Model**: Logistic Regression with balanced class weights
             - **Evaluation**: AUC-ROC, Accuracy, Confusion Matrix
             """)
-        else:
+        elif "VERSION-2" in version:
             st.markdown("""
             **VERSION-2: Federated Learning (FedAvg)**
             
@@ -432,6 +605,39 @@ def main():
             **Expected Results:**
             - FedAvg AUC ≈ Centralized AUC (with enough rounds)
             - Local AUC < FedAvg AUC (benefits of collaboration)
+            """)
+        else:  # VERSION-3
+            st.markdown("""
+            **VERSION-3: Sustainability & Free-Rider Analysis**
+            
+            This version studies the sustainability and scalability of federated learning.
+            
+            **Research Questions:**
+            1. **Scalability**: How does performance change as we add more hospitals?
+            2. **Free-Riding**: Can non-participating hospitals benefit from the global model?
+            3. **Sustainability**: Is federated learning sustainable at scale?
+            
+            **Learning Curve Experiment:**
+            - Test different numbers of hospitals (K = 2, 4, 6, ..., max)
+            - Run multiple Monte Carlo trials for statistical significance
+            - Compare FedAvg vs Local models
+            - Analyze: Does more data (more hospitals) always help?
+            
+            **Free-Rider Experiment:**
+            - Simulate hospitals that don't participate in training
+            - Train FedAvg on K-1 hospitals
+            - Evaluate global model on excluded hospital's data
+            - Question: Do free-riders benefit from collaboration without contributing?
+            
+            **Expected Insights:**
+            - **Learning Curve**: Performance improves with more hospitals, but with diminishing returns
+            - **Free-Rider**: Non-participants still benefit, but less than active participants
+            - **Sustainability**: Federated learning remains effective even at scale
+            
+            **Why This Matters:**
+            - **Real-world**: Not all hospitals may participate equally
+            - **Incentives**: Understanding free-rider benefits helps design participation incentives
+            - **Scalability**: Knowing performance limits helps plan federated deployments
             """)
 
 
