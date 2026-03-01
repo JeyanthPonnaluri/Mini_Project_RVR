@@ -13,6 +13,11 @@ import numpy as np
 import os
 import sys
 
+# Add src directory to Python path for module imports
+src_path = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
+
 # Fix matplotlib backend for cloud deployment (headless environment)
 import matplotlib
 matplotlib.use("Agg")
