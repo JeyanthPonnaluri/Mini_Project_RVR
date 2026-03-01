@@ -576,7 +576,7 @@ def save_partition_comparison_results(
     
     # Save statistical test results
     stats_path = os.path.join(save_dir, 'statistical_test_results.txt')
-    with open(stats_path, 'w') as f:
+    with open(stats_path, 'w', encoding='utf-8') as f:
         f.write("="*70 + "\n")
         f.write("PARTITION COMPARISON: STATISTICAL TEST RESULTS\n")
         f.write("="*70 + "\n\n")
