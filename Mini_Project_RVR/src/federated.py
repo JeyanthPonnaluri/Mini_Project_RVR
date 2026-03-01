@@ -515,14 +515,14 @@ def partition_dirichlet(
         # Distribute samples
         start_idx = 0
         for k in range(num_hospitals):
-            end_idx = start_idx + proportions[k]
-            hospital_indices[k].extend(class_indices[start_idx:end_idx])
+            end_idx = start_idx + int(proportions[k])
+            hospital_indices[k].extend(class_indices[start_idx:end_idx].tolist())
             start_idx = end_idx
     
     # Create hospital datasets
     hospitals = []
     for k in range(num_hospitals):
-        indices = np.array(hospital_indices[k])
+        indices = np.array(hospital_indices[k], dtype=np.int64)
         np.random.shuffle(indices)
         
         X_k = X[indices]
