@@ -506,23 +506,47 @@ def partition_dirichlet(
         # Sample proportions from Dirichlet distribution
         proportions = np.random.dirichlet([alpha] * num_hospitals)
         
+        # Ensure minimum samples per hospital (at least 1 sample per hospital if possible)
+        min_samples_per_hospital = max(1, len(class_indices) // (num_hospitals * 10))
+        
         # Assign samples to hospitals based on proportions
         proportions = (proportions * len(class_indices)).astype(int)
         
+        # Ensure each hospital gets at least min_samples if available
+        for k in range(num_hospitals):
+            if proportions[k] < min_samples_per_hospital and len(class_indices) >= num_hospitals * min_samples_per_hospital:
+                proportions[k] = min_samples_per_hospital
+        
         # Adjust last proportion to ensure all samples are assigned
         proportions[-1] = len(class_indices) - proportions[:-1].sum()
+        
+        # If last proportion is negative, redistribute
+        if proportions[-1] < 0:
+            # Recalculate without minimum constraint
+            proportions = np.random.dirichlet([alpha] * num_hospitals)
+            proportions = (proportions * len(class_indices)).astype(int)
+            proportions[-1] = len(class_indices) - proportions[:-1].sum()
         
         # Distribute samples
         start_idx = 0
         for k in range(num_hospitals):
             end_idx = start_idx + int(proportions[k])
-            hospital_indices[k].extend(class_indices[start_idx:end_idx].tolist())
+            if end_idx > start_idx:  # Only add if there are samples
+                hospital_indices[k].extend(class_indices[start_idx:end_idx].tolist())
             start_idx = end_idx
     
     # Create hospital datasets
     hospitals = []
+    skipped_count = 0
     for k in range(num_hospitals):
         indices = np.array(hospital_indices[k], dtype=np.int64)
+        
+        # Skip empty hospitals
+        if len(indices) == 0:
+            print(f"Hospital {k+1}: 0 samples - SKIPPED (empty)")
+            skipped_count += 1
+            continue
+        
         np.random.shuffle(indices)
         
         X_k = X[indices]
@@ -535,8 +559,11 @@ def partition_dirichlet(
         
         hospitals.append((X_k, y_k))
         
-        print(f"Hospital {k+1}: {len(y_k)} samples, class dist: {class_dist}, ratios: {class_ratios}")
+        print(f"Hospital {len(hospitals)}: {len(y_k)} samples, class dist: {class_dist}, ratios: {class_ratios}")
     
+    if skipped_count > 0:
+        print(f"\n⚠️  Warning: {skipped_count} hospital(s) had 0 samples and were skipped")
+        print(f"Active hospitals: {len(hospitals)} (requested: {num_hospitals})")
     print()
     return hospitals
 
