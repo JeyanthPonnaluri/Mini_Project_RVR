@@ -14,7 +14,7 @@ HPFLearning/
 ├── README.md              # Installation and quick-start instructions
 ├── LICENSE                # Open source license (e.g. MIT, Apache 2.0)
 ├── requirements.txt       # Dependency versions
-├── hpfl_learning/         # Root package directory
+├── hpf_learning/          # Root package directory
 │   ├── __init__.py        # Exposes main API modules & functions
 │   ├── preprocessing.py   # Multi-modal fusion, imputation, cohort generators
 │   ├── optimizers.py      # Custom vectorized NumPy optimizers (Logistic, Cox)
@@ -65,10 +65,10 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["hpfl_learning*"]
+include = ["hpf_learning*"]
 ```
 
-### `hpfl_learning/__init__.py`
+### `hpf_learning/__init__.py`
 Exposes package functions for direct imports:
 
 ```python
@@ -102,7 +102,7 @@ A developer can import and execute the code as follows:
 
 ```python
 import numpy as np
-import hpfl_learning as hpf
+import hpf_learning as hpf
 
 # 1. Prepare target structures
 df_clin = hpf.load_clinical("clinical.tsv")
