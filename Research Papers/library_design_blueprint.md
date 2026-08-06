@@ -1,20 +1,20 @@
-# 📦 FederatedHPL: Federated Hyper-parameterized Learning Library Blueprint
+# 📦 FederatedHPLearning: Federated Hyper-parameterized Learning Library Blueprint
 
-This document outlines the package layout and PyPI publishing workflow for **FederatedHPL** (Federated Hyper-parameterized Learning), a library implementing privacy-preserving, heterogeneity-aware federated optimization (FedProx, PFL) with game-theoretic client contribution valuation (Shapley Value).
+This document outlines the package layout and PyPI publishing workflow for **FederatedHPLearning** (Federated Hyper-parameterized Learning), a library implementing privacy-preserving, heterogeneity-aware federated optimization (FedProx, PFL) with game-theoretic client contribution valuation (Shapley Value).
 
 ---
 
-## 1. Directory Layout of the Library (`FederatedHPL`)
+## 1. Directory Layout of the Library (`FederatedHPLearning`)
 
 To package this project as a reusable Python library, establish a separate repository containing the following folder structure:
 
 ```text
-FederatedHPL/
+FederatedHPLearning/
 ├── pyproject.toml         # Modern build configuration (PEP 517)
 ├── README.md              # Installation and quick-start instructions
 ├── LICENSE                # Open source license (e.g. MIT, Apache 2.0)
 ├── requirements.txt       # Dependency versions
-├── hpf_learning/          # Root package directory
+├── federated_hplearning/  # Root package directory
 │   ├── __init__.py        # Exposes main API modules & functions
 │   ├── preprocessing.py   # Multi-modal fusion, imputation, cohort generators
 │   ├── optimizers.py      # Custom vectorized NumPy optimizers (Logistic, Cox)
@@ -40,12 +40,12 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "FederatedHPL"
+name = "FederatedHPLearning"
 version = "1.0.0"
 authors = [
     { name="Your Name", email="your.email@domain.com" }
 ]
-description = "FederatedHPL: Federated Hyper-parameterized Learning with differential privacy and game-theoretic Shapley valuations."
+description = "FederatedHPLearning: Federated Hyper-parameterized Learning with differential privacy and game-theoretic Shapley valuations."
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
@@ -65,10 +65,10 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["hpf_learning*"]
+include = ["federated_hplearning*"]
 ```
 
-### `hpf_learning/__init__.py`
+### `federated_hplearning/__init__.py`
 Exposes package functions for direct imports:
 
 ```python
@@ -102,7 +102,7 @@ A developer can import and execute the code as follows:
 
 ```python
 import numpy as np
-import hpf_learning as hpf
+import federated_hplearning as hpf
 
 # 1. Prepare target structures
 df_clin = hpf.load_clinical("clinical.tsv")
@@ -131,7 +131,7 @@ print(f"Global weights: {results['w_global']}")
 
 ## 4. Step-by-Step Publishing Guide for PyPI
 
-Follow this protocol to host your package on PyPI so others can run `pip install HPFLearning`:
+Follow this protocol to host your package on PyPI so others can run `pip install FederatedHPLearning`:
 
 ### Step A: Create Accounts
 1. **PyPI Account**: Register at [pypi.org/register](https://pypi.org/register/).
@@ -154,8 +154,8 @@ python -m pip install --upgrade build
 python -m build
 ```
 This generates a `dist/` directory containing two archives:
-* `HPFLearning-1.0.0.tar.gz` (Source Tarball)
-* `HPFLearning-1.0.0-py3-none-any.whl` (Built Wheel)
+* `FederatedHPLearning-1.0.0.tar.gz` (Source Tarball)
+* `FederatedHPLearning-1.0.0-py3-none-any.whl` (Built Wheel)
 
 ### Step D: Upload to PyPI
 1. **Install Twine**:
@@ -171,7 +171,7 @@ This generates a `dist/` directory containing two archives:
 3. **Verify Test Installation**:
    Verify you can download it onto a clean virtual environment:
    ```bash
-   python -m pip install --index-url https://test.pypi.org/simple/ FederatedHPL
+   python -m pip install --index-url https://test.pypi.org/simple/ FederatedHPLearning
    ```
 4. **Upload to Live PyPI (Production Release)**:
    ```bash
@@ -182,5 +182,5 @@ This generates a `dist/` directory containing two archives:
 
 Once completed, anyone can install your framework globally via:
 ```bash
-pip install FederatedHPL
+pip install FederatedHPLearning
 ```
