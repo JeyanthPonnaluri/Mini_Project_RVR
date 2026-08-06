@@ -187,16 +187,6 @@ graph TD
         K & L & M --> N[Streamlit Web Dashboard]
     end
 ```
-
-### Codebase File Mapping
-The core functions of the DP-FPS framework map directly to the workspace python modules:
-*   **[`src/preprocessing.py`](file:///D:/Mini_project_JP/src/preprocessing.py)**: Handles multi-modal barcoding alignment, transposing, missing-value median imputation, and PCA genomic dimensionality reduction. Also loads the MSKCC out-of-distribution validation cohort.
-*   **[`src/logistic_numpy.py`](file:///D:/Mini_project_JP/src/logistic_numpy.py)**: Implements sigmoid activation, BCE loss, per-sample gradient clipping, L2 proximal distance, and Gaussian noise addition ([`local_train_fedprox_dp`](file:///D:/Mini_project_JP/src/logistic_numpy.py#L295)).
-*   **[`src/federated.py`](file:///D:/Mini_project_JP/src/federated.py)**: Coordinates Dirichlet partitions, client dropouts, re-normalized weighted average aggregations, and virtual communication byte and latency tracking ([`fedavg_train`](file:///D:/Mini_project_JP/src/federated.py#L263) and [`fedprox_train`](file:///D:/Mini_project_JP/src/federated.py#L709)).
-*   **[`src/shapley.py`](file:///D:/Mini_project_JP/src/shapley.py)**: Evaluates coalition utilities and computes permutation-based Federated Shapley Values ([`compute_federated_shapley_values`](file:///D:/Mini_project_JP/src/shapley.py#L17)).
-*   **[`src/evaluation.py`](file:///D:/Mini_project_JP/src/evaluation.py)**: Generates ROC curves, confusion matrices, and bootstraps 95% Confidence Intervals.
-*   **[`src/model.py`](file:///D:/Mini_project_JP/src/model.py)**: Trains baseline centralized models using standard Scikit-learn algorithms with L1 (Lasso) and L2 (Ridge) regularization ([`train_regularized_model`](file:///D:/Mini_project_JP/src/model.py#L46)).
-
 ---
 
 ## 5. Experimental Results & Analysis
