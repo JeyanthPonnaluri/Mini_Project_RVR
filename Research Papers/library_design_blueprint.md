@@ -1,15 +1,15 @@
-# 📦 HPFLearning: Hyper-Parameterized Federated Learning Library Blueprint
+# 📦 FederatedHPL: Federated Hyper-parameterized Learning Library Blueprint
 
-This document outlines the package layout and PyPI publishing workflow for **HPFLearning** (Hyper-Parameterized Federated Learning), a library implementing privacy-preserving, heterogeneity-aware federated optimization (FedProx, PFL) with game-theoretic client contribution valuation (Shapley Value).
+This document outlines the package layout and PyPI publishing workflow for **FederatedHPL** (Federated Hyper-parameterized Learning), a library implementing privacy-preserving, heterogeneity-aware federated optimization (FedProx, PFL) with game-theoretic client contribution valuation (Shapley Value).
 
 ---
 
-## 1. Directory Layout of the Library (`HPFLearning`)
+## 1. Directory Layout of the Library (`FederatedHPL`)
 
 To package this project as a reusable Python library, establish a separate repository containing the following folder structure:
 
 ```text
-HPFLearning/
+FederatedHPL/
 ├── pyproject.toml         # Modern build configuration (PEP 517)
 ├── README.md              # Installation and quick-start instructions
 ├── LICENSE                # Open source license (e.g. MIT, Apache 2.0)
@@ -40,12 +40,12 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "HPFLearning-RVR"
+name = "FederatedHPL"
 version = "1.0.0"
 authors = [
     { name="Your Name", email="your.email@domain.com" }
 ]
-description = "HPFLearning: Hyper-Parameterized Federated Learning with differential privacy and game-theoretic Shapley valuations."
+description = "FederatedHPL: Federated Hyper-parameterized Learning with differential privacy and game-theoretic Shapley valuations."
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
@@ -171,7 +171,7 @@ This generates a `dist/` directory containing two archives:
 3. **Verify Test Installation**:
    Verify you can download it onto a clean virtual environment:
    ```bash
-   python -m pip install --index-url https://test.pypi.org/simple/ HPFLearning
+   python -m pip install --index-url https://test.pypi.org/simple/ FederatedHPL
    ```
 4. **Upload to Live PyPI (Production Release)**:
    ```bash
@@ -182,5 +182,5 @@ This generates a `dist/` directory containing two archives:
 
 Once completed, anyone can install your framework globally via:
 ```bash
-pip install HPFLearning
+pip install FederatedHPL
 ```
