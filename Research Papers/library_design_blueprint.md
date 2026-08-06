@@ -40,7 +40,7 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "HPFLearning"
+name = "HPFLearning-RVR"
 version = "1.0.0"
 authors = [
     { name="Your Name", email="your.email@domain.com" }
