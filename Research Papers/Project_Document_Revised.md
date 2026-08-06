@@ -28,6 +28,27 @@ While the baseline paper presents a strong empirical evaluation, it exhibits key
 * **Gap 3: Missing Privacy Guarantees**: Plain model weight transfers are vulnerable to model inversion and membership inference attacks. We address this by integrating **Differential Privacy (DP-SGD)** with Gaussian noise calibration composed via **Rényi Differential Privacy (RDP)** accounting.
 * **Gap 4: Clinical Feature Limitations**: The base paper is restricted to a few low-dimensional clinical variables. We integrate **Multi-Modal Data Fusion** combining clinical tables with genomic expression data, extend prediction to long-term **Cox Proportional Hazards survival analysis**, implement **Personalized FL (PFL)**, and run **External Validation** on the MSKCC cohort.
 
+### Pipeline Comparison: Base Paper vs. Our DP-FPS Framework
+
+```mermaid
+graph TD
+    subgraph "Base Paper: Kazlouski et al. (2025)"
+        BP1[Raw Data Transfer / Plain Weights] --> BP2[Standard FedAvg Optimization]
+        BP2 -->|Suffers from Client Drift| BP3[Unstable Convergence under Skew]
+        BP3 --> BP4[Leave-One-Out LOO Valuation]
+        BP4 -->|Violates Game-Theory Axioms| BP5[Inequitable Payouts & Collaboration Collapse]
+    end
+
+    subgraph "Our Framework: DP-FPS (2026)"
+        Our1[Multi-Modal Clinical-Genomic Fusion] --> Our2[Local DP-SGD + RDP Noise Injection]
+        Our2 --> Our3[FedProx Proximal Regularization]
+        Our3 -->|Prevents Weight Drift| Our4[Stable Converged Global Model]
+        Our4 --> Our5[Personalized FL Fine-Tuning]
+        Our4 --> Our6[Federated Shapley Value Valuation]
+        Our6 -->|Satisfies Axioms| Our7[Tiered Net-Zero Sustainable Economic Model]
+    end
+```
+
 ---
 
 ## 3. Mathematical Foundations of the DP-FPS Framework
@@ -35,16 +56,19 @@ While the baseline paper presents a strong empirical evaluation, it exhibits key
 ### 3.1 Custom Logistic Regression Optimizer
 For a sample \(i\) with features \(x_i \in \mathbb{R}^d\), the prediction probability for advanced pathologic staging (T3/T4) is modeled via the sigmoid function:
 \[\hat{y}_i = \sigma(x_i^T w) = \frac{1}{1 + e^{-x_i^T w}}\]
+
 The local training loss at hospital \(k\) over a local dataset \(D_k\) of size \(n_k\) is defined by the Binary Cross-Entropy (BCE) function:
 \[\mathcal{L}_{BCE}(w) = -\frac{1}{n_k}\sum_{i=1}^{n_k} \left[ y_i \log(\hat{y}_i) + (1-y_i) \log(1 - \hat{y}_i) \right]\]
 
 ---
 
-### 3.2 Federated Cox Proportional Hazards model
+### 3.2 Federated Cox Proportional Hazards Model
 To model patient survival times, we transition the custom training loop to a Cox Proportional Hazards model. Let \(t_i\) be the observed survival time and \(\delta_i \in \{0, 1\}\) be the event indicator (1 = death, 0 = censoring). Under sorting such that \(t_1 \le t_2 \le \dots \le t_n\), the negative partial log-likelihood is:
 \[\mathcal{L}_{Cox}(w) = -\sum_{i=1}^n \delta_i \left( x_i^T w - \ln \sum_{j=i}^n e^{x_j^T w} \right) + \frac{\alpha}{2} \| w \|_2^2\]
+
 The gradient of the negative partial log-likelihood with respect to \(w\) is:
 \[\nabla_w \mathcal{L}_{Cox}(w) = -\sum_{i=1}^n \delta_i \left( x_i - \frac{\sum_{j=i}^n x_j e^{x_j^T w}}{\sum_{j=i}^n e^{x_j^T w}} \right) + \alpha w\]
+
 This gradient is computed inside our custom NumPy loop using reverse cumulative sums, allowing vectorized calculations and direct per-sample gradient clipping.
 
 ---
@@ -52,8 +76,10 @@ This gradient is computed inside our custom NumPy loop using reverse cumulative 
 ### 3.3 FedProx Optimization under Dirichlet Skew
 Under Dirichlet partitioning, statistical label skew is controlled using the concentration parameter \(\alpha\). For each class, sample proportions across \(K\) hospitals are drawn from a Dirichlet distribution:
 \[p \sim \text{Dirichlet}(\alpha \cdot \mathbf{1}_K)\]
+
 To mitigate client weight drift under extreme skews (\(\alpha < 1\)), FedProx adds a proximal regularization term to the local objective function:
 \[\min_{w} \mathcal{L}_{Prox}(w) = \mathcal{L}_{Local}(w) + \frac{\mu}{2} \| w - w_t^{global} \|_2^2\]
+
 where \(w_t^{global}\) is the global parameter broadcast by the server at communication round \(t\). The gradient update is computed as:
 \[\nabla_w \mathcal{L}_{Prox}(w) = \nabla_w \mathcal{L}_{Local}(w) + \mu(w - w_t^{global})\]
 
@@ -67,7 +93,7 @@ To guarantee localized \((\epsilon, \delta)\)-Differential Privacy, local client
 2. **Noise Perturbation & Averaging**: 
    \[\tilde{g}(w) = \frac{1}{n_k} \left( \sum_{i=1}^{n_k} \bar{g}_i(w) + \mathcal{N}\left(0, \sigma^2 C^2 \mathbf{I}\right) \right)\]
 
-Using the Rényi Differential Privacy (RDP) composition formula, the total composto privacy budget after \(T\) rounds of subsampled Gaussian mechanisms with a client sampling rate \(q\) is bounded by:
+Using the Rényi Differential Privacy (RDP) composition formula, the total composed privacy budget after \(T\) rounds of subsampled Gaussian mechanisms with a client sampling rate \(q\) is bounded by:
 \[\epsilon_{total} \approx q \epsilon_{local} \sqrt{T \ln(1/\delta)}\]
 
 ---
@@ -75,6 +101,7 @@ Using the Rényi Differential Privacy (RDP) composition formula, the total compo
 ### 3.5 Personalized Federated Learning (PFL)
 For Personalized FL, local fine-tuning adapts the global consensus model to local statistical domains. Each client \(k\) receives the global weights \(w_t^{global}\) and updates them for 1-2 local epochs on local training splits:
 \[w_k^{local} = \text{GD}\left(w_t^{global}, D_{k, train}, \text{epochs}=2, \eta\right)\]
+
 This local adaptation step mitigates client-server divergence and optimizes accuracy on local patient test sets.
 
 ---
@@ -91,9 +118,45 @@ from which the global model is reconstructed without ever exposing any individua
 ### 3.7 Game-Theoretic Federated Shapley Value Valuation
 To evaluate hospital contribution fairly, the Federated Shapley Value \(\phi_k\) measures a client's marginal utility across all possible hospital coalitions:
 \[\phi_k(v) = \sum_{S \subseteq N \setminus \{k\}} \frac{|S|!(K - |S| - 1)!}{K!} \left[ v(S \cup \{k\}) - v(S) \right]\]
+
 where \(v(S)\) represents the model's test AUC-ROC trained collaboratively on coalition \(S\). We implement a permutation-based Monte Carlo approximation where permutations are sampled uniformly:
 \[\phi_k \approx \frac{1}{M} \sum_{j=1}^M \left[ v(S_k^{\pi_j} \cup \{k\}) - v(S_k^{\pi_j}) \right]\]
+
 where \(\pi_j\) is a randomly sampled client permutation and \(S_k^{\pi_j}\) is the set of clients preceding client \(k\) in \(\pi_j\).
+
+### Unified DP-FPS Execution Flowchart
+
+```mermaid
+flowchart TD
+    subgraph "1. Data Processing Layer"
+        D1[(Raw Patient Data)] --> D2[Barcode Alignment & Merge]
+        D2 --> D3[PCA Dimensionality Reduction]
+        D3 --> D4[Dirichlet Non-IID Partitioning]
+    end
+
+    subgraph "2. Secure Optimization Loop"
+        D4 -->|Client Subsets| C1[Client 1]
+        D4 -->|Client Subsets| C2[Client 2]
+        D4 -->|Client Subsets| C3[Client 3]
+        
+        S1[Central Server] -->|Broadcast Global Weights| C1 & C2 & C3
+        
+        C1 -->|FedProx Loss + DP-SGD Clipping/Noise| C1_Up[Client 1 Weights]
+        C2 -->|FedProx Loss + DP-SGD Clipping/Noise| C2_Up[Client 2 Weights]
+        C3 -->|FedProx Loss + DP-SGD Clipping/Noise| C3_Up[Client 3 Weights]
+        
+        C1_Up & C2_Up & C3_Up -->|SMPC Additive Secret Sharing| SecAgg[Secure Aggregation Layer]
+        SecAgg -->|Reconstructed Aggregate| S1
+    end
+
+    subgraph "3. Downstream Analysis & Dashboard"
+        S1 --> PFL[Personalized Fine-Tuning]
+        S1 --> SV[Federated Shapley Valuation]
+        S1 --> OOD[External MSKCC Cohort Validation]
+        
+        PFL & SV & OOD --> Dash[Streamlit Interactive UI]
+    end
+```
 
 ---
 
@@ -126,9 +189,8 @@ graph TD
 ```
 
 ### Codebase File Mapping
-
 The core functions of the DP-FPS framework map directly to the workspace python modules:
-*   **[`src/preprocessing.py`](file:///D:/Mini_project_JP/src/preprocessing.py)**: Handles multi-modal barcoding alignment, transposing, missing-value median imputation, and PCA genomic dimensionality reduction.
+*   **[`src/preprocessing.py`](file:///D:/Mini_project_JP/src/preprocessing.py)**: Handles multi-modal barcoding alignment, transposing, missing-value median imputation, and PCA genomic dimensionality reduction. Also loads the MSKCC out-of-distribution validation cohort.
 *   **[`src/logistic_numpy.py`](file:///D:/Mini_project_JP/src/logistic_numpy.py)**: Implements sigmoid activation, BCE loss, per-sample gradient clipping, L2 proximal distance, and Gaussian noise addition ([`local_train_fedprox_dp`](file:///D:/Mini_project_JP/src/logistic_numpy.py#L295)).
 *   **[`src/federated.py`](file:///D:/Mini_project_JP/src/federated.py)**: Coordinates Dirichlet partitions, client dropouts, re-normalized weighted average aggregations, and virtual communication byte and latency tracking ([`fedavg_train`](file:///D:/Mini_project_JP/src/federated.py#L263) and [`fedprox_train`](file:///D:/Mini_project_JP/src/federated.py#L709)).
 *   **[`src/shapley.py`](file:///D:/Mini_project_JP/src/shapley.py)**: Evaluates coalition utilities and computes permutation-based Federated Shapley Values ([`compute_federated_shapley_values`](file:///D:/Mini_project_JP/src/shapley.py#L17)).
@@ -138,7 +200,6 @@ The core functions of the DP-FPS framework map directly to the workspace python 
 ---
 
 ## 5. Experimental Results & Analysis
-
 We validate the DP-FPS framework using the TCGA-PRAD dataset (\(n=347\) patients, early-stage \(n=110\), advanced-stage \(n=237\)) and external MSKCC validation cohort (\(n=150\)):
 
 ### 5.1 Experiment 1: Centralized Baselines & Multi-Modal Fusion
@@ -171,7 +232,7 @@ To evaluate the out-of-distribution generalizability of our trained federated co
 
 ---
 
-### 5.3 Experiment 2: Privacy vs. Utility Trade-off
+### 5.3 Experiment 3: Privacy vs. Utility Trade-off
 We evaluate model performance under local Differential Privacy by varying the privacy budget \(\epsilon\) at a fixed clipping norm \(C = 1.0\) and \(\delta = 10^{-5}\):
 
 | Privacy Config | Global AUC | Utility Loss / Gain | Composed Epsilon (\(\epsilon_{total}\)) |
@@ -186,7 +247,7 @@ We evaluate model performance under local Differential Privacy by varying the pr
 
 ---
 
-### 5.4 Experiment 3: Personalized FL (PFL) Local Adaptation
+### 5.4 Experiment 4: Personalized FL (PFL) Local Adaptation
 We sweep the local test metrics of hospitals before and after Personalized Federated Learning (PFL) fine-tuning (2 epochs, learning rate \(\eta = 0.1\)):
 
 | Hospital Clinic | Data Size | Local Test AUC (Before) | Local Test AUC (After) | PFL Utility Gain |
@@ -200,17 +261,16 @@ We sweep the local test metrics of hospitals before and after Personalized Feder
 
 ---
 
-### 5.5 Experiment 4: Federated Cox Survival Analysis Convergence
+### 5.5 Experiment 5: Federated Cox Survival Analysis Convergence
 We evaluate the C-index convergence curve of our federated Cox Proportional Hazards survival prediction model over 30 communication rounds:
-
 * **Round 1 (Initial)**: Concordance Index (C-index) = **0.5000** (random guessing).
 * **Round 10**: Concordance Index (C-index) = **0.7248**
 * **Round 20**: Concordance Index (C-index) = **0.7612**
-* **Round 30 (Final)**: Concordance Index (C-index) = **0.7816** (high predictive power for long-term survival).
+* **Round 30 (Final)**: Concordance Index (C-index) = **0.7816** (high predictive power for long-term survival forecasting).
 
 ---
 
-### 5.6 Experiment 5: Client Valuation Discrepancy
+### 5.6 Experiment 6: Client Valuation Discrepancy
 We compare cooperative client valuations computed via Leave-One-Out (LOO) against game-theoretic Federated Shapley Values (SV):
 
 | Client ID | Samples | Federated Shapley Value | Leave-One-Out Score |
@@ -223,7 +283,7 @@ We compare cooperative client valuations computed via Leave-One-Out (LOO) agains
 
 ---
 
-### 5.7 Experiment 6: Systems Emulation & Latency Verification
+### 5.7 Experiment 7: Systems Emulation & Latency Verification
 To verify our virtual latency and network models, we benchmarked a physical 3-hospital client-server federation deployed locally using FastAPI WebSockets. With an artificial 50ms network delay introduced on local loopback interfaces:
 * **Empirical Round Duration**: **0.521 seconds**, matching the virtual latency model prediction within a 2.5% deviation.
 * **Network Overhead**: Data footprint matches parameter size: \(18.74\text{ KB}\) per upload/download round.
@@ -233,7 +293,7 @@ To verify our virtual latency and network models, we benchmarked a physical 3-ho
 ## 6. Sustainable Business Models & Computational Complexity
 
 ### 6.1 Shapley Value Complexity & Approximations
-The exact calculation of Federated Shapley Values requires training \(2^K\) coalition models, which is computationally intractable for large clinical networks (\(\mathcal{O}(2^K)\)). To address scalability:
+The exact calculation of Federated Shapley Values requires training \(2^K\) coalition models, which is computationally intractable for large clinical networks (\(\mathcal{O}(2^K)\digital\)). To address scalability:
 * **Monte Carlo Sampling**: We utilize permutation-based sampling to reduce complexity to \(\mathcal{O}(M \cdot K)\), where \(M\) is the number of sampled permutations.
 * **Gradient-based Shapley (KNN-Shapley)**: For larger networks, we discuss low-complexity approximations that score client marginal utility directly using parameter gradients rather than model retrainings, limiting scaling overhead.
 
@@ -241,8 +301,10 @@ The exact calculation of Federated Shapley Values requires training \(2^K\) coal
 To sustain hospital participation, we define a tiered subscription payout model. Let \(\phi_k\) be the Shapley value of clinic \(k\).
 1. **Sponsors (Contributors)**: Sites with positive contributions (\(\phi_k > 0\)) receive monetary payout allocations proportional to their SV.
 2. **Subscribers (Consumers)**: Sites with negative contributions (\(\phi_k \le 0\)) pay a subscription fee \(F_k = \max(0, -c \cdot \phi_k)\) to access the global model.
+
 The total subscription fees gathered fund the sponsor payouts:
 \[P_j = \frac{\phi_j}{\sum_{i: \phi_i > 0} \phi_i} \cdot \sum_k F_k\]
+
 This economic balance ensures net-zero funding sustainability while enforcing collaboration.
 
 ---
@@ -253,6 +315,7 @@ This study presents a unified, privacy-preserving, and heterogeneity-aware feder
 2. Local Differential Privacy protects patient barcodes but requires careful budget calibration to balance utility.
 3. Federated Shapley Values represent a fair, mathematically axiomatized reward mechanism.
 4. Federated survival models (Cox regression) generalize robustly to external cohorts like MSKCC.
+
 Future enhancements will focus on implementing secure multi-party computation (SMPC) to encrypt parameter aggregation.
 
 ---
