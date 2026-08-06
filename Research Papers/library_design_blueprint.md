@@ -1,45 +1,27 @@
-# 📦 DP-FPS Framework: Python Library Packaging Blueprint (`fed-fps`)
+# 📦 HPFLearning: Hyper-Parameterized Federated Learning Library Blueprint
 
-This document outlines the real-world applications of the **DP-FedProx-Shapley (DP-FPS)** framework and provides a concrete technical blueprint to package, build, and publish the codebase as a reusable Python library on PyPI.
-
----
-
-## 1. Where This Framework Can Be Used (Real-World Applications)
-
-The DP-FPS framework is designed for **collaborative machine learning under privacy, data heterogeneity, and participation incentive constraints**. 
-
-### 🏥 Clinical Healthcare Consortia (Primary Domain)
-*   **Oncology & Genomics**: Multiple hospitals (e.g., TCGA, MSKCC, Mayo Clinic) want to train cancer survival models (Cox) or staging classifiers on patient genomics and clinical tables without transferring raw patient data due to HIPAA and GDPR.
-*   **Rare Disease Diagnosis**: Because individual clinics have very few rare disease samples, collaboration is required. DP-FPS lets clinics combine features while protecting patient identities.
-*   **EHDS Clinical Data Marketplaces**: Under the *European Health Data Space (EHDS)* framework, hospital networks can use Shapley Values to legally buy, lease, or get compensated for clinical model participation.
-
-### 🏦 Financial Institutions & Anti-Money Laundering (AML)
-*   **Fraud Detection networks**: Banks want to collaborate to detect credit card fraud or transaction-level money laundering. Since sharing customer bank statements is strictly regulated, they train federated classifiers.
-*   **Credit Risk Assessment**: Fintechs and community banks collaborate to model credit scoring without leaking proprietary client portfolios.
-
-### 🚗 Intelligent Transport Systems & IoT
-*   **Smart City Sensors**: Autonomous vehicles or smart grid substations collaborate to model traffic congestion or energy surges. FedProx mitigates local sensor drift (device heterogeneity), and virtual latency bounds help adapt to bandwidth delays.
+This document outlines the package layout and PyPI publishing workflow for **HPFLearning** (Hyper-Parameterized Federated Learning), a library implementing privacy-preserving, heterogeneity-aware federated optimization (FedProx, PFL) with game-theoretic client contribution valuation (Shapley Value).
 
 ---
 
-## 2. Standalone Python Library Architecture (`fed-fps`)
+## 1. Directory Layout of the Library (`HPFLearning`)
 
-To package this framework into a library that developers can install with `pip install fed-fps`, organize the repository as follows:
+To package this project as a reusable Python library, establish a separate repository containing the following folder structure:
 
 ```text
-fed-fps/
-├── README.md              # Installation and usage instructions
-├── LICENSE                # MIT or Apache 2.0 license
-├── pyproject.toml         # Build system configuration (PEP 517)
+HPFLearning/
+├── pyproject.toml         # Modern build configuration (PEP 517)
+├── README.md              # Installation and quick-start instructions
+├── LICENSE                # Open source license (e.g. MIT, Apache 2.0)
 ├── requirements.txt       # Dependency versions
-├── fed_fps/               # Package source root
-│   ├── __init__.py        # Library entry point (exposes APIs)
-│   ├── preprocessing.py   # Multi-modal data fusion, imputation, and PCA
-│   ├── optimizers.py      # Vectorized custom NumPy loops (Logistic, Cox)
-│   ├── federated.py       # FedAvg, FedProx, PFL training loops
-│   ├── privacy.py         # DP gradient clipping, noise injection, RDP accountant
-│   └── valuation.py       # shapley Value & Leave-One-Out contribution analysis
-└── tests/                 # Unit test folder
+├── hpfl_learning/         # Root package directory
+│   ├── __init__.py        # Exposes main API modules & functions
+│   ├── preprocessing.py   # Multi-modal fusion, imputation, cohort generators
+│   ├── optimizers.py      # Custom vectorized NumPy optimizers (Logistic, Cox)
+│   ├── federated.py       # FedAvg, FedProx, PFL local fine-tuning
+│   ├── privacy.py         # DP noise, clipping, Rényi DP budget accountants
+│   └── valuation.py       # Shapley Value & Leave-One-Out contributors
+└── tests/                 # Unit tests
     ├── __init__.py
     ├── test_optimizers.py
     └── test_federated.py
@@ -47,10 +29,10 @@ fed-fps/
 
 ---
 
-## 3. Package Configuration Files
+## 2. Package Configuration Files
 
 ### `pyproject.toml`
-This file configures the build backend (e.g., `setuptools`) and defines package metadata.
+This file declares packaging metadata and specifies build requirements.
 
 ```toml
 [build-system]
@@ -58,12 +40,12 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "fed-fps"
+name = "HPFLearning"
 version = "1.0.0"
 authors = [
     { name="Your Name", email="your.email@domain.com" }
 ]
-description = "A privacy-preserving, heterogeneity-aware federated learning library with game-theoretic client contribution valuation."
+description = "HPFLearning: Hyper-Parameterized Federated Learning with differential privacy and game-theoretic Shapley valuations."
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
@@ -83,11 +65,11 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["fed_fps*"]
+include = ["hpfl_learning*"]
 ```
 
-### `fed_fps/__init__.py`
-Exposes the core functions to the user:
+### `hpfl_learning/__init__.py`
+Exposes package functions for direct imports:
 
 ```python
 from .preprocessing import load_clinical, load_survival_data, merge_clinical_survival
@@ -114,62 +96,91 @@ __all__ = [
 
 ---
 
-## 4. Usage Example for End-Users
+## 3. End-User Usage Example
 
-Once published, a developer can run a collaborative private survival analysis in under 15 lines of code:
+A developer can import and execute the code as follows:
 
 ```python
 import numpy as np
-import fed_fps as fps
+import hpfl_learning as hpf
 
-# 1. Load clinical & survival records
-df_clin = fps.load_clinical("hospitals_clinical.tsv")
-df_surv = fps.load_survival_data("hospitals_survival.tsv")
-merged = fps.merge_clinical_survival(df_clin, df_surv)
+# 1. Prepare target structures
+df_clin = hpf.load_clinical("clinical.tsv")
+df_surv = hpf.load_survival_data("survival.tsv")
+merged = hpf.merge_clinical_survival(df_clin, df_surv)
 
-# 2. Extract features and target arrays
 X = merged.drop(columns=['OS.time', 'OS', 'sample']).values
 times = merged['OS.time'].values
 events = merged['OS'].values
 
-# 3. Simulate statistical heterogeneity (skew) across 3 hospitals
-hospitals = fps.partition_dirichlet(X, y=events, num_hospitals=3, alpha=0.5)
+# 2. Partition clinical records
+hospitals = hpf.partition_dirichlet(X, y=events, num_hospitals=3, alpha=0.5)
 
-# 4. Train private Federated Cox model under bandwidth constraints
-results = fps.fedavg_cox_train(
-    hospitals_surv=hospitals,  # (X, times, events) partitions
+# 3. Train private Cox Proportional Hazards model
+results = hpf.fedavg_cox_train(
+    hospitals_surv=hospitals,
     X_test=X[:50], times_test=times[:50], events_test=events[:50],
     rounds=20, epochs=3, lr=0.01,
-    dp_enabled=True, epsilon=1.5, delta=1e-5,
-    dropout_rate=0.1, bandwidth_mbps=10.0, latency_ms=50.0
+    dp_enabled=True, epsilon=1.5, delta=1e-5
 )
 
-# 5. compute game-theoretic rewards for participation
-shapley_scores = fps.compute_federated_shapley_values(
-    hospitals, X_test=X[:50], y_test=events[:50]
-)
-
-print(f"Aggregated consensus parameters: {results['w_global']}")
-print(f"Fair hospital payout distribution shares: {shapley_scores}")
+print(f"Global weights: {results['w_global']}")
 ```
 
 ---
 
-## 5. How to Publish the Library to PyPI
+## 4. Step-by-Step Publishing Guide for PyPI
 
-Run these commands in your package root directory:
+Follow this protocol to host your package on PyPI so others can run `pip install HPFLearning`:
 
+### Step A: Create Accounts
+1. **PyPI Account**: Register at [pypi.org/register](https://pypi.org/register/).
+2. **TestPyPI Account** (Highly Recommended for testing): Register at [test.pypi.org/register](https://test.pypi.org/register/).
+
+### Step B: Generate an API Token
+PyPI requires authentication via API tokens for security (passwords are not accepted during upload):
+1. Log in to [pypi.org](https://pypi.org/).
+2. Go to **Account Settings** -> **API Tokens** -> **Add API Token**.
+3. Set the scope to "Entire Account" (or a specific project once uploaded).
+4. Copy the token. It will look like `pypi-AgEIcHlwaS5vcmc...`.
+
+### Step C: Build the Distribution Package
+In the project root folder (containing `pyproject.toml`), run:
 ```bash
-# 1. Install packaging tools
-python -m pip install --upgrade build twine
+# Upgrade build package
+python -m pip install --upgrade build
 
-# 2. Build distribution archives (source tarball and wheel file)
+# Compile source distribution and wheel files
 python -m build
-
-# 3. Upload build files to TestPyPI (to verify uploading works)
-python -m twine upload --repository testpypi dist/*
-
-# 4. Upload to PyPI (Production Release)
-python -m twine upload dist/*
 ```
-Once uploaded, anyone in the world can run `pip install fed-fps` to load your framework!
+This generates a `dist/` directory containing two archives:
+* `HPFLearning-1.0.0.tar.gz` (Source Tarball)
+* `HPFLearning-1.0.0-py3-none-any.whl` (Built Wheel)
+
+### Step D: Upload to PyPI
+1. **Install Twine**:
+   ```bash
+   python -m pip install --upgrade twine
+   ```
+2. **Upload to TestPyPI** first to make sure there are no errors:
+   ```bash
+   python -m twine upload --repository testpypi dist/*
+   ```
+   * *Username*: Enter `__token__` (literally).
+   * *Password*: Paste your TestPyPI API token (including the `pypi-` prefix).
+3. **Verify Test Installation**:
+   Verify you can download it onto a clean virtual environment:
+   ```bash
+   python -m pip install --index-url https://test.pypi.org/simple/ HPFLearning
+   ```
+4. **Upload to Live PyPI (Production Release)**:
+   ```bash
+   python -m twine upload dist/*
+   ```
+   * *Username*: Enter `__token__`
+   * *Password*: Paste your production PyPI API token.
+
+Once completed, anyone can install your framework globally via:
+```bash
+pip install HPFLearning
+```
