@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "HPFLearning"
+version = "1.0.0"
+authors = [
+    { name="Your Name", email="your.email@domain.com" }
+]
+description = "Hyper-Parameterized Federated Learning with differential privacy and game-theoretic Shapley valuations."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+dependencies = [
+    "numpy>=1.22.0",
+    "pandas>=1.4.0",
+    "scikit-learn>=1.0.0",
+    "scipy>=1.8.0",
+    "matplotlib>=3.5.0",
+    "websockets>=10.0"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["hpf_learning*"]
