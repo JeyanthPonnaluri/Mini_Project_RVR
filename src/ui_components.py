@@ -538,6 +538,12 @@ def render_version_selector():
             "description": "Advanced analysis with contribution measurement and experiment management",
             "tags": ["Contribution", "Multi-Modal", "Publication-Ready"],
             "icon": "🧬"
+        },
+        "IEEE-BOARD": {
+            "title": "IEEE Reviewer Board",
+            "description": "Peer-review evaluation board. Code mapping, interactive sweeps, and game-theoretic audits.",
+            "tags": ["Reviewer Mode", "Live Benchmarks", "Math Validation"],
+            "icon": "🔍"
         }
     }
     
@@ -545,11 +551,11 @@ def render_version_selector():
     if 'selected_version' not in st.session_state:
         st.session_state.selected_version = "VERSION-1"
     
-    # Create columns for version cards
-    cols = st.columns(2)
+    # Create columns for version cards (3 columns)
+    cols = st.columns(3)
     
     for idx, (version_key, version_info) in enumerate(versions.items()):
-        col_idx = idx % 2
+        col_idx = idx % 3
         with cols[col_idx]:
             # Determine button type based on selection
             is_selected = st.session_state.selected_version == version_key

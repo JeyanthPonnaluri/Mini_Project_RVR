@@ -6,6 +6,7 @@ Implements metrics and visualization for model performance assessment.
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from typing import Tuple
 from sklearn.metrics import (
     roc_auc_score, 
     roc_curve, 
@@ -69,9 +70,60 @@ def evaluate_model(model, X_test, y_test):
     return results
 
 
-def plot_roc_curve(y_test, y_pred_proba, save_path=None):
+def bootstrap_auc_ci(
+    y_true: np.ndarray,
+    y_pred_proba: np.ndarray,
+    n_bootstraps: int = 1000,
+    alpha: float = 0.95,
+    random_seed: int = 42
+) -> Tuple[float, float, float]:
     """
-    Plot ROC curve with AUC score.
+    Calculate the bootstrap confidence interval for the AUC-ROC score.
+    
+    Returns:
+    --------
+    Tuple[float, float, float]
+        (mean_auc, lower_bound, upper_bound)
+    """
+    np.random.seed(random_seed)
+    y_true = np.array(y_true)
+    y_pred_proba = np.array(y_pred_proba)
+    
+    n_samples = len(y_true)
+    bootstrapped_scores = []
+    
+    for _ in range(n_bootstraps):
+        # Bootstrap sample
+        indices = np.random.choice(n_samples, size=n_samples, replace=True)
+        # Check if sample contains both classes
+        if len(np.unique(y_true[indices])) < 2:
+            continue
+            
+        score = roc_auc_score(y_true[indices], y_pred_proba[indices])
+        bootstrapped_scores.append(score)
+        
+    if len(bootstrapped_scores) == 0:
+        return roc_auc_score(y_true, y_pred_proba), 0.0, 1.0
+        
+    bootstrapped_scores = np.sort(bootstrapped_scores)
+    
+    # Calculate percentiles
+    lower_p = (1.0 - alpha) / 2.0
+    upper_p = 1.0 - lower_p
+    
+    lower_idx = int(lower_p * len(bootstrapped_scores))
+    upper_idx = int(upper_p * len(bootstrapped_scores))
+    
+    lower_bound = bootstrapped_scores[lower_idx]
+    upper_bound = bootstrapped_scores[upper_idx]
+    mean_auc = np.mean(bootstrapped_scores)
+    
+    return mean_auc, lower_bound, upper_bound
+
+
+def plot_roc_curve(y_test, y_pred_proba, save_path=None, bootstrap_ci=True, n_bootstraps=1000):
+    """
+    Plot ROC curve with AUC score and optional bootstrap confidence intervals.
     
     Parameters:
     -----------
@@ -81,31 +133,63 @@ def plot_roc_curve(y_test, y_pred_proba, save_path=None):
         Predicted probabilities for the positive class
     save_path : str, optional
         Path to save the plot. If None, plot is not saved.
+    bootstrap_ci : bool
+        Whether to calculate and display the bootstrap confidence interval band
+    n_bootstraps : int
+        Number of bootstraps for CI calculation
         
     Returns:
     --------
     matplotlib.figure.Figure
         The generated figure object
     """
-    # Compute ROC curve
     fpr, tpr, thresholds = roc_curve(y_test, y_pred_proba)
     roc_auc = auc(fpr, tpr)
     
     # Create plot
     fig, ax = plt.subplots(figsize=(8, 6))
     
-    ax.plot(fpr, tpr, color='darkorange', lw=2, 
-            label=f'ROC curve (AUC = {roc_auc:.4f})')
+    if bootstrap_ci:
+        # Calculate AUC confidence interval
+        mean_auc, lower_auc, upper_auc = bootstrap_auc_ci(y_test, y_pred_proba, n_bootstraps=n_bootstraps)
+        label_text = f'ROC curve (AUC = {roc_auc:.4f}, 95% CI [{lower_auc:.4f}, {upper_auc:.4f}])'
+        
+        # Calculate ROC band
+        grid_fpr = np.linspace(0, 1, 100)
+        tprs = []
+        
+        n_samples = len(y_test)
+        for _ in range(n_bootstraps):
+            indices = np.random.choice(n_samples, size=n_samples, replace=True)
+            if len(np.unique(y_test[indices])) < 2:
+                continue
+            f, t, _ = roc_curve(y_test[indices], y_pred_proba[indices])
+            t_interp = np.interp(grid_fpr, f, t)
+            t_interp[0] = 0.0
+            tprs.append(t_interp)
+            
+        if tprs:
+            tprs = np.array(tprs)
+            tprs_lower = np.percentile(tprs, 2.5, axis=0)
+            tprs_upper = np.percentile(tprs, 97.5, axis=0)
+            tprs_upper = np.minimum(tprs_upper, 1.0)
+            
+            ax.fill_between(grid_fpr, tprs_lower, tprs_upper, color='darkorange', alpha=0.15,
+                            label='95% Bootstrap CI Band')
+    else:
+        label_text = f'ROC curve (AUC = {roc_auc:.4f})'
+        
+    ax.plot(fpr, tpr, color='darkorange', lw=2.5, label=label_text)
     ax.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--', 
             label='Random Classifier')
     
     ax.set_xlim([0.0, 1.0])
     ax.set_ylim([0.0, 1.05])
-    ax.set_xlabel('False Positive Rate', fontsize=12)
-    ax.set_ylabel('True Positive Rate', fontsize=12)
-    ax.set_title('ROC Curve - Clinical Stage Classification (T3/T4 vs Others)', fontsize=14, fontweight='bold')
+    ax.set_xlabel('False Positive Rate', fontsize=12, fontweight='bold')
+    ax.set_ylabel('True Positive Rate', fontsize=12, fontweight='bold')
+    ax.set_title('ROC Curve - Clinical Stage Classification', fontsize=14, fontweight='bold')
     ax.legend(loc="lower right", fontsize=10)
-    ax.grid(alpha=0.3)
+    ax.grid(alpha=0.3, linestyle='--')
     
     plt.tight_layout()
     

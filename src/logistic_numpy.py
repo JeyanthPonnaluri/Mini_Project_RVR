@@ -120,7 +120,8 @@ def local_train(
     y: np.ndarray,
     w_init: np.ndarray,
     epochs: int,
-    lr: float
+    lr: float,
+    l2_reg: float = 0.0
 ) -> Tuple[np.ndarray, list]:
     """
     Train logistic regression locally using gradient descent.
@@ -137,6 +138,8 @@ def local_train(
         Number of training epochs
     lr : float
         Learning rate
+    l2_reg : float
+        L2 regularization coefficient
         
     Returns:
     --------
@@ -151,6 +154,8 @@ def local_train(
     for epoch in range(epochs):
         # Compute gradient
         grad = compute_gradient(X, y, w)
+        if l2_reg > 0.0:
+            grad = grad + l2_reg * w
         
         # Update weights
         w = w - lr * grad
@@ -202,3 +207,179 @@ def predict(X: np.ndarray, w: np.ndarray, threshold: float = 0.5) -> np.ndarray:
     """
     proba = predict_proba(X, w)
     return (proba >= threshold).astype(int)
+
+
+def local_train_dp(
+    X: np.ndarray,
+    y: np.ndarray,
+    w_init: np.ndarray,
+    epochs: int,
+    lr: float,
+    epsilon: float,
+    delta: float,
+    clipping_norm: float,
+    random_seed: int = 42
+) -> Tuple[np.ndarray, list]:
+    """
+    Train logistic regression locally using DP-SGD (clipping and noise addition).
+    
+    Parameters:
+    -----------
+    X : np.ndarray
+        Feature matrix of shape (n_samples, n_features)
+    y : np.ndarray
+        True labels of shape (n_samples,)
+    w_init : np.ndarray
+        Initial weights of shape (n_features,)
+    epochs : int
+        Number of training epochs
+    lr : float
+        Learning rate
+    epsilon : float
+        Privacy budget epsilon
+    delta : float
+        Privacy parameter delta
+    clipping_norm : float
+        L2 norm clipping threshold
+    random_seed : int
+        Random seed for reproducibility
+        
+    Returns:
+    --------
+    tuple
+        (w_final, loss_history)
+    """
+    np.random.seed(random_seed)
+    w = w_init.copy()
+    loss_history = []
+    n_samples, n_features = X.shape
+    
+    # Calculate noise multiplier using standard Gaussian mechanism approximation
+    if epsilon <= 0:
+        raise ValueError("Epsilon must be greater than zero.")
+    if delta <= 0 or delta >= 1:
+        raise ValueError("Delta must be in (0, 1).")
+        
+    noise_mult = np.sqrt(2.0 * np.log(1.25 / delta)) / epsilon
+    
+    for epoch in range(epochs):
+        z = X @ w
+        y_hat = sigmoid(z)
+        
+        # Per-sample gradients
+        errors = (y_hat - y).reshape(-1, 1)
+        per_sample_grads = X * errors
+        
+        # Clip per-sample gradients
+        l2_norms = np.linalg.norm(per_sample_grads, axis=1, keepdims=True)
+        l2_norms = np.clip(l2_norms, 1e-15, None)
+        clip_factors = np.minimum(1.0, clipping_norm / l2_norms)
+        clipped_grads = per_sample_grads * clip_factors
+        
+        # Sum and add noise
+        sum_clipped_grad = np.sum(clipped_grads, axis=0)
+        noise_std = noise_mult * clipping_norm
+        noise = np.random.normal(0, noise_std, size=n_features)
+        
+        # Update
+        dp_grad = (sum_clipped_grad + noise) / n_samples
+        w = w - lr * dp_grad
+        
+        # Compute loss
+        loss = compute_loss(X, y, w)
+        loss_history.append(loss)
+        
+    return w, loss_history
+
+
+def local_train_fedprox_dp(
+    X: np.ndarray,
+    y: np.ndarray,
+    w_global: np.ndarray,
+    epochs: int,
+    lr: float,
+    mu: float,
+    epsilon: float,
+    delta: float,
+    clipping_norm: float,
+    random_seed: int = 42
+) -> Tuple[np.ndarray, list]:
+    """
+    Train logistic regression locally using DP-SGD with FedProx proximal term.
+    
+    Parameters:
+    -----------
+    X : np.ndarray
+        Feature matrix of shape (n_samples, n_features)
+    y : np.ndarray
+        True labels of shape (n_samples,)
+    w_global : np.ndarray
+        Global weights from server (proximal center)
+    epochs : int
+        Number of training epochs
+    lr : float
+        Learning rate
+    mu : float
+        Proximal term coefficient
+    epsilon : float
+        Privacy budget epsilon
+    delta : float
+        Privacy parameter delta
+    clipping_norm : float
+        L2 norm clipping threshold
+    random_seed : int
+        Random seed for reproducibility
+        
+    Returns:
+    --------
+    tuple
+        (w_final, loss_history)
+    """
+    np.random.seed(random_seed)
+    w = w_global.copy()
+    loss_history = []
+    n_samples, n_features = X.shape
+    
+    if epsilon <= 0:
+        raise ValueError("Epsilon must be greater than zero.")
+    if delta <= 0 or delta >= 1:
+        raise ValueError("Delta must be in (0, 1).")
+        
+    noise_mult = np.sqrt(2.0 * np.log(1.25 / delta)) / epsilon
+    
+    for epoch in range(epochs):
+        z = X @ w
+        y_hat = sigmoid(z)
+        
+        # Per-sample gradients of cross-entropy
+        errors = (y_hat - y).reshape(-1, 1)
+        per_sample_grads = X * errors
+        
+        # Clip per-sample gradients
+        l2_norms = np.linalg.norm(per_sample_grads, axis=1, keepdims=True)
+        l2_norms = np.clip(l2_norms, 1e-15, None)
+        clip_factors = np.minimum(1.0, clipping_norm / l2_norms)
+        clipped_grads = per_sample_grads * clip_factors
+        
+        # Sum and add noise
+        sum_clipped_grad = np.sum(clipped_grads, axis=0)
+        noise_std = noise_mult * clipping_norm
+        noise = np.random.normal(0, noise_std, size=n_features)
+        
+        # Average DP gradient for BCE
+        dp_grad_ce = (sum_clipped_grad + noise) / n_samples
+        
+        # Proximal term gradient
+        grad_prox = mu * (w - w_global)
+        
+        # Update
+        w = w - lr * (dp_grad_ce + grad_prox)
+        
+        # Compute loss (including proximal term)
+        loss_ce = compute_loss(X, y, w)
+        loss_prox = (mu / 2.0) * np.sum((w - w_global) ** 2)
+        loss = loss_ce + loss_prox
+        loss_history.append(loss)
+        
+    return w, loss_history
+

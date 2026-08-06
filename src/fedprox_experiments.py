@@ -32,10 +32,17 @@ def run_fedavg_vs_fedprox_experiment(
     rounds: int = 50,
     epochs: int = 5,
     lr: float = 0.1,
-    random_seed: int = 42
+    random_seed: int = 42,
+    dp_enabled: bool = False,
+    epsilon: float = 1.0,
+    delta: float = 1e-5,
+    clipping_norm: float = 1.0,
+    dropout_rate: float = 0.0,
+    bandwidth_mbps: float = 10.0,
+    latency_ms: float = 50.0
 ) -> pd.DataFrame:
     """
-    Compare FedAvg vs FedProx under different partition strategies.
+    Compare FedAvg vs FedProx under different partition strategies with optional DP, client dropouts, and latency.
     
     Parameters:
     -----------
@@ -63,6 +70,12 @@ def run_fedavg_vs_fedprox_experiment(
         Learning rate
     random_seed : int
         Random seed
+    dropout_rate : float
+        Rate of client dropouts
+    bandwidth_mbps : float
+        Network bandwidth in Mbps
+    latency_ms : float
+        Network latency in milliseconds
         
     Returns:
     --------
@@ -75,6 +88,8 @@ def run_fedavg_vs_fedprox_experiment(
         - final_auc: final test AUC
         - convergence_std: std of AUC in last 10 rounds
         - avg_weight_drift: average weight change per round
+        - cumulative_bytes: final total bytes transferred
+        - cumulative_time_s: final total virtual time
     """
     print(f"\n{'='*70}")
     print(f"FEDAVG VS FEDPROX COMPARISON")
@@ -84,6 +99,7 @@ def run_fedavg_vs_fedprox_experiment(
         print(f"Alpha: {alpha}")
     print(f"Hospitals: {num_hospitals}")
     print(f"Rounds: {rounds}, Epochs: {epochs}, LR: {lr}")
+    print(f"Dropout Rate: {dropout_rate}, Bandwidth: {bandwidth_mbps} Mbps, Latency: {latency_ms} ms")
     print(f"{'='*70}\n")
     
     # Partition data
@@ -111,7 +127,14 @@ def run_fedavg_vs_fedprox_experiment(
         rounds=rounds,
         epochs=epochs,
         lr=lr,
-        random_seed=random_seed
+        random_seed=random_seed,
+        dp_enabled=dp_enabled,
+        epsilon=epsilon,
+        delta=delta,
+        clipping_norm=clipping_norm,
+        dropout_rate=dropout_rate,
+        bandwidth_mbps=bandwidth_mbps,
+        latency_ms=latency_ms
     )
     
     # Calculate convergence stability (std of last 10 rounds)
@@ -129,8 +152,12 @@ def run_fedavg_vs_fedprox_experiment(
         'final_auc': fedavg_results['round_aucs'][-1],
         'convergence_std': convergence_std,
         'avg_weight_drift': avg_drift,
+        'cumulative_bytes_final': fedavg_results['cumulative_bytes'][-1],
+        'cumulative_time_s_final': fedavg_results['cumulative_time_s'][-1],
         'round_aucs': fedavg_results['round_aucs'],
-        'round_losses': fedavg_results['round_losses']
+        'round_losses': fedavg_results['round_losses'],
+        'cumulative_bytes': fedavg_results['cumulative_bytes'],
+        'cumulative_time_s': fedavg_results['cumulative_time_s']
     })
     
     # Run FedProx with different mu values
@@ -145,7 +172,14 @@ def run_fedavg_vs_fedprox_experiment(
             epochs=epochs,
             lr=lr,
             mu=mu,
-            random_seed=random_seed
+            random_seed=random_seed,
+            dp_enabled=dp_enabled,
+            epsilon=epsilon,
+            delta=delta,
+            clipping_norm=clipping_norm,
+            dropout_rate=dropout_rate,
+            bandwidth_mbps=bandwidth_mbps,
+            latency_ms=latency_ms
         )
         
         # Calculate convergence stability
@@ -163,8 +197,12 @@ def run_fedavg_vs_fedprox_experiment(
             'final_auc': fedprox_results['round_aucs'][-1],
             'convergence_std': convergence_std,
             'avg_weight_drift': avg_drift,
+            'cumulative_bytes_final': fedprox_results['cumulative_bytes'][-1],
+            'cumulative_time_s_final': fedprox_results['cumulative_time_s'][-1],
             'round_aucs': fedprox_results['round_aucs'],
-            'round_losses': fedprox_results['round_losses']
+            'round_losses': fedprox_results['round_losses'],
+            'cumulative_bytes': fedprox_results['cumulative_bytes'],
+            'cumulative_time_s': fedprox_results['cumulative_time_s']
         })
     
     df = pd.DataFrame(results)

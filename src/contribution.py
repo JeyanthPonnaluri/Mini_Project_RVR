@@ -22,7 +22,11 @@ def measure_hospital_contribution(
     lr: float = 0.1,
     algorithm: str = 'fedavg',
     mu: float = 0.1,
-    random_seed: int = 42
+    random_seed: int = 42,
+    dp_enabled: bool = False,
+    epsilon: float = 1.0,
+    delta: float = 1e-5,
+    clipping_norm: float = 1.0
 ) -> pd.DataFrame:
     """
     Measure each hospital's contribution to federated learning performance.
@@ -80,13 +84,15 @@ def measure_hospital_contribution(
         baseline_results = fedavg_train(
             hospitals, X_test, y_test,
             rounds=rounds, epochs=epochs, lr=lr,
-            random_seed=random_seed
+            random_seed=random_seed,
+            dp_enabled=dp_enabled, epsilon=epsilon, delta=delta, clipping_norm=clipping_norm
         )
     else:  # fedprox
         baseline_results = fedprox_train(
             hospitals, X_test, y_test,
             rounds=rounds, epochs=epochs, lr=lr, mu=mu,
-            random_seed=random_seed
+            random_seed=random_seed,
+            dp_enabled=dp_enabled, epsilon=epsilon, delta=delta, clipping_norm=clipping_norm
         )
     
     baseline_auc = baseline_results['round_aucs'][-1]
@@ -109,13 +115,15 @@ def measure_hospital_contribution(
             without_k_results = fedavg_train(
                 hospitals_without_k, X_test, y_test,
                 rounds=rounds, epochs=epochs, lr=lr,
-                random_seed=random_seed
+                random_seed=random_seed,
+                dp_enabled=dp_enabled, epsilon=epsilon, delta=delta, clipping_norm=clipping_norm
             )
         else:  # fedprox
             without_k_results = fedprox_train(
                 hospitals_without_k, X_test, y_test,
                 rounds=rounds, epochs=epochs, lr=lr, mu=mu,
-                random_seed=random_seed
+                random_seed=random_seed,
+                dp_enabled=dp_enabled, epsilon=epsilon, delta=delta, clipping_norm=clipping_norm
             )
         
         without_k_auc = without_k_results['round_aucs'][-1]

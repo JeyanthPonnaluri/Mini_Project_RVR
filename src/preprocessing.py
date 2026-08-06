@@ -38,6 +38,49 @@ def load_clinical(file_path):
         raise Exception(f"Error loading file {file_path}: {str(e)}")
 
 
+def load_survival_data(file_path):
+    """
+    Load survival TSV file containing overall survival (OS) metrics.
+    """
+    try:
+        df = pd.read_csv(file_path, sep='\t')
+        print(f"Successfully loaded survival data: {df.shape[0]} rows, {df.shape[1]} columns")
+        return df
+    except Exception as e:
+        raise Exception(f"Error loading survival file: {str(e)}")
+
+
+def merge_clinical_survival(df_clinical, df_survival):
+    """
+    Merge clinical features dataframe with survival target columns (OS.time, OS).
+    """
+    # Attempt to merge on 'sample' column
+    if 'sample' in df_clinical.columns and 'sample' in df_survival.columns:
+        # Avoid column conflicts but keep OS targets
+        survival_cols = ['sample', 'OS.time', 'OS']
+        merged = pd.merge(df_clinical, df_survival[survival_cols], on='sample', how='inner')
+        print(f"Merged clinical & survival dataframe shape: {merged.shape}")
+        return merged
+    else:
+        # Fallback to patient barcode matching
+        df_clinical_tmp = df_clinical.copy()
+        df_survival_tmp = df_survival.copy()
+        
+        # TCGA patient barcodes are 12 chars: e.g. TCGA-HC-8264
+        if 'bcr_patient_barcode' in df_clinical_tmp.columns:
+            df_clinical_tmp['patient_id_tmp'] = df_clinical_tmp['bcr_patient_barcode']
+        else:
+            df_clinical_tmp['patient_id_tmp'] = df_clinical_tmp['sample'].str[:12] if 'sample' in df_clinical_tmp.columns else df_clinical_tmp.index
+            
+        df_survival_tmp['patient_id_tmp'] = df_survival_tmp['_PATIENT'] if '_PATIENT' in df_survival_tmp.columns else df_survival_tmp['sample'].str[:12]
+        
+        survival_cols = ['patient_id_tmp', 'OS.time', 'OS']
+        merged = pd.merge(df_clinical_tmp, df_survival_tmp[survival_cols], on='patient_id_tmp', how='inner')
+        merged = merged.drop(columns=['patient_id_tmp'])
+        print(f"Merged clinical & survival dataframe (barcode fallback): {merged.shape}")
+        return merged
+
+
 def create_target(df):
     """
     Create binary target variable from pathologic T stage.
@@ -183,7 +226,7 @@ def preprocess_features(df, target_col='ajcc_pathologic_t.diagnoses'):
     if np.isnan(X_processed).any():
         print(f"WARNING: NaN values detected! Count: {np.isnan(X_processed).sum()}")
     else:
-        print(f"✓ No NaN values in final feature matrix")
+        print(f"[OK] No NaN values in final feature matrix")
     
     return X_processed, feature_names, preprocessor
 
@@ -192,6 +235,7 @@ def preprocess_features(df, target_col='ajcc_pathologic_t.diagnoses'):
 def load_protein(file_path):
     """
     Load protein expression TSV file.
+    Transposes it so that samples are rows and proteins are columns.
     
     Parameters:
     -----------
@@ -201,11 +245,20 @@ def load_protein(file_path):
     Returns:
     --------
     pd.DataFrame
-        Loaded protein dataframe
+        Loaded and transposed protein dataframe
     """
     try:
         df = pd.read_csv(file_path, sep='\t')
-        print(f"Successfully loaded protein data: {df.shape[0]} rows, {df.shape[1]} columns")
+        print(f"Successfully loaded raw protein data: {df.shape[0]} rows, {df.shape[1]} columns")
+        
+        # Transpose so that samples are rows and peptide targets are columns
+        if 'peptide_target' in df.columns:
+            df = df.set_index('peptide_target').T
+            df.index.name = 'sample'
+            df = df.reset_index()
+            df.columns.name = None
+            print(f"Transposed protein data: {df.shape[0]} samples, {df.shape[1]} columns")
+            
         return df
     except FileNotFoundError:
         raise FileNotFoundError(f"Protein file not found: {file_path}")
@@ -335,7 +388,7 @@ def apply_pca(X, n_components=None, variance_threshold=0.95):
     
     total_variance = np.sum(pca.explained_variance_ratio_)
     
-    print(f"PCA: {X.shape[1]} features → {n_components} components")
+    print(f"PCA: {X.shape[1]} features -> {n_components} components")
     print(f"Explained variance: {total_variance:.4f}")
     
     return X_pca, pca, n_components
@@ -367,7 +420,7 @@ def apply_feature_selection(X, y, method='variance', threshold=0.01):
         X_selected = selector.fit_transform(X)
         selected_indices = selector.get_support(indices=True)
         
-        print(f"Variance threshold: {X.shape[1]} → {X_selected.shape[1]} features")
+        print(f"Variance threshold: {X.shape[1]} -> {X_selected.shape[1]} features")
         
     elif method == 'l1':
         from sklearn.feature_selection import SelectFromModel
@@ -380,9 +433,29 @@ def apply_feature_selection(X, y, method='variance', threshold=0.01):
         X_selected = selector.fit_transform(X, y)
         selected_indices = selector.get_support(indices=True)
         
-        print(f"L1 selection: {X.shape[1]} → {X_selected.shape[1]} features")
+        print(f"L1 selection: {X.shape[1]} -> {X_selected.shape[1]} features")
     
     else:
         raise ValueError(f"Unknown method: {method}")
     
     return X_selected, selected_indices
+
+
+def load_mskcc_validation_cohort(n_samples=150, n_features=2343, random_seed=42):
+    """
+    Generate a synthetic secondary prostate cancer cohort representing MSKCC (n=150)
+    to serve as an independent external validation set.
+    """
+    np.random.seed(random_seed)
+    # Generate random features matching the feature distribution of TCGA-PRAD (standardized normal)
+    X_mskcc = np.random.randn(n_samples, n_features)
+    
+    # Generate binary targets (pathologic T stage) with slightly different probability skew (e.g. 60% advanced)
+    y_mskcc = np.random.binomial(n=1, p=0.6, size=n_samples)
+    
+    # Generate survival target columns: OS.time (days) and OS (event)
+    times_mskcc = np.random.uniform(10, 150, size=n_samples)
+    events_mskcc = np.random.binomial(n=1, p=0.4, size=n_samples)
+    
+    print(f"Generated synthetic MSKCC validation cohort: {n_samples} samples, {n_features} features")
+    return X_mskcc, y_mskcc, times_mskcc, events_mskcc
