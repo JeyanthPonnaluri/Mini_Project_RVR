@@ -357,7 +357,7 @@ We evaluated client test partitions matching local Dirichlet skews ($\alpha=0.5$
 PFL fine-tuning improved staging performance by **0.0786 absolute AUC points** (from 0.6315 to 0.7101, corresponding to a **12.45% relative improvement**) compared to the local-only baseline, but did not outperform the global consensus model (0.7433) in this sparse data environment, supporting **H4**. Client 1 and 3 local test partitions contained only a single target class due to Dirichlet skew, resulting in undefined local AUCs (NaN).
 
 \subsection{Experiment 5: Game-Theoretic Contribution Valuation}
-We evaluated permutation-based Shapley values against Leave-One-Out (LOO) utility degradation across clients (Hospital 1, 2, and 3):
+We evaluated permutation-based Shapley values against Leave-One-Out (LOO) utility degradation across clients (Hospital 1, 2, and 3). Note that the Shapley values in Experiment 5 are computed for the baseline valuation-alignment analysis under a moderate label skew ($\alpha=1.0$), whereas Experiment 6 recomputes Shapley values independently under each privacy configuration:
 \begin{itemize}
     \item Shapley Scores: H1 = 0.0455, H2 = 0.1027, H3 = 0.1094
     \item LOO Degradations: H1 = -0.0104, H2 = 0.0824, H3 = 0.0294
@@ -394,7 +394,7 @@ The evaluations in Table \ref{tab:shapley_noise} demonstrate that differential p
 \end{figure}
 
 \subsection{Experiment 7: Empirical Privacy Protection (MIA Resistance)}
-Without DP, the confidence-threshold MIA Attacker achieves an AUC of 0.5679 (attacker advantage = 0.0734) on prediction confidence. Once DP is enabled (even at a weak budget $\epsilon=10.0$), the attacker AUC drops to 0.4802 (attacker advantage = -0.0161), indicating substantially reduced vulnerability to the evaluated confidence-threshold membership-inference attack (as mapped in Fig. \ref{fig:mia}), supporting **H7**.
+Without DP, the confidence-threshold MIA attacker achieves an AUC of 0.5679 (attacker advantage = 0.0734) on prediction confidence. With DP enabled, the attacker AUC decreases to 0.4802 at $\epsilon=10.0$ and declines further as the privacy budget is tightened (as mapped in Fig. \ref{fig:mia}). Thus, the evaluated confidence-threshold attack loses discriminative advantage under the applied privacy perturbation, with attacker performance approaching and falling below the random-guess baseline of 0.50, supporting \textbf{H7}.
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\columnwidth]{figures/figure7_mia.pdf}
