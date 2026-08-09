@@ -279,7 +279,7 @@ H7 & Does DP reduce MIA? & MIA Attacker ROC AUC & Attacker AUC drops from 0.5679
 \subsection{Centralized Baselines and Staging Performance}
 Centralized models trained on the combined training partition yield: Lasso AUC = 0.7850, Ridge AUC = 0.7642, MLP NN AUC = 0.6146, Custom NumPy Model AUC = 0.7566 [95\% Bootstrap CI: $0.6447 - 0.8659$].
 
-\subsection{Experiment 1: Bounded Client Update Drift}
+\subsection{Client Update Drift under Statistical Heterogeneity}
 We evaluated client-update divergence over 5 seeds across Dirichlet partitions $\alpha \in \{10.0, 1.0, 0.5, 0.1\}$. Enabling proximal regularization ($\mu=0.5$) consistently restricts the average client weight drift by approximately 4.2--4.3\% (as shown in Fig. \ref{fig:drift}):
 \begin{itemize}
     \item $\alpha = 10.0$ (IID-like): FedAvg Drift = $0.1628 \pm 0.0119$ vs. FedProx Drift = $0.1557 \pm 0.0112$
@@ -293,7 +293,7 @@ This consistent containment across all heterogeneity levels supports **H1**.
 \label{fig:drift}
 \end{figure}
 
-\subsection{Experiment 2: Privacy--Utility Trade-off Curve}
+\subsection{Privacy--Utility Trade-off}
 We evaluated composed Rényi DP bounds on the global test partition across budgets (as shown in Fig. \ref{fig:privacy_utility}):
 \begin{itemize}
     \item $\epsilon = 0.5 \to$ AUC: $0.6998$ [95\% CI: $0.5776 - 0.8222$] ($\sigma = 67.3716$)
@@ -310,7 +310,7 @@ Performance generally improves as privacy constraints are relaxed, with small no
 \label{fig:privacy_utility}
 \end{figure}
 
-\subsection{Experiment 3: Joint Privacy × Heterogeneity Interaction Matrix}
+\subsection{FedProx under Joint Privacy and Heterogeneity}
 We swept Dirichlet label skew ($\alpha$) and privacy budget ($\epsilon$) across 5 random seeds to evaluate global model test AUC under joint constraints in Table \ref{tab:interaction}:
 
 \begin{table*}[t]
@@ -352,19 +352,19 @@ Under joint privacy–heterogeneity constraints over repeated trials, FedProx pr
 \label{fig:heatmap}
 \end{figure}
 
-\subsection{Experiment 4: Personalized Adaptation Gains}
+\subsection{Personalized Adaptation under Data Scarcity}
 We evaluated client test partitions matching local Dirichlet skews ($\alpha=0.5$). For Hospital 2 (containing valid target classes), Local-Only AUC was 0.6315, Global FedProx AUC was 0.7433, and Personalized FL (PFL) AUC was 0.7101.
 PFL fine-tuning improved staging performance by **0.0786 absolute AUC points** (from 0.6315 to 0.7101, corresponding to a **12.45% relative improvement**) compared to the local-only baseline, but did not outperform the global consensus model (0.7433) in this sparse data environment, supporting **H4**. Client 1 and 3 local test partitions contained only a single target class due to Dirichlet skew, resulting in undefined local AUCs (NaN).
 
-\subsection{Experiment 5: Game-Theoretic Contribution Valuation}
-We evaluated permutation-based Shapley values against Leave-One-Out (LOO) utility degradation across clients (Hospital 1, 2, and 3). Note that the Shapley values in Experiment 5 are computed for the baseline valuation-alignment analysis under a moderate label skew ($\alpha=1.0$), whereas Experiment 6 recomputes Shapley values independently under each privacy configuration:
+\subsection{Contribution Valuation}
+We evaluated permutation-based Shapley values against Leave-One-Out (LOO) utility degradation across clients (Hospital 1, 2, and 3). Note that the Shapley values in Subsection VII-F are computed for the baseline valuation-alignment analysis under a moderate label skew ($\alpha=1.0$), whereas the privacy-noise analysis in Subsection VII-G recomputes Shapley values independently under each privacy configuration:
 \begin{itemize}
     \item Shapley Scores: H1 = 0.0455, H2 = 0.1027, H3 = 0.1094
     \item LOO Degradations: H1 = -0.0104, H2 = 0.0824, H3 = 0.0294
 \end{itemize}
 The observed positive rank association ($\rho=0.50$) provides preliminary descriptive evidence of alignment between Shapley valuation and leave-one-client-out utility degradation; however, the three-client setting does not support reliable inferential claims. The measured permutation Shapley computation time (0.0561s) was comparable to LOO (0.0438s) in this setting, supporting **H5**.
 
-\subsection{Experiment 6: Shapley Valuation under Privacy Noise}
+\subsection{Contribution Valuation under Privacy Noise}
 We swept differential privacy noise constraints over client Shapley values in Table \ref{tab:shapley_noise}:
 
 \begin{table}[ht]
@@ -393,7 +393,7 @@ The evaluations in Table \ref{tab:shapley_noise} demonstrate that differential p
 \label{fig:shapley_volatility}
 \end{figure}
 
-\subsection{Experiment 7: Empirical Privacy Protection (MIA Resistance)}
+\subsection{Empirical Membership-Inference Resistance}
 Without DP, the confidence-threshold MIA attacker achieves an AUC of 0.5679 (attacker advantage = 0.0734) on prediction confidence. With DP enabled, the attacker AUC decreases to 0.4802 at $\epsilon=10.0$ and declines further as the privacy budget is tightened (as mapped in Fig. \ref{fig:mia}). Thus, the evaluated confidence-threshold attack loses discriminative advantage under the applied privacy perturbation, with attacker performance approaching and falling below the random-guess baseline of 0.50, supporting \textbf{H7}.
 \begin{figure}[ht]
 \centering
@@ -402,7 +402,7 @@ Without DP, the confidence-threshold MIA attacker achieves an AUC of 0.5679 (att
 \label{fig:mia}
 \end{figure}
 
-\subsection{Experiment 8: Controlled Distribution-Shift Stress Testing}
+\subsection{Controlled Distribution-Shift Stress Testing}
 We evaluated model robustness under controlled synthetic domain shifts (as plotted in Fig. \ref{fig:stress_test}). The test split AUC degrades gracefully from 0.7566 to 0.7462 (at severity 2.0) under covariate shift $P(X)$, but drops precipitously to 0.5265 (at severity 2.0) under concept shift $P(Y|X)$ as target labels are flipped. These stress-testing experiments assess sensitivity to controlled synthetic distribution perturbations rather than external clinical generalization, supporting **H6**.
 \begin{figure}[ht]
 \centering
