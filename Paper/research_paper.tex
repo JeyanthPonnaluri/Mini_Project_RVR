@@ -11,7 +11,7 @@
 
 \begin{document}
 
-\title{A Privacy-Preserving and Heterogeneity-Aware Federated Learning Framework for Prostate Cancer Staging and Client Contribution Valuation}
+\title{Privacy--Heterogeneity Trade-offs in Federated Prostate Cancer Staging: Optimization Stability, Personalization, and Client Contribution Valuation}
 
 \author{Anonymous Authors
 \thanks{Affiliation anonymized for peer review.}
@@ -20,7 +20,7 @@
 \maketitle
 
 \begin{abstract}
-Collaborative machine learning in medical networks is often hindered by strict data privacy regulations and statistical heterogeneity across clinical sites. While federated learning (FL) enables multi-institutional training without direct data aggregation, the multi-dimensional interactions between statistical heterogeneity, privacy constraints, local adaptation, and participant valuation remain poorly characterized. In this study, we systematically investigate the central research question: How do privacy constraints and statistical heterogeneity jointly affect federated clinical model utility, local adaptation, and participant contribution valuation under decentralized training? We evaluate this using a multi-dimensional framework, DP-FPS, which integrates FedProx optimization, sample-level differential privacy calibrated via Rényi Differential Privacy (RDP) under a full sampling rate $q=1.0$, personalized local adaptation (PFL), and game-theoretic permutation Shapley values. Using the TCGA-PRAD clinical cohort, our evaluations show that: (1) FedProx consistently reduces measured client-update weight drift by approximately 4.2--4.3\% across all tested Dirichlet concentrations; (2) under joint privacy--heterogeneity constraints over repeated trials, FedProx produced consistently positive utility differences at moderate privacy budgets ($\epsilon = 1.0$ and $2.0$), whereas differences were small and sometimes negative at weaker privacy constraints ($\epsilon = 5.0$ and $10.0$); (3) personalized local adaptation improves performance over local-only training in the evaluable client setting, yielding a 0.0786 absolute AUC point improvement (corresponding to a 12.45\% relative improvement), although it does not outperform the global model; (4) privacy noise perturbation altered the observed contribution rankings in the evaluated three-client setting; and (5) RDP-calibrated noise reduces membership inference attack (MIA) advantage, indicating substantially reduced vulnerability to the evaluated confidence-threshold MIA. Finally, we report that while a federated Cox proportional-hazards survival model was successfully developed, out-of-sample survival discrimination could not be reliably evaluated because the held-out test partition contained zero observed death events due to severe right-censoring.
+Collaborative machine learning in medical networks is often hindered by strict data privacy regulations and statistical heterogeneity across clinical sites. While federated learning (FL) enables multi-institutional training without direct data aggregation, the multi-dimensional interactions between statistical heterogeneity, privacy constraints, local adaptation, and participant valuation remain poorly characterized. In this study, we systematically investigate the central research question: How do privacy constraints and statistical heterogeneity jointly affect federated clinical model utility, local adaptation, and participant contribution valuation under decentralized training? We evaluate this using a multi-dimensional framework, DP-FPS, which integrates FedProx optimization, sample-level differential privacy calibrated via Rényi Differential Privacy (RDP) under a full sampling rate $q=1.0$, personalized local adaptation (PFL), and game-theoretic permutation Shapley values. Using the TCGA-PRAD clinical cohort, our evaluations show that: (1) FedProx reduced measured client-update drift by approximately 4.2--4.3\% across the tested Dirichlet concentrations; (2) under joint privacy--heterogeneity constraints over repeated trials, FedProx produced consistently positive utility differences at moderate privacy budgets ($\epsilon = 1.0$ and $2.0$), whereas differences were small and sometimes negative at weaker privacy constraints ($\epsilon = 5.0$ and $10.0$); (3) personalized local adaptation improves performance over local-only training in the evaluable client setting, yielding a 0.0786 absolute AUC point improvement (corresponding to a 12.45\% relative improvement), although it does not outperform the global model; (4) privacy noise perturbation altered the observed contribution rankings in the evaluated three-client setting; and (5) RDP-calibrated noise reduces membership inference attack (MIA) advantage, indicating substantially reduced vulnerability to the evaluated confidence-threshold MIA. Finally, we report that while a federated Cox proportional-hazards survival model was successfully developed, out-of-sample survival discrimination could not be reliably evaluated because the held-out test partition contained zero observed death events due to severe right-censoring.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -34,7 +34,7 @@ Federated Learning (FL) has emerged as a promising collaborative paradigm to add
 
 Prior research has largely examined these challenges in isolation. The interactions between statistical heterogeneity, differential privacy noise, local personalization, and contribution valuation remain poorly understood. For example, adding differential privacy noise to local updates disrupts optimization paths, and the severity of this disruption depends on the non-IID label skew across hospitals. Similarly, privacy noise alters computed game-theoretic contribution scores, potentially undermining fair incentive distribution.
 
-To address these gaps, we systematically study the central research question: **How do privacy constraints and statistical heterogeneity jointly affect federated clinical model utility, local adaptation, and participant contribution valuation?** We construct a multi-dimensional conceptual chain to characterize these relationships: clinical heterogeneity leads to client optimization drift, which is stabilized by FedProx regularization; this interaction occurs alongside privacy perturbation under sample-level differential privacy, establishing a privacy--utility trade-off; these combined constraints affect both global model utility and local personalized adaptation, which ultimately alters participant contribution valuation and its associated economic incentive allocation.
+To address these gaps, we systematically study the central research question: **How do privacy constraints and statistical heterogeneity jointly affect federated clinical model utility, local adaptation, and participant contribution valuation?** We construct a multi-dimensional conceptual model to characterize these relationships: clinical heterogeneity leads to client optimization drift, which is stabilized by FedProx regularization; this interaction occurs alongside privacy perturbation under sample-level differential privacy, establishing a privacy--utility trade-off; these combined constraints affect both global model utility and local personalized adaptation, which ultimately alters participant contribution valuation and its associated economic incentive allocation.
 
 We evaluate this interaction model using a multi-layered framework, DP-FPS, on the clinical-proteomic TCGA-PRAD cohort. This paper establishes the following key contributions:
 \begin{itemize}
@@ -61,7 +61,7 @@ When local datasets are non-IID, the local optimization objectives of clinical c
 Exposing model weights to a coordinator introduces privacy risks, as membership inference and model inversion attacks can reconstruct patient information. Differential Privacy (DP) provides mathematical guarantees against such leakage \cite{Dwork2008DPSurvey}. DP-SGD applies gradient clipping to limit the influence of individual records, followed by Gaussian noise addition to perturb the aggregated update \cite{Abadi2016DPSGD}. Tracking privacy leakage across communication rounds requires advanced composition methods. Rényi Differential Privacy (RDP) provides tight composition bounds for the Gaussian mechanism, making it suitable for multi-round federated training \cite{Mironov2017RDP, Mironov2019SampledGaussian}.
 
 \subsection{Client Contribution Valuation}
-To maintain the stability of clinical federated networks, contribution valuation methods are required to incentivize hospital participation \cite{Kazlouski2025HospitalParticipation, Wang2020ContributionSV}. Leave-One-Out (LOO) metrics assess a client's marginal value by comparing global performance with and without that client \cite{Ghorbani2019DataShapley}. However, LOO does not account for sub-coalition synergies and exhibits high variance. Game theory offers the Shapley value, which assigns contributions based on axiomatic fairness \cite{Jia2019KNNShapley}. However, computing exact Shapley values requires training models for all $2^K$ client coalitions, which is computationally expensive \cite{Lyu2020FairnessFL, Song2019BlockchainFL, Yan2021SelectionFL}.
+To maintain the stability of clinical federated networks, contribution valuation methods are required to incentivize hospital participation \cite{Kazlouski2025HospitalParticipation, Wang2020ContributionSV}. Leave-One-Out (LOO) methods assess a client's marginal value by comparing global performance with and without that client \cite{Ghorbani2019DataShapley}. However, LOO does not account for sub-coalition synergies and exhibits high variance. Game theory offers the Shapley value, which assigns contributions based on axiomatic principles \cite{Jia2019KNNShapley}. However, computing exact Shapley values requires training models for all $2^K$ client coalitions, which is computationally expensive \cite{Lyu2020FairnessFL, Song2019BlockchainFL, Yan2021SelectionFL}.
 
 \subsection{Membership Inference Attacks in Clinical AI}
 While differential privacy provides formal mathematical bounds, empirical privacy audits are needed to measure practical resistance to leakage. Membership Inference Attacks (MIA) aim to determine whether a specific patient record was used in training. In clinical applications, the prediction confidence difference between members and non-members serves as an information leak channel. Noise calibration under DP aims to obfuscate this confidence gap, reducing attacker advantage to random guess levels.
@@ -72,18 +72,20 @@ Prior works have typically evaluated heterogeneity, differential privacy, person
 \begin{table*}[t]
 \caption{Comparison of Our Approach with Existing Federated Learning Literature}
 \centering
-\begin{tabular}{lcccccc}
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lcccccccc}
 \toprule
-Study & Healthcare Tabular & Non-IID Skew & Differential Privacy & Personalization & Shapley Valuation & Privacy Attack Audit \\
+Study & Clinical FL & Non-IID Skew & FedProx & DP & PFL & Shapley & MIA & Privacy $\times$ Heterogeneity \\
 \midrule
-McMahan et al. \cite{McMahan2017FedAvg} & No & Yes & No & No & No & No \\
-Li et al. \cite{Li2020FedProx} & No & Yes & No & No & No & No \\
-Abadi et al. \cite{Abadi2016DPSGD} & No & No & Yes & No & No & No \\
-Ghorbani et al. \cite{Ghorbani2019DataShapley} & No & No & No & No & Yes & No \\
-Kazlouski et al. \cite{Kazlouski2025HospitalParticipation} & Yes & Yes & No & No & Yes & No \\
-\textbf{Ours (DP-FPS)} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes (RDP)} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes (MIA)} \\
+McMahan et al. \cite{McMahan2017FedAvg} & Yes & Yes & No & No & No & No & No & No \\
+Li et al. \cite{Li2020FedProx} & Yes & Yes & Yes & No & No & No & No & No \\
+Abadi et al. \cite{Abadi2016DPSGD} & No & No & No & Yes & No & No & No & No \\
+Ghorbani et al. \cite{Ghorbani2019DataShapley} & No & No & No & No & No & Yes & No & No \\
+Kazlouski et al. \cite{Kazlouski2025HospitalParticipation} & Yes & Yes & No & No & No & Yes & No & No \\
+\textbf{Ours (DP-FPS)} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} \\
 \bottomrule
 \end{tabular}
+}
 \label{tab:lit_comparison}
 \end{table*}
 
@@ -105,7 +107,7 @@ h_k(w; w^t) = F_k(w) + \frac{\mu}{2} \|w - w^t\|_2^2
 \end{equation}
 where $\mu \ge 0$ controls the penalty strength, limiting local parameter drift away from the global model $w^t$.
 
-To provide sample-level privacy guarantees, local gradients are clipped and perturbed using a Gaussian noise mechanism calibrated via Rényi Differential Privacy (RDP). Client contributions are evaluated using cooperative game theory. Let $S \subseteq \{1, \dots, K\}$ be a client coalition, and $v(S)$ be the utility of the model trained on coalition $S$, evaluated on a held-out validation set. The contribution of client $k$ is measured by its Shapley value $\phi_k$, reflecting its marginal utility across coalitions.
+To provide sample-level privacy guarantees, local gradients are clipped and perturbed using a Gaussian noise mechanism calibrated via Rényi Differential Privacy (RDP). Client contribution valuation is measured using cooperative game theory. Let $S \subseteq \{1, \dots, K\}$ be a client coalition, and $v(S)$ be the utility of the model trained on coalition $S$, evaluated on a held-out validation set. The contribution of client $k$ is measured by its Shapley value $\phi_k$, reflecting its marginal utility across coalitions.
 
 \section{Mathematical Methodology}
 
@@ -154,7 +156,7 @@ The Gaussian mechanism perturbs the average gradient:
 which corresponds to adding noise with multiplier $\sigma$ to a query with sensitivity $C/B$.
 
 \subsubsection{Rényi DP Composition}
-For a full local batch update, the sampling rate is $q=1.0$ (i.e., $B = n_k$). Under full batching, the step is not amplified by Poisson subsampling. For a Gaussian mechanism with noise multiplier $\sigma$, the step privacy loss at Rényi order $\alpha > 1$ is:
+For a full local batch update, the sampling rate is $q=1.0$ (i.e., $B = n_k$). Because the evaluated mechanism uses full-batch updates ($q=1.0$), no subsampling amplification is applied, and the resulting Gaussian-mechanism RDP composition follows the analytical bound directly. For a Gaussian mechanism with noise multiplier $\sigma$, the step privacy loss at Rényi order $\alpha > 1$ is:
 \begin{equation}
 \epsilon_{RDP}(\alpha) = \frac{\alpha}{2 \sigma^2}
 \end{equation}
@@ -186,6 +188,13 @@ score(x_i, y_i) = y_i p_i + (1 - y_i) (1 - p_i)
 \end{equation}
 The attack model predicts that a sample was in the training set if its score exceeds a threshold. The attack is evaluated using ROC AUC on a combined set of training members and test non-members.
 
+\subsection{Domain Shift Formulations}
+Robustness is evaluated under controlled synthetic shifts on the test set:
+\begin{itemize}
+    \item **Covariate Shift**: Scale features by factor $\beta$ and add noise: $\tilde{x} = \beta x + e, \, e \sim \mathcal{N}(0, 0.1)$.
+    \item **Concept Shift**: Flip labels with probability $\gamma$: $\tilde{y} = 1-y$ with probability $\gamma$.
+\end{itemize}
+
 \subsection{Statistical Analysis}
 To ensure statistical rigor, all experimental sweeps are evaluated over 5 independent random seeds.
 \begin{itemize}
@@ -210,7 +219,7 @@ To prevent data leakage, we partition the cohort into an 80\% training split (27
 \subsection{Dirichlet Client Heterogeneity Partitioning}
 To simulate non-IID clinical sites, the training split is distributed among 3 hospitals using a Dirichlet allocation over staging labels. We control the level of statistical skew by varying the concentration parameter $\alpha \in \{10.0, 1.0, 0.5, 0.1\}$, where smaller $\alpha$ indicates extreme label heterogeneity.
 
-\subsection{Survival Subset event Counts}
+\subsection{Survival Subset Event Counts}
 After preprocessing and cohort matching, the survival-analysis subset contains 347 observations, with 12 observed death events (9 in the training split of size 277, and 0 in the test split of size 70).
 Due to the severe right-censoring in the PRAD cohort, out-of-sample survival discrimination was not estimable in the test split (0 death events). No performance claims are made for survival discrimination.
 
@@ -229,11 +238,11 @@ Unique Patients & 500 \\
 Train/Test Split & 80\% / 20\% \\
 Clinical Features & 62 categorical, 12 numerical \\
 PCA Proteins & 456 columns $\to$ 115 components \\
-communication Rounds ($T$) & 15 \\
+Communication Rounds ($T$) & 15 \\
 Local Epochs ($E$) & 3 \\
 FedProx Regularizer ($\mu$) & 0.5 \\
-Gradient clipping Norm ($C$) & 1.0 \\
-Target Privacy delta ($\delta$) & $10^{-5}$ \\
+Gradient Clipping Norm ($C$) & 1.0 \\
+Target Privacy Delta ($\delta$) & $10^{-5}$ \\
 \bottomrule
 \end{tabular}
 \label{tab:protocol}
@@ -248,11 +257,11 @@ Hypothesis & Question & Primary Metric & Main Finding & Evidence Strength \\
 \midrule
 H1 & Does FedProx reduce drift? & Average Parameter L2 Drift & Consistent 4.2--4.3\% drift reduction across skews. & Strong \\
 H2 & What is the privacy-utility curve? & Test ROC AUC & AUC degrades from 0.7576 ($\epsilon=10$) to 0.6998 ($\epsilon=0.5$). & Strong \\
-H3 & Interaction of privacy & heterogeneity & Test AUC Benefit ($\Delta$) & FedProx improves AUC at $\epsilon=1.0$ and $2.0$; CI is positive. & Strong in range \\
+H3 & Interaction of privacy \& heterogeneity & Test AUC Benefit ($\Delta$) & FedProx improves AUC at $\epsilon=1.0$ and $2.0$; CI is positive. & Strong in range \\
 H4 & Does PFL improve over local-only? & Client Local Test AUC & PFL improves AUC by 0.0786 absolute points over local-only. & Limited \\
 H5 & Does DP noise alter contribution? & Shapley Value Ranking & DP noise flips client contribution rankings. & Descriptive \\
 H6 & Sensitivity to domain shifts & Global Test AUC & Concept shift degrades AUC much faster than covariate shift. & Controlled stress test \\
-H7 & Does DP mitigate MIA? & MIA Attacker ROC AUC & Attacker AUC drops from 0.5679 to 0.4802. & Attack-specific \\
+H7 & Does DP reduce MIA? & MIA Attacker ROC AUC & Attacker AUC drops from 0.5679 to 0.4802. & Attack-specific \\
 \bottomrule
 \end{tabular}
 \label{tab:hyp_summary}
@@ -270,6 +279,12 @@ We evaluated client-update divergence over 5 seeds across Dirichlet partitions $
     \item $\alpha = 0.1$ (Extreme skew): FedAvg Drift = $0.1908 \pm 0.0289$ vs. FedProx Drift = $0.1825 \pm 0.0272$
 \end{itemize}
 This consistent containment across all heterogeneity levels supports **H1**.
+\begin{figure}[ht]
+\centering
+\fbox{Placeholder for Figure 4: Client weight divergence (L2 norm) comparison between FedAvg and FedProx across Dirichlet concentration parameters $\alpha \in \{10.0, 1.0, 0.5, 0.1\}$.}
+\caption{Optimization weight drift containment using proximal regularization under varying statistical heterogeneity skew.}
+\label{fig:drift}
+\end{figure}
 
 \subsection{Experiment 2: Privacy--Utility Trade-off Curve}
 We evaluated composed Rényi DP bounds on the global test partition across budgets:
@@ -281,6 +296,12 @@ We evaluated composed Rényi DP bounds on the global test partition across budge
     \item $\epsilon = 10.0 \to$ AUC: $0.7576$ [95\% CI: $0.6364 - 0.8814$] ($\sigma = 3.8216$)
 \end{itemize}
 This shows a clear privacy--utility trade-off, supporting **H2**.
+\begin{figure}[ht]
+\centering
+\fbox{Placeholder for Figure 2: Global Model ROC AUC vs. Privacy budget Epsilon ($\epsilon$) with 95\% percentile bootstrap confidence intervals.}
+\caption{Analytical privacy-utility trade-off curve under composed Rényi Differential Privacy.}
+\label{fig:privacy_utility}
+\end{figure}
 
 \subsection{Experiment 3: Joint Privacy × Heterogeneity Interaction Matrix}
 We swept Dirichlet label skew ($\alpha$) and privacy budget ($\epsilon$) across 5 random seeds to evaluate global model test AUC under joint constraints in Table \ref{tab:interaction}:
@@ -316,7 +337,13 @@ Dirichlet $\alpha$ & Metric / Model & $\epsilon=0.5$ & $\epsilon=1.0$ & $\epsilo
 \label{tab:interaction}
 \end{table*}
 
-Under joint privacy--heterogeneity constraints over repeated trials, FedProx produced consistently positive utility differences at moderate privacy budgets ($\epsilon = 1.0$ and $2.0$), whereas differences were small and sometimes negative at weaker privacy constraints ($\epsilon = 5.0$ and $10.0$). This confirms that the regularization benefit of FedProx is most visible when the optimization path is perturbed by privacy noise under label heterogeneity, supporting **H3**.
+Under joint privacy–heterogeneity constraints over repeated trials, FedProx produced consistently positive utility differences at moderate privacy budgets ($\epsilon = 1.0$ and $2.0$), whereas differences were small and sometimes negative at weaker privacy constraints ($\epsilon = 5.0$ and $10.0$). This confirms that the regularization benefit of FedProx is most visible when the optimization path is perturbed by privacy noise under label heterogeneity, supporting **H3**.
+\begin{figure}[ht]
+\centering
+\fbox{Placeholder for Figure 3: Heatmap of the performance benefit ($\Delta AUC$) of FedProx over FedAvg across the Dirichlet Concentration skew $\alpha$ and privacy budget $\epsilon$.}
+\caption{2D Heatmap of FedProx-FedAvg optimization benefits under joint privacy and heterogeneity constraints.}
+\label{fig:heatmap}
+\end{figure}
 
 \subsection{Experiment 4: Personalized Adaptation Gains}
 We evaluated client test partitions matching local Dirichlet skews ($\alpha=0.5$). For Hospital 2 (containing valid target classes), Local-Only AUC was 0.6315, Global FedProx AUC was 0.7433, and Personalized FL (PFL) AUC was 0.7101.
@@ -352,12 +379,30 @@ No DP & 0.0611 & 0.0720 & 0.1065 & 3 & 2 & 1 \\
 \end{table}
 
 The evaluations in Table \ref{tab:shapley_noise} demonstrate that differential privacy noise altered the observed contribution rankings in the evaluated three-client setting. As privacy noise increases ($\epsilon$ drops from 10 to 0.5), the contribution rankings flip: Hospital 1 rises to Rank 1 while Hospital 3 drops to Rank 3, revealing that privacy perturbation alters perceived economic contribution in the evaluated three-client setting, supporting **H5**.
+\begin{figure}[ht]
+\centering
+\fbox{Placeholder for Figure 5: Line plot showing computed client contribution scores and ranks on the y-axis against privacy epsilon $\epsilon \in \{\text{No DP}, 10, 5, 2, 1, 0.5\}$ on the x-axis.}
+\caption{Shapley contribution value and rank volatility under composed differential privacy noise constraints.}
+\label{fig:shapley_volatility}
+\end{figure}
 
 \subsection{Experiment 7: Empirical Privacy Protection (MIA Resistance)}
 Without DP, the confidence-threshold MIA Attacker achieves an AUC of 0.5679 (attacker advantage = 0.0734) on prediction confidence. Once DP is enabled (even at a weak budget $\epsilon=10.0$), the attacker AUC drops to 0.4802 (attacker advantage = -0.0161), indicating substantially reduced vulnerability to the evaluated confidence-threshold membership-inference attack, supporting **H7**.
+\begin{figure}[ht]
+\centering
+\fbox{Placeholder for Figure 6: MIA attacker ROC curves for models trained without DP vs. models trained with DP $\epsilon=10$.}
+\caption{Empirical Membership Inference Attack (MIA) resistance curves and AUC degradation under Gaussian perturbation.}
+\label{fig:mia}
+\end{figure}
 
 \subsection{Experiment 8: Controlled Distribution-Shift Stress Testing}
 We evaluated model robustness under controlled synthetic domain shifts. The test split AUC degrades gracefully from 0.7566 to 0.7462 (at severity 2.0) under covariate shift $P(X)$, but drops precipitously to 0.5265 (at severity 2.0) under concept shift $P(Y|X)$ as target labels are flipped. These stress-testing experiments assess sensitivity to controlled synthetic distribution perturbations rather than external clinical generalization, supporting **H6**.
+\begin{figure}[ht]
+\centering
+\fbox{Placeholder for Figure 7: Model staging AUC on the y-axis against domain shift severity scale on the x-axis for covariate shift and concept shift.}
+\caption{Model robustness profile under controlled distribution-shift stress testing.}
+\label{fig:stress_test}
+\end{figure}
 
 \section{Survival Analysis Methodological Extension and Dataset Limitation}
 After preprocessing and cohort matching, the survival-analysis subset contains 347 observations, with 12 observed death events (9 in the training split of size 277, and 0 in the test split of size 70).
@@ -367,9 +412,32 @@ Although a federated Cox proportional-hazards implementation was developed, reli
 The findings in this study answer our primary research question: privacy constraints and statistical heterogeneity jointly influence both optimization stability and the economics of clinical data sharing. Under extreme non-IID conditions, client parameters drift. FedProx controls this drift by penalizing local optimization steps. Under differential privacy constraints, client updates are perturbed by noise. The results are consistent with the interpretation that proximal regularization may mitigate optimization instability under the combined effects of statistical heterogeneity and privacy perturbation.
 
 Importantly, privacy mechanisms have consequences beyond model staging performance. We showed that adding differential privacy noise disrupts contribution valuation, altering client contribution rankings in the evaluated three-client setting. This suggests a conflict between privacy and incentive alignment in collaborative clinical consortia.
+\begin{figure*}[t]
+\centering
+\fbox{Placeholder for Figure 1: Architectural diagram of the multi-dimensional DP-FPS clinical federated system, showing clinical site partitioning, local gradient clipping and RDP noise additions, FedProx server consolidation, and post-aggregation Shapley valuation.}
+\caption{Overall DP-FPS clinical federated architecture showing data pathways and optimization-privacy-valuation alignment.}
+\label{fig:architecture}
+\end{figure*}
+
+\subsection{Threats to Validity}
+
+\subsubsection{Internal Validity}
+First, the non-IID clinical distributions are generated synthetically using label-skew Dirichlet allocations rather than natural clinical silos. Second, the distribution shift evaluations rely on controlled synthetic perturbations (covariate scaling and random label flipping) rather than real multi-site clinical datasets. Third, contribution evaluations are restricted to a three-client setting due to the computational complexity of the Shapley value, which may limit generalizability to larger hospital networks. Finally, statistical observations are computed over five random seeds, which captures variance but does not fully chart the stochastic properties of federated training.
+
+\subsubsection{External Validity}
+First, the evaluation is restricted to the retrospective TCGA-PRAD clinical-proteomic cohort, which may not reflect current clinical distributions at physical hospitals. Second, the dataset lacks prospective validation or genuine external clinical cohorts, meaning that clinical utility remains unestablished. Third, the synthetic client silos assume uniform feature dimensions across institutions, ignoring tabular discrepancies and feature alignment issues common in physical silos.
+
+\subsubsection{Privacy Validity}
+First, the differential privacy bounds protect sample records under sample-level add/remove adjacency. They do not guarantee patient-level privacy if a single patient barcode matches multiple samples in the cohort. Second, the analytical RDP composition assumes strict full-batch updates ($q=1.0$), ignoring subsampling amplification. Third, empirical protection is measured using one confidence-threshold membership inference attack, which does not guarantee protection against alternative threats (e.g., gradient reconstruction or model inversion).
+
+\subsubsection{Statistical Validity}
+First, the three-client setting yields a sample size $n=3$ for the correlation analysis between Shapley values and empirical LOO utility, which does not support formal statistical significance claims. Second, the extreme right-censoring in the PRAD survival subset yields only 12 observed events overall and 0 events in the test partition, preventing out-of-sample survival performance estimations.
+
+\subsection{Reproducibility Statement}
+To ensure reproducibility, the source code, preprocessed variables, and analysis notebooks are hosted in a public git repository at \url{https://github.com/JeyanthPonnaluri/Mini_Project_RVR}. All experiments are implemented in Python 3.12, utilizing NumPy 1.26.4, Scikit-learn 1.4.0, and Pandas 2.2.0. Neural network baselines are trained using PyTorch 2.2.0. Experiments were executed on an AMD Ryzen 7 5800H CPU with 16GB RAM. Hyperparameters, random seeds, training-test split parameters, Dirichlet partitioning indexes, RDP noise calibrations, and bootstrap configurations are detailed in Table \ref{tab:protocol} and Section VI.
 
 \section{Limitations}
-The study has several limitations: (1) Preprocessing and DP guarantees are sample-level, not patient-level. (2) The valuation mechanism was evaluated in a three-client setting, and Shapley computational cost scales exponentially with client size. (3) Out-of-sample survival discrimination could not be evaluated due to extreme right-censoring in the PRAD cohort. (4) Robustness evaluations are synthetic stress tests rather than external clinical validations.
+The study limitations are detailed in Section IX.A (Threats to Validity).
 
 \section{Future Work}
 Future work will investigate patient-level DP, scalable Shapley value approximations, and validation on prospective multi-institutional cohorts with sufficient survival events.
