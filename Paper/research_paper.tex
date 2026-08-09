@@ -1,4 +1,4 @@
-\documentclass[journal,compsoc]{IEEEtran}
+\documentclass[conference]{IEEEtran}
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
@@ -11,16 +11,31 @@
 
 \begin{document}
 
-\title{Privacy--Heterogeneity Trade-offs in Federated Prostate Cancer Staging: Optimization Stability, Personalization, and Client Contribution Valuation}
+\title{Privacy-Heterogeneity Trade-offs in Federated Prostate Cancer Staging}
 
-\author{Anonymous Authors
-\thanks{Affiliation anonymized for peer review.}
+\author{\IEEEauthorblockN{Ponnaluri Jeyanth}
+\IEEEauthorblockA{\textit{CSE (Data Science)} \\
+\textit{R.V.R. \& J.C. College of Engineering}\\
+Guntur, India \\
+jeyanthponnaluri08@gmail.com}
+\and
+\IEEEauthorblockN{Pudota Jaideep}
+\IEEEauthorblockA{\textit{CSE (Data Science)} \\
+\textit{R.V.R. \& J.C. College of Engineering}\\
+Guntur, India \\
+pudotajaideep@gmail.com}
+\and
+\IEEEauthorblockN{Dr. M.V.P. Chandra Sekhara Rao}
+\IEEEauthorblockA{\textit{Professor \& Head, CSE (DS)} \\
+\textit{R.V.R. \& J.C. College of Engineering}\\
+Guntur, India \\
+manukondach@gmail.com}
 }
 
 \maketitle
 
 \begin{abstract}
-Collaborative machine learning in medical networks is often hindered by strict data privacy regulations and statistical heterogeneity across clinical sites. While federated learning (FL) enables multi-institutional training without direct data aggregation, the multi-dimensional interactions between statistical heterogeneity, privacy constraints, local adaptation, and participant valuation remain poorly characterized. In this study, we systematically investigate the central research question: How do privacy constraints and statistical heterogeneity jointly affect federated clinical model utility, local adaptation, and participant contribution valuation under decentralized training? We evaluate this using a multi-dimensional framework, DP-FPS, which integrates FedProx optimization, sample-level differential privacy calibrated via Rényi Differential Privacy (RDP) under a full sampling rate $q=1.0$, personalized local adaptation (PFL), and game-theoretic permutation Shapley values. Using the TCGA-PRAD clinical cohort, our evaluations show that: (1) FedProx reduced measured client-update drift by approximately 4.2--4.3\% across the tested Dirichlet concentrations; (2) under joint privacy--heterogeneity constraints over repeated trials, FedProx produced consistently positive utility differences at moderate privacy budgets ($\epsilon = 1.0$ and $2.0$), whereas differences were small and sometimes negative at weaker privacy constraints ($\epsilon = 5.0$ and $10.0$); (3) personalized local adaptation improves performance over local-only training in the evaluable client setting, yielding a 0.0786 absolute AUC point improvement (corresponding to a 12.45\% relative improvement), although it does not outperform the global model; (4) privacy noise perturbation altered the observed contribution rankings in the evaluated three-client setting; and (5) RDP-calibrated noise reduces membership inference attack (MIA) advantage, indicating substantially reduced vulnerability to the evaluated confidence-threshold MIA. Finally, we report that while a federated Cox proportional-hazards survival model was successfully developed, out-of-sample survival discrimination could not be reliably evaluated because the held-out test partition contained zero observed death events due to severe right-censoring.
+Collaborative machine learning in medical networks is often hindered by strict data privacy regulations and statistical heterogeneity across clinical sites. While federated learning enables multi-institutional training without direct data aggregation, the multi-dimensional interactions between statistical heterogeneity, privacy constraints, local adaptation, and participant valuation remain poorly characterized. In this study, we systematically investigate the central research question: How do privacy constraints and statistical heterogeneity jointly affect federated clinical model utility, local adaptation, and participant contribution valuation under decentralized training? We evaluate this using a multi-dimensional framework, DP-FPS, which integrates FedProx optimization, sample-level differential privacy calibrated via Renyi Differential Privacy (RDP) under a full sampling rate of 1.0, personalized local adaptation, and game-theoretic permutation Shapley values. Using the TCGA-PRAD clinical cohort, our evaluations show that: first, FedProx reduced measured client-update drift by approximately 4.2 to 4.3 percent across the tested Dirichlet concentrations; second, under joint privacy and heterogeneity constraints over repeated trials, FedProx produced consistently positive utility differences at moderate privacy budgets of epsilon equal to 1.0 and 2.0, whereas differences were small and sometimes negative at weaker privacy constraints of epsilon equal to 5.0 and 10.0; third, personalized local adaptation improves performance over local-only training in the evaluable client setting, yielding a 0.0786 absolute Area Under the Curve (AUC) point improvement (corresponding to a 12.45 percent relative improvement), although it does not outperform the global model; fourth, privacy noise perturbation altered the observed contribution rankings in the evaluated three-client setting; and fifth, RDP-calibrated noise reduces membership inference attack (MIA) advantage, indicating substantially reduced vulnerability to the evaluated confidence-threshold MIA. Finally, we report that while a federated Cox proportional-hazards survival model was successfully developed, out-of-sample survival discrimination could not be reliably evaluated because the held-out test partition contained zero observed death events due to severe right-censoring.
 \end{abstract}
 
 \begin{IEEEkeywords}
