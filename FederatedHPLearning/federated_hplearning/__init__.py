@@ -5,7 +5,7 @@ from .federated import partition_dirichlet, partition_equal, fedavg_train, fedpr
 from .shapley import compute_federated_shapley_values
 from .contribution import measure_hospital_contribution
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __all__ = [
     "load_clinical",
     "load_survival_data",

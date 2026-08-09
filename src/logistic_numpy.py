@@ -218,49 +218,24 @@ def local_train_dp(
     epsilon: float,
     delta: float,
     clipping_norm: float,
-    random_seed: int = 42
+    random_seed: int = 42,
+    noise_mult: float = None
 ) -> Tuple[np.ndarray, list]:
     """
     Train logistic regression locally using DP-SGD (clipping and noise addition).
-    
-    Parameters:
-    -----------
-    X : np.ndarray
-        Feature matrix of shape (n_samples, n_features)
-    y : np.ndarray
-        True labels of shape (n_samples,)
-    w_init : np.ndarray
-        Initial weights of shape (n_features,)
-    epochs : int
-        Number of training epochs
-    lr : float
-        Learning rate
-    epsilon : float
-        Privacy budget epsilon
-    delta : float
-        Privacy parameter delta
-    clipping_norm : float
-        L2 norm clipping threshold
-    random_seed : int
-        Random seed for reproducibility
-        
-    Returns:
-    --------
-    tuple
-        (w_final, loss_history)
     """
     np.random.seed(random_seed)
     w = w_init.copy()
     loss_history = []
     n_samples, n_features = X.shape
     
-    # Calculate noise multiplier using standard Gaussian mechanism approximation
-    if epsilon <= 0:
-        raise ValueError("Epsilon must be greater than zero.")
-    if delta <= 0 or delta >= 1:
-        raise ValueError("Delta must be in (0, 1).")
-        
-    noise_mult = np.sqrt(2.0 * np.log(1.25 / delta)) / epsilon
+    if noise_mult is None:
+        # Calculate noise multiplier using standard Gaussian mechanism approximation
+        if epsilon <= 0:
+            raise ValueError("Epsilon must be greater than zero.")
+        if delta <= 0 or delta >= 1:
+            raise ValueError("Delta must be in (0, 1).")
+        noise_mult = np.sqrt(2.0 * np.log(1.25 / delta)) / epsilon
     
     for epoch in range(epochs):
         z = X @ w
@@ -302,50 +277,24 @@ def local_train_fedprox_dp(
     epsilon: float,
     delta: float,
     clipping_norm: float,
-    random_seed: int = 42
+    random_seed: int = 42,
+    noise_mult: float = None
 ) -> Tuple[np.ndarray, list]:
     """
     Train logistic regression locally using DP-SGD with FedProx proximal term.
-    
-    Parameters:
-    -----------
-    X : np.ndarray
-        Feature matrix of shape (n_samples, n_features)
-    y : np.ndarray
-        True labels of shape (n_samples,)
-    w_global : np.ndarray
-        Global weights from server (proximal center)
-    epochs : int
-        Number of training epochs
-    lr : float
-        Learning rate
-    mu : float
-        Proximal term coefficient
-    epsilon : float
-        Privacy budget epsilon
-    delta : float
-        Privacy parameter delta
-    clipping_norm : float
-        L2 norm clipping threshold
-    random_seed : int
-        Random seed for reproducibility
-        
-    Returns:
-    --------
-    tuple
-        (w_final, loss_history)
     """
     np.random.seed(random_seed)
     w = w_global.copy()
     loss_history = []
     n_samples, n_features = X.shape
     
-    if epsilon <= 0:
-        raise ValueError("Epsilon must be greater than zero.")
-    if delta <= 0 or delta >= 1:
-        raise ValueError("Delta must be in (0, 1).")
-        
-    noise_mult = np.sqrt(2.0 * np.log(1.25 / delta)) / epsilon
+    if noise_mult is None:
+        # Calculate noise multiplier using standard Gaussian mechanism approximation
+        if epsilon <= 0:
+            raise ValueError("Epsilon must be greater than zero.")
+        if delta <= 0 or delta >= 1:
+            raise ValueError("Delta must be in (0, 1).")
+        noise_mult = np.sqrt(2.0 * np.log(1.25 / delta)) / epsilon
     
     for epoch in range(epochs):
         z = X @ w

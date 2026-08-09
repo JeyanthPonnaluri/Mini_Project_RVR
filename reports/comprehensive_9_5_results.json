@@ -1,0 +1,374 @@
+{
+    "privacy_heterogeneity_2d": [
+        {
+            "Alpha": 10.0,
+            "Epsilon": 0.5,
+            "FedAvg_AUC_mean": 0.6102272727272727,
+            "FedAvg_AUC_std": 0.07380679631184506,
+            "FedProx_AUC_mean": 0.6098484848484849,
+            "FedProx_AUC_std": 0.07705564054713036,
+            "Benefit_mean": -0.00037878787878787846,
+            "Benefit_std": 0.006738805634339817,
+            "Benefit_CI_lower": -0.006285611453120508,
+            "Benefit_CI_upper": 0.005528035695544751
+        },
+        {
+            "Alpha": 10.0,
+            "Epsilon": 1.0,
+            "FedAvg_AUC_mean": 0.6893939393939394,
+            "FedAvg_AUC_std": 0.047932010359256635,
+            "FedProx_AUC_mean": 0.6935606060606061,
+            "FedProx_AUC_std": 0.047941737961312486,
+            "Benefit_mean": 0.004166666666666674,
+            "Benefit_std": 0.0015386436372416756,
+            "Benefit_CI_lower": 0.0028179860543868685,
+            "Benefit_CI_upper": 0.005515347278946481
+        },
+        {
+            "Alpha": 10.0,
+            "Epsilon": 2.0,
+            "FedAvg_AUC_mean": 0.740719696969697,
+            "FedAvg_AUC_std": 0.01650446206745023,
+            "FedProx_AUC_mean": 0.7422348484848484,
+            "FedProx_AUC_std": 0.016655902171151975,
+            "Benefit_mean": 0.0015151515151514915,
+            "Benefit_std": 0.001136363636363591,
+            "Benefit_CI_lower": 0.0005190848706288979,
+            "Benefit_CI_upper": 0.002511218159674085
+        },
+        {
+            "Alpha": 10.0,
+            "Epsilon": 5.0,
+            "FedAvg_AUC_mean": 0.7573863636363637,
+            "FedAvg_AUC_std": 0.004537556269208679,
+            "FedProx_AUC_mean": 0.75625,
+            "FedProx_AUC_std": 0.0035229309162383123,
+            "Benefit_mean": -0.00113636363636358,
+            "Benefit_std": 0.002192393352801134,
+            "Benefit_CI_lower": -0.0030580811399141296,
+            "Benefit_CI_upper": 0.0007853538671869699
+        },
+        {
+            "Alpha": 10.0,
+            "Epsilon": 10.0,
+            "FedAvg_AUC_mean": 0.7558712121212121,
+            "FedAvg_AUC_std": 0.004035468892549711,
+            "FedProx_AUC_mean": 0.7551136363636364,
+            "FedProx_AUC_std": 0.005637453055355008,
+            "Benefit_mean": -0.0007575757575757569,
+            "Benefit_std": 0.00162922827027323,
+            "Benefit_CI_lower": -0.0021856573015483307,
+            "Benefit_CI_upper": 0.000670505786396817
+        },
+        {
+            "Alpha": 1.0,
+            "Epsilon": 0.5,
+            "FedAvg_AUC_mean": 0.6107954545454546,
+            "FedAvg_AUC_std": 0.07501052114755827,
+            "FedProx_AUC_mean": 0.6113636363636363,
+            "FedProx_AUC_std": 0.0766275801669385,
+            "Benefit_mean": 0.0005681818181817677,
+            "Benefit_std": 0.002440170213394831,
+            "Benefit_CI_lower": -0.0015707216795560683,
+            "Benefit_CI_upper": 0.0027070853159196035
+        },
+        {
+            "Alpha": 1.0,
+            "Epsilon": 1.0,
+            "FedAvg_AUC_mean": 0.6892045454545455,
+            "FedAvg_AUC_std": 0.048709234562662164,
+            "FedProx_AUC_mean": 0.6935606060606061,
+            "FedProx_AUC_std": 0.04851812896623113,
+            "Benefit_mean": 0.004356060606060574,
+            "Benefit_std": 0.002125941697030533,
+            "Benefit_CI_lower": 0.002492590546962053,
+            "Benefit_CI_upper": 0.006219530665159095
+        },
+        {
+            "Alpha": 1.0,
+            "Epsilon": 2.0,
+            "FedAvg_AUC_mean": 0.740909090909091,
+            "FedAvg_AUC_std": 0.016539199200470277,
+            "FedProx_AUC_mean": 0.743560606060606,
+            "FedProx_AUC_std": 0.01640636956644523,
+            "Benefit_mean": 0.0026515151515151603,
+            "Benefit_std": 0.002192393352801169,
+            "Benefit_CI_lower": 0.0007297976479645801,
+            "Benefit_CI_upper": 0.00457323265506574
+        },
+        {
+            "Alpha": 1.0,
+            "Epsilon": 5.0,
+            "FedAvg_AUC_mean": 0.7575757575757576,
+            "FedAvg_AUC_std": 0.003927356316918101,
+            "FedProx_AUC_mean": 0.7571969696969697,
+            "FedProx_AUC_std": 0.004088453247144455,
+            "Benefit_mean": -0.0003787878787878451,
+            "Benefit_std": 0.00258298895776239,
+            "Benefit_CI_lower": -0.0026428775255055554,
+            "Benefit_CI_upper": 0.001885301767929865
+        },
+        {
+            "Alpha": 1.0,
+            "Epsilon": 10.0,
+            "FedAvg_AUC_mean": 0.7560606060606061,
+            "FedAvg_AUC_std": 0.004623695308990012,
+            "FedProx_AUC_mean": 0.7547348484848484,
+            "FedProx_AUC_std": 0.005618332187193683,
+            "Benefit_mean": -0.0013257575757575691,
+            "Benefit_std": 0.0012845321937737255,
+            "Benefit_CI_lower": -0.0024516996871470423,
+            "Benefit_CI_upper": -0.00019981546436809616
+        },
+        {
+            "Alpha": 0.5,
+            "Epsilon": 0.5,
+            "FedAvg_AUC_mean": 0.6102272727272726,
+            "FedAvg_AUC_std": 0.0722795363986366,
+            "FedProx_AUC_mean": 0.612310606060606,
+            "FedProx_AUC_std": 0.07557886117293873,
+            "Benefit_mean": 0.002083333333333304,
+            "Benefit_std": 0.005567022142689096,
+            "Benefit_CI_lower": -0.002796376724440042,
+            "Benefit_CI_upper": 0.006963043391106649
+        },
+        {
+            "Alpha": 0.5,
+            "Epsilon": 1.0,
+            "FedAvg_AUC_mean": 0.690719696969697,
+            "FedAvg_AUC_std": 0.04716099241633171,
+            "FedProx_AUC_mean": 0.6935606060606061,
+            "FedProx_AUC_std": 0.047388619353815206,
+            "Benefit_mean": 0.0028409090909091274,
+            "Benefit_std": 0.0015845833835872298,
+            "Benefit_CI_lower": 0.0014519605155158008,
+            "Benefit_CI_upper": 0.004229857666302454
+        },
+        {
+            "Alpha": 0.5,
+            "Epsilon": 2.0,
+            "FedAvg_AUC_mean": 0.740719696969697,
+            "FedAvg_AUC_std": 0.01684861088354862,
+            "FedProx_AUC_mean": 0.7424242424242424,
+            "FedProx_AUC_std": 0.016226098477730173,
+            "Benefit_mean": 0.001704545454545503,
+            "Benefit_std": 0.0007086472323435697,
+            "Benefit_CI_lower": 0.0010833887681792778,
+            "Benefit_CI_upper": 0.0023257021409117283
+        },
+        {
+            "Alpha": 0.5,
+            "Epsilon": 5.0,
+            "FedAvg_AUC_mean": 0.7575757575757576,
+            "FedAvg_AUC_std": 0.004234977230113219,
+            "FedProx_AUC_mean": 0.7568181818181818,
+            "FedProx_AUC_std": 0.003945580806060554,
+            "Benefit_mean": -0.0007575757575756902,
+            "Benefit_std": 0.002192393352801138,
+            "Benefit_CI_lower": -0.002679293261126243,
+            "Benefit_CI_upper": 0.0011641417459748629
+        },
+        {
+            "Alpha": 0.5,
+            "Epsilon": 10.0,
+            "FedAvg_AUC_mean": 0.7554924242424242,
+            "FedAvg_AUC_std": 0.00445780389997717,
+            "FedProx_AUC_mean": 0.7551136363636364,
+            "FedProx_AUC_std": 0.005637453055355008,
+            "Benefit_mean": -0.0003787878787878896,
+            "Benefit_std": 0.0012845321937737617,
+            "Benefit_CI_lower": -0.0015047299901773943,
+            "Benefit_CI_upper": 0.0007471542326016153
+        },
+        {
+            "Alpha": 0.1,
+            "Epsilon": 0.5,
+            "FedAvg_AUC_mean": 0.6117424242424243,
+            "FedAvg_AUC_std": 0.07386606445115579,
+            "FedProx_AUC_mean": 0.612310606060606,
+            "FedProx_AUC_std": 0.07782362670345193,
+            "Benefit_mean": 0.0005681818181817677,
+            "Benefit_std": 0.00513812877509489,
+            "Benefit_CI_lower": -0.003935586627376113,
+            "Benefit_CI_upper": 0.0050719502637396495
+        },
+        {
+            "Alpha": 0.1,
+            "Epsilon": 1.0,
+            "FedAvg_AUC_mean": 0.6895833333333334,
+            "FedAvg_AUC_std": 0.04907971369723331,
+            "FedProx_AUC_mean": 0.6941287878787878,
+            "FedProx_AUC_std": 0.04975692752318303,
+            "Benefit_mean": 0.004545454545454497,
+            "Benefit_std": 0.0013917555356722001,
+            "Benefit_CI_lower": 0.003325527031011225,
+            "Benefit_CI_upper": 0.0057653820598977685
+        },
+        {
+            "Alpha": 0.1,
+            "Epsilon": 2.0,
+            "FedAvg_AUC_mean": 0.7412878787878787,
+            "FedAvg_AUC_std": 0.015633893245067348,
+            "FedProx_AUC_mean": 0.7433712121212122,
+            "FedProx_AUC_std": 0.015467815900829832,
+            "Benefit_mean": 0.00208333333333337,
+            "Benefit_std": 0.0011043469497812848,
+            "Benefit_CI_lower": 0.0011153305519548146,
+            "Benefit_CI_upper": 0.0030513361147119257
+        },
+        {
+            "Alpha": 0.1,
+            "Epsilon": 5.0,
+            "FedAvg_AUC_mean": 0.7579545454545455,
+            "FedAvg_AUC_std": 0.003909046863740557,
+            "FedProx_AUC_mean": 0.7573863636363637,
+            "FedProx_AUC_std": 0.0038998599018889774,
+            "Benefit_mean": -0.00056818181818179,
+            "Benefit_std": 0.0024401702133948176,
+            "Benefit_CI_lower": -0.002707085315919614,
+            "Benefit_CI_upper": 0.0015707216795560338
+        },
+        {
+            "Alpha": 0.1,
+            "Epsilon": 10.0,
+            "FedAvg_AUC_mean": 0.7554924242424242,
+            "FedAvg_AUC_std": 0.005234952636774709,
+            "FedProx_AUC_mean": 0.7558712121212121,
+            "FedProx_AUC_std": 0.004376598487989142,
+            "Benefit_mean": 0.00037878787878786735,
+            "Benefit_std": 0.001284532193773719,
+            "Benefit_CI_lower": -0.0007471542326015997,
+            "Benefit_CI_upper": 0.0015047299901773344
+        }
+    ],
+    "personalization_baselines": [
+        {
+            "Hospital": "Hospital 1",
+            "Local_AUC": 1.0,
+            "FedAvg_AUC": 1.0,
+            "FedProx_AUC": 1.0,
+            "PFL_AUC": 1.0,
+            "Delta_PFL": 0.0,
+            "Delta_PFL_Local": 0.0
+        },
+        {
+            "Hospital": "Hospital 2",
+            "Local_AUC": 0.6314699792960662,
+            "FedAvg_AUC": 0.7432712215320911,
+            "FedProx_AUC": 0.7432712215320911,
+            "PFL_AUC": 0.7101449275362318,
+            "Delta_PFL": -0.03312629399585931,
+            "Delta_PFL_Local": 0.07867494824016563
+        },
+        {
+            "Hospital": "Hospital 3",
+            "Local_AUC": NaN,
+            "FedAvg_AUC": NaN,
+            "FedProx_AUC": NaN,
+            "PFL_AUC": NaN,
+            "Delta_PFL": NaN,
+            "Delta_PFL_Local": NaN
+        }
+    ],
+    "shapley_privacy_noise": [
+        {
+            "Privacy": "No DP",
+            "H1_Score": 0.06107954545454549,
+            "H2_Score": 0.07196969696969698,
+            "H3_Score": 0.1065340909090909,
+            "H1_Rank": 3,
+            "H2_Rank": 2,
+            "H3_Rank": 1
+        },
+        {
+            "Privacy": "10.0",
+            "H1_Score": 0.11000631313131311,
+            "H2_Score": 0.02099116161616162,
+            "H3_Score": 0.09438131313131311,
+            "H1_Rank": 1,
+            "H2_Rank": 3,
+            "H3_Rank": 2
+        },
+        {
+            "Privacy": "5.0",
+            "H1_Score": 0.10811237373737374,
+            "H2_Score": 0.03424873737373738,
+            "H3_Score": 0.0905934343434344,
+            "H1_Rank": 1,
+            "H2_Rank": 3,
+            "H3_Rank": 2
+        },
+        {
+            "Privacy": "2.0",
+            "H1_Score": 0.10574494949494945,
+            "H2_Score": 0.04750631313131315,
+            "H3_Score": 0.08065025252525254,
+            "H1_Rank": 1,
+            "H2_Rank": 3,
+            "H3_Rank": 2
+        },
+        {
+            "Privacy": "1.0",
+            "H1_Score": 0.10448232323232326,
+            "H2_Score": 0.05808080808080801,
+            "H3_Score": 0.07133838383838387,
+            "H1_Rank": 1,
+            "H2_Rank": 3,
+            "H3_Rank": 2
+        },
+        {
+            "Privacy": "0.5",
+            "H1_Score": 0.09311868686868686,
+            "H2_Score": 0.05808080808080809,
+            "H3_Score": 0.05050505050505046,
+            "H1_Rank": 1,
+            "H2_Rank": 2,
+            "H3_Rank": 3
+        }
+    ],
+    "contribution_consistency": {
+        "shap_scores": [
+            0.04545454545454547,
+            0.1027462121212121,
+            0.109375
+        ],
+        "degradations": [
+            -0.01041666666666663,
+            0.08238636363636365,
+            0.029356060606060552
+        ],
+        "correlation": 0.5
+    },
+    "mia_attack_results": [
+        {
+            "Privacy": "No DP",
+            "MIA_Attacker_AUC": 0.5679216090768436,
+            "MIA_Advantage": 0.07338834450747811
+        },
+        {
+            "Privacy": "10.0",
+            "MIA_Attacker_AUC": 0.48024755028365135,
+            "MIA_Advantage": -0.01609076843733881
+        },
+        {
+            "Privacy": "5.0",
+            "MIA_Attacker_AUC": 0.4790613718411552,
+            "MIA_Advantage": -0.05188241361526558
+        },
+        {
+            "Privacy": "2.0",
+            "MIA_Attacker_AUC": 0.470293965961836,
+            "MIA_Advantage": -0.06977823620422902
+        },
+        {
+            "Privacy": "1.0",
+            "MIA_Attacker_AUC": 0.4612686952037132,
+            "MIA_Advantage": -0.06977823620422902
+        },
+        {
+            "Privacy": "0.5",
+            "MIA_Attacker_AUC": 0.45729757607013927,
+            "MIA_Advantage": -0.01609076843733881
+        }
+    ]
+}

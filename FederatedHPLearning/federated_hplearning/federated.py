@@ -8,7 +8,7 @@ from typing import List, Tuple, Dict
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score
 
-from logistic_numpy import (
+from .logistic_numpy import (
     initialize_weights,
     local_train,
     compute_loss,
@@ -934,7 +934,7 @@ def fedavg_cox_train(
     """
     Train federated Cox Proportional Hazards model using FedAvg.
     """
-    from cox_numpy import local_cox_train, compute_concordance_index
+    from .cox_numpy import local_cox_train, compute_concordance_index
     
     np.random.seed(random_seed)
     n_features = X_test.shape[1]

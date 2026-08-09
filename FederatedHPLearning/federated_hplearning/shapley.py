@@ -10,8 +10,8 @@ import itertools
 import math
 from typing import List, Tuple, Dict
 from sklearn.metrics import roc_auc_score
-from federated import fedavg_train, fedprox_train
-from logistic_numpy import predict_proba
+from .federated import fedavg_train, fedprox_train
+from .logistic_numpy import predict_proba
 
 
 def compute_federated_shapley_values(

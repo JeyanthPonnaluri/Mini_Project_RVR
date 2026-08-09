@@ -348,6 +348,13 @@ def fedavg_train(
     total_bytes = 0
     total_time = 0.0
     
+    # Calibrate DP noise multiplier using rigorous RDP accountant
+    noise_mult = None
+    if dp_enabled:
+        steps = rounds * epochs
+        noise_mult = calibrate_noise_multiplier(q=1.0, steps=steps, target_epsilon=epsilon, delta=delta)
+        print(f"  [DP-FPS] Calibrated RDP noise multiplier for target epsilon={epsilon}, delta={delta}, steps={steps}: sigma={noise_mult:.4f}")
+    
     # Pre-calculate network bandwidth and latency in standard units
     bandwidth_bps = bandwidth_mbps * 1e6
     latency_s = latency_ms / 1000.0
@@ -380,7 +387,8 @@ def fedavg_train(
                 w_k, loss_history = local_train_dp(
                     X_k, y_k, w_global, epochs, lr,
                     epsilon=epsilon, delta=delta, clipping_norm=clipping_norm,
-                    random_seed=random_seed + k + round_idx * 10
+                    random_seed=random_seed + k + round_idx * 10,
+                    noise_mult=noise_mult
                 )
             else:
                 w_k, loss_history = local_train(X_k, y_k, w_global, epochs, lr)
@@ -802,6 +810,13 @@ def fedprox_train(
     total_bytes = 0
     total_time = 0.0
     
+    # Calibrate DP noise multiplier using rigorous RDP accountant
+    noise_mult = None
+    if dp_enabled:
+        steps = rounds * epochs
+        noise_mult = calibrate_noise_multiplier(q=1.0, steps=steps, target_epsilon=epsilon, delta=delta)
+        print(f"  [DP-FPS] Calibrated RDP noise multiplier for target epsilon={epsilon}, delta={delta}, steps={steps}: sigma={noise_mult:.4f}")
+    
     # Pre-calculate network bandwidth and latency in standard units
     bandwidth_bps = bandwidth_mbps * 1e6
     latency_s = latency_ms / 1000.0
@@ -836,7 +851,8 @@ def fedprox_train(
                 w_k, loss_history = local_train_fedprox_dp(
                     X_k, y_k, w_global, epochs, lr, mu,
                     epsilon=epsilon, delta=delta, clipping_norm=clipping_norm,
-                    random_seed=random_seed + k + round_idx * 10
+                    random_seed=random_seed + k + round_idx * 10,
+                    noise_mult=noise_mult
                 )
             else:
                 w_k, loss_history = local_train_fedprox(X_k, y_k, w_global, epochs, lr, mu)
@@ -947,6 +963,13 @@ def fedavg_cox_train(
     total_bytes = 0
     total_time = 0.0
     
+    # Calibrate DP noise multiplier using rigorous RDP accountant
+    noise_mult = None
+    if dp_enabled:
+        steps = rounds * epochs
+        noise_mult = calibrate_noise_multiplier(q=1.0, steps=steps, target_epsilon=epsilon, delta=delta)
+        print(f"  [DP-FPS Cox] Calibrated RDP noise multiplier for target epsilon={epsilon}, delta={delta}, steps={steps}: sigma={noise_mult:.4f}")
+    
     # Pre-sort test data for C-index evaluation
     sort_idx = np.argsort(times_test)
     X_test_sorted = X_test[sort_idx]
@@ -976,7 +999,8 @@ def fedavg_cox_train(
             w_k = local_cox_train(
                 X_k, times_k, events_k, epochs=epochs, lr=lr, alpha=alpha,
                 w_global=w_global, mu=0.0,
-                dp_enabled=dp_enabled, epsilon=epsilon, delta=delta, clipping_norm=clipping_norm
+                dp_enabled=dp_enabled, epsilon=epsilon, delta=delta, clipping_norm=clipping_norm,
+                noise_mult=noise_mult
             )
             client_weights.append(w_k)
             client_sizes.append(len(X_k))
@@ -1060,22 +1084,158 @@ def evaluate_personalized_fl(hospitals, w_global, epochs=2, lr=0.1, random_seed=
     }
 
 
-def compute_rdp_privacy_budget(q: float, epsilon_local: float, T: int, delta: float = 1e-5) -> float:
+def compute_rdp_step(q: float, sigma: float, alpha: float) -> float:
     """
-    Compute total composed privacy budget (Epsilon total) using RDP composition bounds.
+    Computes Rényi Differential Privacy (RDP) at order alpha for a subsampling rate q
+    and noise multiplier sigma using the analytical subsampled Gaussian mechanism formula.
     
     Parameters:
     -----------
     q : float
-        Client sampling rate (active clients / total clients)
-    epsilon_local : float
-        DP budget epsilon per client update in each round
-    T : int
-        Total number of communication rounds
-    delta : float, default=1e-5
-        Failure probability
+        Sampling rate in (0, 1.0]
+    sigma : float
+        Noise multiplier (standard deviation / L2 sensitivity)
+    alpha : float
+        Rényi order (must be > 1.0)
     """
-    if T <= 0 or q <= 0:
+    import math
+    if sigma <= 0:
+        return float('inf')
+    if q <= 0 or q > 1.0:
+        raise ValueError("Sampling rate q must be in (0, 1.0]")
+    if alpha <= 1.0:
+        raise ValueError("Rényi order alpha must be greater than 1.0")
+        
+    if q == 1.0:
+        return alpha / (2.0 * sigma**2)
+        
+    # If alpha is an integer, we can use the exact analytical formula via binomial expansion
+    if float(alpha).is_integer():
+        alpha_int = int(alpha)
+        terms = []
+        for j in range(alpha_int + 1):
+            coeff = math.comb(alpha_int, j)
+            if q == 1.0:
+                # Base Gaussian mechanism without subsampling
+                log_val = (alpha_int * (alpha_int - 1.0)) / (2.0 * sigma**2) if j == alpha_int else float('-inf')
+            else:
+                # Subsampled Gaussian mechanism term in log-space
+                if j == 0:
+                    log_val = alpha_int * math.log(1.0 - q)
+                elif j == alpha_int:
+                    log_val = alpha_int * math.log(q) + (j * (j - 1.0)) / (2.0 * sigma**2)
+                else:
+                    log_val = (math.log(coeff) + 
+                               j * math.log(q) + 
+                               (alpha_int - j) * math.log(1.0 - q) + 
+                               (j * (j - 1.0)) / (2.0 * sigma**2))
+            terms.append(log_val)
+            
+        # Log-sum-exp for numerical stability
+        max_term = max(terms)
+        sum_val = max_term + math.log(sum(math.exp(t - max_term) for t in terms))
+        return sum_val / (alpha - 1.0)
+    else:
+        # For non-integer alpha, fall back to standard analytical upper bound
+        return (q**2 * alpha) / (2.0 * sigma**2 * (1.0 - q))
+
+
+def compose_rdp_to_dp(q: float, sigma: float, steps: int, delta: float = 1e-5, orders: list = None) -> tuple:
+    """
+    Composes steps of RDP updates and converts to standard (epsilon, delta)-DP by optimizing over orders.
+    
+    Parameters:
+    -----------
+    q : float
+        Sampling rate in (0, 1.0]
+    sigma : float
+        Noise multiplier
+    steps : int
+        Total number of gradient steps (rounds * local_epochs)
+    delta : float
+        Failure probability parameter
+    orders : list, optional
+        Grid of candidate Rényi orders to optimize over.
+        
+    Returns:
+    --------
+    tuple
+        (epsilon, optimal_alpha)
+    """
+    import math
+    if orders is None:
+        orders = [1.5, 2.0, 3.0, 4.0, 5.0, 8.0, 10.0, 16.0, 20.0, 32.0, 64.0, 100.0, 128.0, 200.0]
+        
+    if steps <= 0:
+        return 0.0, 1.5
+    if sigma <= 0:
+        return float('inf'), 1.5
+        
+    epsilons = []
+    for alpha in orders:
+        rdp_step = compute_rdp_step(q, sigma, alpha)
+        rdp_total = steps * rdp_step
+        # Convert RDP total back to standard epsilon
+        eps = rdp_total + math.log(1.0 / delta) / (alpha - 1.0)
+        epsilons.append((eps, alpha))
+        
+    # Return minimum epsilon and its order
+    min_eps, opt_alpha = min(epsilons, key=lambda x: x[0])
+    return float(min_eps), float(opt_alpha)
+
+
+def calibrate_noise_multiplier(q: float, steps: int, target_epsilon: float, delta: float = 1e-5, orders: list = None) -> float:
+    """
+    Calibrates the required noise multiplier sigma to satisfy a target composed epsilon
+    using binary search.
+    
+    Parameters:
+    -----------
+    q : float
+        Sampling rate in (0, 1.0]
+    steps : int
+        Total number of gradient steps (rounds * local_epochs)
+    target_epsilon : float
+        Target privacy budget epsilon
+    delta : float
+        Target failure probability delta
+    orders : list, optional
+        Grid of candidate Rényi orders.
+        
+    Returns:
+    --------
+    float
+        Calibrated noise multiplier sigma
+    """
+    if target_epsilon <= 0:
+        raise ValueError("Target epsilon must be greater than zero.")
+        
+    low = 0.001
+    high = 10000.0
+    
+    # Run binary search for 50 iterations to ensure high precision
+    for _ in range(50):
+        mid = (low + high) / 2.0
+        eps_mid, _ = compose_rdp_to_dp(q, mid, steps, delta, orders)
+        
+        if eps_mid < target_epsilon:
+            # mid noise achieves smaller epsilon than target -> we can afford less noise
+            high = mid
+        else:
+            # mid noise is not enough -> we need more noise
+            low = mid
+            
+    return float(high)
+
+
+def compute_rdp_privacy_budget(q: float, epsilon_local: float, T: int, delta: float = 1e-5) -> float:
+    """
+    Backward-compatible fallback wrapper that maps local single-step epsilon to composed epsilon.
+    """
+    # Map epsilon_local to a base noise multiplier first (single-step Gaussian)
+    import numpy as np
+    if epsilon_local <= 0:
         return 0.0
-    epsilon_total = q * epsilon_local * np.sqrt(T * np.log(1.0 / delta))
-    return float(epsilon_total)
+    sigma = np.sqrt(2.0 * np.log(1.25 / delta)) / epsilon_local
+    composed_eps, _ = compose_rdp_to_dp(q, sigma, steps=T, delta=delta)
+    return float(composed_eps)

@@ -68,7 +68,7 @@ def compute_cox_likelihood_and_grad(w, X, times, events, alpha=0.1, w_global=Non
 
 
 def local_cox_train(X, times, events, epochs=5, lr=0.01, alpha=0.1, w_global=None, mu=0.0,
-                    dp_enabled=False, epsilon=1.0, delta=1e-5, clipping_norm=1.0):
+                    dp_enabled=False, epsilon=1.0, delta=1e-5, clipping_norm=1.0, noise_mult=None):
     """
     Local training loop using gradient descent on the Cox model.
     """
@@ -83,7 +83,10 @@ def local_cox_train(X, times, events, epochs=5, lr=0.01, alpha=0.1, w_global=Non
     
     # Calibration of Gaussian noise for DP
     if dp_enabled:
-        sigma = np.sqrt(2 * np.log(1.25 / delta)) / epsilon
+        if noise_mult is None:
+            sigma = np.sqrt(2 * np.log(1.25 / delta)) / epsilon
+        else:
+            sigma = noise_mult
         noise_std = (clipping_norm * sigma) / n
     else:
         noise_std = 0.0

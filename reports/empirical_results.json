@@ -1,0 +1,132 @@
+{
+    "centralized_baselines": {
+        "lasso_auc": 0.7850378787878788,
+        "ridge_auc": 0.7642045454545454,
+        "mlp_auc": 0.6145833333333334,
+        "numpy_auc": 0.7566287878787878,
+        "numpy_auc_ci_lower": 0.6446962290474972,
+        "numpy_auc_ci_upper": 0.8659126700680272
+    },
+    "heterogeneity_sweep": [
+        {
+            "Alpha": 10.0,
+            "Algorithm": "FedAvg",
+            "Final AUC": 0.7556818181818182,
+            "Convergence Std (last 5)": 0.001515151515151525,
+            "Avg Weight Drift": 0.0
+        },
+        {
+            "Alpha": 10.0,
+            "Algorithm": "FedProx",
+            "Final AUC": 0.7566287878787878,
+            "Convergence Std (last 5)": 0.0024401702133949434,
+            "Avg Weight Drift": 0.0690779181625901
+        },
+        {
+            "Alpha": 1.0,
+            "Algorithm": "FedAvg",
+            "Final AUC": 0.7509469696969697,
+            "Convergence Std (last 5)": 0.0033346244056172494,
+            "Avg Weight Drift": 0.0
+        },
+        {
+            "Alpha": 1.0,
+            "Algorithm": "FedProx",
+            "Final AUC": 0.7490530303030303,
+            "Convergence Std (last 5)": 0.0028472152231766882,
+            "Avg Weight Drift": 0.06761534704501135
+        },
+        {
+            "Alpha": 0.5,
+            "Algorithm": "FedAvg",
+            "Final AUC": 0.7566287878787878,
+            "Convergence Std (last 5)": 0.00175636713929845,
+            "Avg Weight Drift": 0.0
+        },
+        {
+            "Alpha": 0.5,
+            "Algorithm": "FedProx",
+            "Final AUC": 0.7575757575757576,
+            "Convergence Std (last 5)": 0.0015386436372416673,
+            "Avg Weight Drift": 0.06761680067339612
+        },
+        {
+            "Alpha": 0.1,
+            "Algorithm": "FedAvg",
+            "Final AUC": 0.7566287878787878,
+            "Convergence Std (last 5)": 0.00037878787878781184,
+            "Avg Weight Drift": 0.0
+        },
+        {
+            "Alpha": 0.1,
+            "Algorithm": "FedProx",
+            "Final AUC": 0.7566287878787881,
+            "Convergence Std (last 5)": 0.0009278370237815014,
+            "Avg Weight Drift": 0.06759759458219546
+        }
+    ],
+    "privacy_utility_sweep": {
+        "epsilons": [
+            0.5,
+            1.0,
+            2.0,
+            5.0,
+            10.0
+        ],
+        "aucs": [
+            0.6998106060606062,
+            0.7481060606060608,
+            0.7632575757575757,
+            0.7642045454545454,
+            0.7575757575757576
+        ]
+    },
+    "survival_analysis": {
+        "c_index": 0.5,
+        "c_index_ci_lower": 0.5,
+        "c_index_ci_upper": 0.5
+    },
+    "shapley_stability": [
+        {
+            "Hospital ID": "Hospital 1",
+            "Mean Shapley Value": 0.05609217171717172,
+            "Std Dev (across seeds)": 0.005866118676927966,
+            "COV (%)": 10.457998670342374
+        },
+        {
+            "Hospital ID": "Hospital 2",
+            "Mean Shapley Value": 0.0705808080808081,
+            "Std Dev (across seeds)": 0.0022923709160814973,
+            "COV (%)": 3.247867155301319
+        },
+        {
+            "Hospital ID": "Hospital 3",
+            "Mean Shapley Value": 0.10798611111111112,
+            "Std Dev (across seeds)": 0.0019391695143191167,
+            "COV (%)": 1.7957582474344753
+        }
+    ],
+    "domain_shift": {
+        "severities": [
+            0.0,
+            0.5,
+            1.0,
+            1.5,
+            2.0
+        ],
+        "covariate_aucs": [
+            0.7566287878787878,
+            0.7547348484848484,
+            0.7452651515151516,
+            0.747159090909091,
+            0.7462121212121211
+        ],
+        "concept_aucs": [
+            0.7566287878787878,
+            0.6660839160839161,
+            0.524547803617571,
+            0.48299319727891155,
+            0.5264928511354079
+        ]
+    }
+}
