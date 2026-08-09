@@ -46,34 +46,34 @@ This document serves as the finalized Claim-Evidence Matrix for the **DP-FPS** f
 *   **Status**: 🟢 **VERIFIED & SUPPORTED**
 *   **Evidence (Experiment D)**: Evaluated per-client test splits matching local Dirichlet skews ($\alpha=0.5$):
     *   *Hospital 2 (Valid classes)*: Local-Only AUC = **0.6315** | Global FedProx AUC = **0.7433** | Personalized FL (PFL) AUC = **0.7101**.
-    *   *PFL Benefit*: PFL fine-tuning improves staging performance by **+7.87%** ($0.7101$ vs. $0.6315$) compared to the local-only baseline, but does not outperform the global consensus model ($0.7433$) in this sparse data environment.
+    *   *PFL Benefit*: PFL fine-tuning improves staging performance by **0.0786 absolute AUC points** (from $0.6315$ to $0.7101$, corresponding to a $12.45\%$ relative improvement) compared to the local-only baseline, but does not outperform the global consensus model ($0.7433$) in this sparse data environment.
     *   *Data Sparsity Observation*: Under Dirichlet partitioning ($\alpha=0.5$), some client local test splits contain only a single target class, resulting in undefined local AUCs (NaN) for Hospital 1 and 3.
-
+ 
 ### H5 — Shapley Valuations under Privacy Noise
 *   **Hypothesis**: Differential privacy noise alters the participant contribution valuation, potentially affecting fair incentive allocation.
 *   **Status**: 🟢 **VERIFIED & SUPPORTED**
 *   **Evidence (Experiment F & G)**:
     *   **Valuation Under Noise (Experiment F)**: Privacy perturbation altered the observed contribution rankings in the evaluated three-client setting. Without DP, client rankings are: Hospital 3 (Score: 0.1065, Rank 1) > Hospital 2 (Score: 0.0720, Rank 2) > Hospital 1 (Score: 0.0611, Rank 3). Under DP noise ($\epsilon \in [10.0, 1.0]$), Hospital 1 rises to Rank 1 (Score: 0.1045, Rank 1), while Hospital 3 falls to Rank 2.
     *   **LOO vs. Shapley Rank Correlation**: Spearman rank correlation is **0.2000**, highlighting systematically different client valuation outcomes.
-    *   **Contribution-Utility Consistency (Experiment G)**: Shapley values positively correlate with empirical AUC degradation when removed ($\rho = 0.5000$), validating that Shapley valuation represents actual model contribution.
-
+    *   **Contribution-Utility Consistency (Experiment G)**: The observed positive rank association ($\rho=0.50$) provides preliminary descriptive evidence of alignment between Shapley valuation and leave-one-client-out utility degradation; however, the three-client setting does not support reliable inferential claims.
+ 
 ### H6 — Robustness to Distribution Shifts
 *   **Hypothesis**: The proposed model exhibits different degradation profiles under controlled synthetic domain shifts.
 *   **Status**: 🟢 **VERIFIED & SUPPORTED**
 *   **Evidence (Experiment H)**: Under controlled synthetic domain shifts, covariate shift $P(X)$ degrades AUC gracefully from **0.7566** to **0.7462** (severity 2.0). Under concept shift $P(Y|X)$, the target mappings are disrupted, and AUC drops sharply to **0.5265** (severity 2.0).
-
+ 
 ### H7 — Empirical Privacy Protection (MIA Resistance)
-*   **Hypothesis**: RDP-calibrated Gaussian perturbation reduces empirical membership vulnerability under gradient inference attacks.
+*   **Hypothesis**: RDP-calibrated Gaussian perturbation reduces empirical membership vulnerability under the evaluated confidence-threshold membership-inference attack.
 *   **Status**: 🟢 **VERIFIED & SUPPORTED**
 *   **Evidence (Experiment I)**: A confidence-threshold Membership Inference Attack (MIA) was executed:
     *   *Without DP*: MIA Attacker achieves an AUC of **0.5679** and an attacker advantage of **0.0734** on the model's prediction confidence.
     *   *With DP*: Even at a weak budget ($\epsilon=10.0$), the attacker AUC drops to **0.4802** and attacker advantage falls to **-0.0161**, indicating substantially reduced vulnerability to the evaluated confidence-threshold membership-inference attack.
-
+ 
 ---
-
+ 
 ## 3. Preprocessing, Sample Counts & Cohort Terminology
-
+ 
 We establish strict definitions to ensure absolute mathematical honesty throughout the manuscript:
-1.  **Clinical Cohort Size**: The TCGA-PRAD clinical cohort contains 572 sample records corresponding to 500 unique patients. Because multiple biological samples may originate from the same patient, the implemented privacy guarantee is defined at the sample level rather than the patient level.
+1.  **Clinical Cohort Size**: Although the initial TCGA-PRAD clinical cohort comprised 572 sample records corresponding to 500 unique patients, feature matching, missing value exclusion, and quality control preprocessing yielded a usable analysis cohort of 347 observations for the classification and survival experiments reported here. This cohort was partitioned into 277 training and 70 held-out test observations. Because multiple biological samples may originate from the same patient barcode, the implemented privacy guarantee is strictly sample-level rather than patient-level.
 2.  **Survival Subset Event Counts (Experiment B)**: After preprocessing and cohort matching, the survival-analysis subset contains 347 observations, with 12 observed death events (9 in the training split of size 277, and 0 in the test split of size 70).
 3.  **Survival Modeling Limitation**: Although a federated Cox proportional-hazards implementation was developed, reliable out-of-sample survival discrimination could not be evaluated on the selected TCGA-PRAD split because the test partition contained no observed death events. Consequently, no survival-performance claim is made. This is presented as an honest dataset-level limitation regarding survival time modeling.
