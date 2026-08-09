@@ -377,7 +377,7 @@ We evaluated permutation-based Shapley values against Leave-One-Out (LOO) utilit
     \item Shapley Scores: H1 = 0.0455, H2 = 0.1027, H3 = 0.1094
     \item LOO Degradations: H1 = -0.0104, H2 = 0.0824, H3 = 0.0294
 \end{itemize}
-The observed positive rank association ($\rho=0.50$) provides preliminary descriptive evidence of alignment between Shapley valuation and leave-one-client-out utility degradation; however, the three-client setting does not support reliable inferential claims. The measured permutation Shapley computation time (0.0561s) was comparable to LOO (0.0438s) in this setting, supporting **H5**.
+The observed positive rank association ($\rho=0.50$) provides preliminary descriptive evidence of alignment between Shapley valuation and leave-one-client-out utility degradation; however, the three-client setting does not support reliable inferential claims. The measured permutation Shapley computation time (0.0561s) was comparable to LOO (0.0438s), providing descriptive evidence for the feasibility of permutation-based valuation in this three-client setting.
 
 \subsection{Contribution Valuation under Privacy Noise}
 We swept differential privacy noise constraints over client Shapley values in Table \ref{tab:shapley_noise}:
@@ -408,7 +408,7 @@ The evaluations in Table \ref{tab:shapley_noise} demonstrate that differential p
 \label{fig:shapley_volatility}
 \end{figure}
 
-\subsection{Empirical Membership-Inference Resistance}
+\subsection{Empirical Membership-Inference Evaluation}
 Without DP, the confidence-threshold MIA attacker achieves an AUC of 0.5679 (attacker advantage = 0.0734) on prediction confidence. With DP enabled, the attacker AUC decreases to 0.4802 at $\epsilon=10.0$ and declines further as the privacy budget is tightened (as mapped in Fig. \ref{fig:mia}). Thus, the evaluated confidence-threshold attack loses discriminative advantage under the applied privacy perturbation, with attacker performance approaching and falling below the random-guess baseline of 0.50, supporting \textbf{H7}.
 \begin{figure}[ht]
 \centering
@@ -426,7 +426,7 @@ We evaluated model robustness under controlled synthetic domain shifts (as plott
 \label{fig:stress_test}
 \end{figure}
 
-\section{Survival Analysis Methodological Extension and Dataset Limitation}
+\section{Survival Analysis Limitation}
 After preprocessing and cohort matching, the survival-analysis subset contains 347 observations, with 12 observed death events (9 in the training split of size 277, and 0 in the test split of size 70).
 Although a federated Cox proportional-hazards implementation was developed \cite{Sadovsky2023SurvivalFL}, reliable out-of-sample survival discrimination could not be evaluated on the selected TCGA-PRAD split because the held-out test partition contained zero observed death events due to extreme right-censoring. Consequently, no survival-performance claim is made. This is presented as an honest dataset-level limitation regarding survival time modeling.
 
@@ -442,6 +442,7 @@ Importantly, privacy mechanisms have consequences beyond model staging performan
 \end{figure*}
 
 \subsection{Threats to Validity}
+\label{sec:threats_validity}
 
 \subsubsection{Internal Validity}
 First, the non-IID clinical distributions are generated synthetically using label-skew Dirichlet allocations rather than natural clinical silos. Second, the distribution shift evaluations rely on controlled synthetic perturbations (covariate scaling and random label flipping) rather than real multi-site clinical datasets. Third, contribution evaluations are restricted to a three-client setting due to the computational complexity of the Shapley value, which may limit generalizability to larger hospital networks. Finally, statistical observations are computed over five random seeds, which captures variance but does not fully chart the stochastic properties of federated training.
@@ -458,8 +459,6 @@ First, the three-client setting yields a sample size $n=3$ for the correlation a
 \subsection{Reproducibility Statement}
 To ensure reproducibility, the source code, preprocessed variables, and analysis notebooks are hosted in a public git repository at \url{https://github.com/JeyanthPonnaluri/Mini_Project_RVR}. All experiments are implemented in Python 3.12, utilizing NumPy 1.26.4, Scikit-learn 1.4.0, and Pandas 2.2.0. Neural network baselines are trained using PyTorch 2.2.0. Experiments were executed on an AMD Ryzen 7 5800H CPU with 16GB RAM. Hyperparameters, random seeds, training-test split parameters, Dirichlet partitioning indexes, RDP noise calibrations, and bootstrap configurations are detailed in Table \ref{tab:protocol} and Section VI.
 
-\section{Limitations}
-The study limitations are detailed in Section IX.A (Threats to Validity).
 
 \section{Future Work}
 Future work will investigate patient-level DP, scalable Shapley value approximations, and validation on prospective multi-institutional cohorts with sufficient survival events.
