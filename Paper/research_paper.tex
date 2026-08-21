@@ -62,7 +62,7 @@ We experimentally characterize how privacy and statistical heterogeneity interac
     \item **Censoring Characterization**: We document that a federated Cox survival model was successfully developed and technically validated; however, the available cohort and selected split did not permit meaningful out-of-sample survival discrimination due to extreme right-censoring (0 test death events).
 \end{itemize}
 
-\begin{figure}[ht]
+\begin{figure}[!t]
     \centering
     \includegraphics[width=\columnwidth]{figures/figure1_conceptual_map.pdf}
     \caption{Conceptual model of the privacy--heterogeneity--optimization--valuation relationships investigated in this study, tracking variables from data skew to client optimization drift, proximal stabilization, privacy perturbation, staging utility, and collaborative incentive implications.}
@@ -71,7 +71,15 @@ We experimentally characterize how privacy and statistical heterogeneity interac
 
 The remainder of this manuscript is organized as follows: Section II reviews related work and defines the research gap. Section III details the system model and problem formulation. Section IV explains the mathematical methodology, including RDP accounting, Shapley valuation, and statistical analyses. Section V describes the dataset and preprocessing pipeline. Section VI outlines the experimental protocol. Section VII presents the empirical results. Section VIII discusses the survival extension, and Sections IX, X, XI, and XII present the discussion, limitations, future work, and conclusion.
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/figure2_architecture.pdf}
+\caption{Experimental system architecture of the DP-FPS clinical federated system, detailing client-level data preprocessing, local gradient clipping and RDP noise additions, FedProx consensus aggregations, and post-aggregation permutation Shapley valuations.}
+\label{fig:architecture}
+\end{figure*}
+
 \section{Related Work}
+
 
 \subsection{Federated Learning for Healthcare}
 Cross-silo federated learning has attracted significant interest in clinical AI due to its ability to train models across institutions without direct data sharing \cite{Rieke2020DigitalHealth, Sheller2020MedicineFL, Li2021SurveyFLMedical}. Clinical studies have applied FL to tasks such as brain tumor segmentation, medical imaging, rare cancer research, and tabular clinical risk prediction \cite{Pati2022GFLMedical}. Recently, federated transfer learning has been applied to transfer prognostic models across related cancers under differential privacy \cite{Wen2025Federated}, and decentralized networks have been developed to model pan-cancer survival using clinical-protein sequences \cite{Chai2024AdFed}. To facilitate standardized implementations of these multi-modal models, benchmarks such as FedMultimodal have been established to provide unified recipes for processing multi-site clinical and genomic features \cite{feng2023fedmultimodal}. Tabular databases containing demographic variables, lab values, and genomic markers are highly sensitive, and institutional boundaries prevent their aggregation \cite{Wang2019DPFLMedical}. While early work assumed identical client data distributions, clinical datasets exhibit severe statistical skew due to differences in patient demographics, diagnostics, and regional pathology characteristics \cite{Kairouz2021FLAdvances, Yang2019ConceptFL}.
@@ -130,13 +138,6 @@ h_k(w; w^t) = F_k(w) + \frac{\mu}{2} \|w - w^t\|_2^2
 where $\mu \ge 0$ controls the penalty strength, limiting local parameter drift away from the global model $w^t$.
 
 To provide sample-level privacy guarantees, local gradients are clipped and perturbed using a Gaussian noise mechanism calibrated via Rényi Differential Privacy (RDP). Client contribution valuation is measured using cooperative game theory. Let $S \subseteq \{1, \dots, K\}$ be a client coalition, and $v(S)$ be the utility of the model trained on coalition $S$, evaluated on a held-out validation set. The contribution of client $k$ is measured by its Shapley value $\phi_k$, reflecting its marginal utility across coalitions. The complete experimental system architecture of the DP-FPS clinical federated model is shown in Fig. \ref{fig:architecture}.
-
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{figures/figure2_architecture.pdf}
-\caption{Experimental system architecture of the DP-FPS clinical federated system, detailing client-level data preprocessing, local gradient clipping and RDP noise additions, FedProx consensus aggregations, and post-aggregation permutation Shapley valuations.}
-\label{fig:architecture}
-\end{figure*}
 
 \section{Mathematical Methodology}
 
@@ -298,10 +299,24 @@ H7 & Does DP reduce MIA? & MIA Attacker ROC AUC & Attacker AUC drops from 0.5679
 \label{tab:hyp_summary}
 \end{table*}
 
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure5_drift.pdf}
+\caption{Comparison of average client parameter weight drift ($L_2$ norm) between FedAvg and FedProx across Dirichlet concentration parameters $\alpha \in \{10.0, 1.0, 0.5, 0.1\}$. Error bars represent the standard deviation over 5 random seeds. Smaller $\alpha$ values correspond to stronger non-IID label skew.}
+\label{fig:drift}
+\end{figure}
+
 \section{Results}
 
 \subsection{Centralized Baselines and Staging Performance}
 Centralized models trained on the combined training partition yield: Lasso AUC = 0.7850, Ridge AUC = 0.7642, MLP NN AUC = 0.6146, Custom NumPy Model AUC = 0.7566 [95\% Bootstrap CI: $0.6447 - 0.8659$].
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure3_privacy_utility.pdf}
+\caption{Privacy-utility trade-off curve showing global model staging test ROC AUC vs. composed privacy budget epsilon $\epsilon$. The wide confidence intervals indicate substantial uncertainty in AUC estimates under the evaluated cohort size. Error bars represent the 95\% percentile bootstrap confidence intervals.}
+\label{fig:privacy_utility}
+\end{figure}
 
 \subsection{Client Update Drift under Statistical Heterogeneity}
 We evaluated client-update divergence over 5 seeds across Dirichlet partitions $\alpha \in \{10.0, 1.0, 0.5, 0.1\}$. Enabling proximal regularization ($\mu=0.5$) consistently restricts the average client weight drift by approximately 4.2--4.3\% (as shown in Fig. \ref{fig:drift}):
@@ -310,11 +325,12 @@ We evaluated client-update divergence over 5 seeds across Dirichlet partitions $
     \item $\alpha = 0.1$ (Extreme skew): FedAvg Drift = $0.1908 \pm 0.0289$ vs. FedProx Drift = $0.1825 \pm 0.0272$
 \end{itemize}
 This consistent containment across all heterogeneity levels supports **H1**.
-\begin{figure}[ht]
+
+\begin{figure}[!t]
 \centering
-\includegraphics[width=\columnwidth]{figures/figure5_drift.pdf}
-\caption{Comparison of average client parameter weight drift ($L_2$ norm) between FedAvg and FedProx across Dirichlet concentration parameters $\alpha \in \{10.0, 1.0, 0.5, 0.1\}$. Error bars represent the standard deviation over 5 random seeds. Smaller $\alpha$ values correspond to stronger non-IID label skew.}
-\label{fig:drift}
+\includegraphics[width=\columnwidth]{figures/figure4_heatmap.pdf}
+\caption{2D Diverging heatmap showing the performance benefit ($\Delta AUC$) of FedProx over FedAvg across Dirichlet Concentration skew $\alpha$ and privacy budget $\epsilon$. Values are explicitly annotated inside each cell.}
+\label{fig:heatmap}
 \end{figure}
 
 \subsection{Privacy--Utility Trade-off}
@@ -327,12 +343,6 @@ We evaluated composed Rényi DP bounds on the global test partition across budge
     \item $\epsilon = 10.0 \to$ AUC: $0.7576$ [95\% CI: $0.6364 - 0.8814$] ($\sigma = 3.8216$)
 \end{itemize}
 Performance point estimates generally improve as privacy constraints are relaxed, supporting the direction of \textbf{H2}. However, because the individual 95\% confidence intervals overlap heavily, we conducted a paired-bootstrap difference test between the extreme budgets ($\epsilon=10.0$ vs. $\epsilon=0.5$). The resulting paired bootstrap mean difference in AUC is $+0.0559$ with a 95\% paired confidence interval of $[-0.0894, 0.2126]$. Since this interval includes zero, the observed privacy-utility degradation is not statistically significant at $\alpha=0.05$ on the test split, suggesting that larger clinical cohorts are required to conclusively establish statistical bounds for this trade-off.
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\columnwidth]{figures/figure3_privacy_utility.pdf}
-\caption{Privacy-utility trade-off curve showing global model staging test ROC AUC vs. composed privacy budget epsilon $\epsilon$. The wide confidence intervals indicate substantial uncertainty in AUC estimates under the evaluated cohort size. Error bars represent the 95\% percentile bootstrap confidence intervals.}
-\label{fig:privacy_utility}
-\end{figure}
 
 \subsection{FedProx under Joint Privacy and Heterogeneity}
 We swept Dirichlet label skew ($\alpha$) and privacy budget ($\epsilon$) across 20 random seeds to evaluate global model test AUC under joint constraints in Table \ref{tab:interaction}:
@@ -371,12 +381,6 @@ Dirichlet $\alpha$ & Metric / Model & $\epsilon=0.5$ & $\epsilon=1.0$ & $\epsilo
 Under joint privacy–heterogeneity constraints over 20 random seeds, FedProx produced consistently positive utility differences at moderate privacy budgets ($\epsilon = 1.0$ and $2.0$) as illustrated in Fig. \ref{fig:heatmap}, whereas differences were negligible at weaker privacy constraints ($\epsilon \ge 5.0$). These results support H3 under the evaluated privacy–heterogeneity configurations, although the small number of clients ($N=3$) limits broader inferential generalization. Furthermore, the absolute magnitude of the benefit is extremely modest (approx. $+0.0020$ absolute AUC points), and the omnibus mixed-effects model shows no statistically significant main effect of method or interaction terms.
 
 To rigorously test whether there is a detectable interaction between optimization method, privacy constraint, and label skew while accounting for the grouped, paired nature of our random seeds (avoiding pseudo-replication), we fit a Linear Mixed Effects Model (MixedLM) with a random intercept for random seed. Specifically, we model $\text{AUC}_{s,\alpha,\epsilon,m} = \beta_0 + \mathbf{\beta}^T \mathbf{X} + u_s + \varepsilon$, where $\mathbf{X}$ represents the fixed effects (Method, Alpha, Epsilon, and their full interactions), $u_s \sim \mathcal{N}(0, \sigma^2_{\text{seed}})$ is the random intercept for seed $s \in \{1,\dots,20\}$, and $\varepsilon \sim \mathcal{N}(0, \sigma^2)$ is the residual error. A random-intercept specification was selected to account for shared stochastic variation induced by the seed-level initialization and partitioning, while retaining the factorial experimental structure of method, heterogeneity, and privacy. Fitting a categorical MixedLM shows that while the main effect of privacy budget Epsilon is highly statistically significant (with z-scores for $\epsilon=1.0, 2.0, 5.0, 10.0$ equal to $8.95, 15.94, 18.73, 19.10$ respectively, all $P < 0.001$), neither the main effect of Method ($P=0.990$) and Alpha ($P \ge 0.912$) nor any of the interaction terms are statistically significant (all interaction $P \ge 0.795$). Fitting a continuous log-transformed MixedLM of the form $\text{AUC} \sim \text{Method} \times \log(\text{Alpha}) \times \log(\text{Epsilon})$ yields similar results, with $\log(\text{Epsilon})$ showing a highly significant positive coefficient ($+0.048$, $z=44.76$, $P < 0.001$) and all other terms remaining non-significant (all other $P \ge 0.776$). These results indicate that the primary driver of performance is the privacy budget itself, and the observed regularized aggregation benefits of FedProx at moderate budgets do not support a statistically significant interaction term at the mixed-effects level, resolving any potential issues of pseudo-replication.
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\columnwidth]{figures/figure4_heatmap.pdf}
-\caption{2D Diverging heatmap showing the performance benefit ($\Delta AUC$) of FedProx over FedAvg across Dirichlet Concentration skew $\alpha$ and privacy budget $\epsilon$. Values are explicitly annotated inside each cell.}
-\label{fig:heatmap}
-\end{figure}
 
 \subsection{Personalized Adaptation under Data Scarcity}
 We evaluated client test partitions matching local Dirichlet skews ($\alpha=0.5$). To prevent undefined local AUCs due to single-class partitions, we enforced a stratified minimum allocation of at least 2 samples per class per client. Under this configuration, every client had a valid local test set. The individual client results are:
@@ -387,6 +391,12 @@ We evaluated client test partitions matching local Dirichlet skews ($\alpha=0.5$
 \end{itemize}
 Across all clients, Local-Only training yields a mean client AUC of $0.7942$, but exhibits high inter-client performance dispersion (standard deviation: $0.1419$) and poor utility for the data-scarce node (worst-client Hospital 2: $0.6310$). Global FedProx collaborative training substantially improves the worst-client experience to $0.7487$ (an absolute lift of $+0.1177$ AUC points) and reduces inter-client performance variance by more than half (standard deviation drops to $0.0592$), illustrating that collaborative federated networks can stabilize utility distributions across clinical sites. Personalized FL (PFL) fine-tuning \cite{Arivazhagan2019FederatedPersonalization, Li2021Ditto} yields a mean client AUC of $0.8097$ (worst-client Hospital 2: $0.7166$, standard deviation: $0.0870$). PFL improves local performance on the data-scarce Hospital 2 by \textbf{0.0856 absolute AUC points} (from $0.6310$ to $0.7166$, corresponding to a \textbf{13.57\% relative improvement}) compared to its local-only baseline. However, PFL is not uniformly superior across all participants, failing to outperform the global consensus model on Hospital 2 ($0.7487$) or Hospital 3 ($0.8627$), showing that personalized adaptation provides localized utility benefits under severe data scarcity but does not consistently outperform global collaborative representation across the network. These results support the direction of \textbf{H4} for data-scarce sites \cite{Kulkarni2020SurveyPFL}, though the three-client setting limits broader generalizability.
 
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure6_shapley.pdf}
+\caption{Computed permutation Shapley contribution scores for Hospital 1, 2, and 3 under varying privacy budget constraints $\epsilon \in \{\text{No DP}, 10, 5, 2, 1, 0.5\}$. The annotation highlights the ranking reversal inside the plotting region as noise increases.}
+\label{fig:shapley_volatility}
+\end{figure}
 
 \subsection{Contribution Valuation}
 \label{sec:contribution_valuation}
@@ -396,6 +406,13 @@ We evaluated permutation-based Shapley values against Leave-One-Out (LOO) utilit
     \item LOO Degradations: H1 = -0.0104, H2 = 0.0824, H3 = 0.0294
 \end{itemize}
 The observed positive rank association under a single representative partition ($\rho=0.50$, evaluated under seed 42) provides preliminary descriptive evidence of alignment between Shapley valuation and leave-one-client-out utility degradation. However, when averaged over 5 independent experimental replicates (running across different initialization and partitioning seeds), the average Spearman rank correlation decreases to $\rho=0.2000$. This discrepancy highlights that while alignment exists in individual stochastic realizations, statistical variance and the extremely small client cohort size ($N=3$) limit the stability of rank alignment across different data splits; thus, the three-client setting does not support reliable inferential claims. The measured permutation Shapley computation time (0.0561s) was comparable to LOO (0.0438s), providing descriptive evidence for the feasibility of permutation-based valuation in this three-client setting. The valuation analysis is exploratory and intended to demonstrate sensitivity of contribution estimates to privacy perturbation rather than establish a general theory of fair compensation.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/figure9_shapley_instability.pdf}
+\caption{Shapley contribution score instability metrics across 20 independent privacy-noise realizations as a function of composed privacy budget epsilon $\epsilon$: (Top-Left) Spearman rank correlation with No-DP (mean $\pm$ std); (Top-Right) Mean absolute contribution error per client; (Bottom-Left) Rank-reversal probability per client ($RR_k$); (Bottom-Right) Top-contributor stability probability per client ($TS_k$). Instability metrics generally increase as epsilon decreases / noise increases.}
+\label{fig:shapley_instability}
+\end{figure*}
 
 \subsection{Contribution Valuation under Privacy Noise}
 We swept differential privacy noise constraints over client Shapley values in Table \ref{tab:shapley_noise}:
@@ -438,38 +455,25 @@ where $\mathbb{I}(\cdot)$ is the indicator function. The evaluations demonstrate
 \end{itemize}
 Shapley variability and contribution error generally increase under stronger privacy constraints, although the relationship is not strictly monotonic for every client and metric. For example, the variance of Hospital 1's Shapley scores rises from $9.9 \times 10^{-5}$ at $\epsilon=10.0$ to $5.8 \times 10^{-4}$ at $\epsilon=1.0$, but decreases to $3.7 \times 10^{-4}$ at $\epsilon=0.5$. The high standard deviations in rank correlation and high rank-reversal probabilities highlight that in a small hospital setting ($N=3$), contribution rankings are highly sensitive to stochastic differential privacy perturbations. These results support H5 under the evaluated privacy-noise configurations, though the three-client setting limits broader generalizability.
 
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{figures/figure9_shapley_instability.pdf}
-\caption{Shapley contribution score instability metrics across 20 independent privacy-noise realizations as a function of composed privacy budget epsilon $\epsilon$: (Top-Left) Spearman rank correlation with No-DP (mean $\pm$ std); (Top-Right) Mean absolute contribution error per client; (Bottom-Left) Rank-reversal probability per client ($RR_k$); (Bottom-Right) Top-contributor stability probability per client ($TS_k$). Instability metrics generally increase as epsilon decreases / noise increases.}
-\label{fig:shapley_instability}
-\end{figure*}
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\columnwidth]{figures/figure6_shapley.pdf}
-\caption{Computed permutation Shapley contribution scores for Hospital 1, 2, and 3 under varying privacy budget constraints $\epsilon \in \{\text{No DP}, 10, 5, 2, 1, 0.5\}$. The annotation highlights the ranking reversal inside the plotting region as noise increases.}
-\label{fig:shapley_volatility}
-\end{figure}
-
-
-\subsection{Empirical Membership-Inference Evaluation}
-Without DP, the confidence-threshold MIA attacker achieves an AUC of 0.5679 (attacker advantage = 0.0734) on prediction confidence. With DP enabled, the attacker AUC decreases to 0.4802 at $\epsilon=10.0$ and declines further as the privacy budget is tightened (as mapped in Fig. \ref{fig:mia}). Thus, under the evaluated confidence-threshold attack, DP reduced membership-inference discrimination toward chance level, supporting \textbf{H7}.
-\begin{figure}[ht]
+\begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{figures/figure7_mia.pdf}
 \caption{MIA attacker ROC AUC values under different privacy budgets compared to the random guess baseline (0.50), demonstrating empirical vulnerability reduction as noise perturbation is applied.}
 \label{fig:mia}
 \end{figure}
 
-\subsection{Controlled Distribution-Shift Stress Testing}
-We evaluated model robustness under controlled synthetic domain shifts (as plotted in Fig. \ref{fig:stress_test}). The test split AUC degrades gracefully from 0.7566 to 0.7462 (at severity 2.0) under covariate shift $P(X)$, but drops precipitously to 0.5265 (at severity 2.0) under concept shift $P(Y|X)$ as target labels are flipped. These stress-testing experiments assess sensitivity to controlled synthetic distribution perturbations rather than external clinical generalization, supporting **H6**.
-\begin{figure}[ht]
+\subsection{Empirical Membership-Inference Evaluation}
+Without DP, the confidence-threshold MIA attacker achieves an AUC of 0.5679 (attacker advantage = 0.0734) on prediction confidence. With DP enabled, the attacker AUC decreases to 0.4802 at $\epsilon=10.0$ and declines further as the privacy budget is tightened (as mapped in Fig. \ref{fig:mia}). Thus, under the evaluated confidence-threshold attack, DP reduced membership-inference discrimination toward chance level, supporting \textbf{H7}.
+
+\begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{figures/figure8_stress_test.pdf}
 \caption{Global model staging test ROC AUC under controlled synthetic covariate distribution shift $P(X)$ and concept distribution shift $P(Y|X)$ across severity scales.}
 \label{fig:stress_test}
 \end{figure}
+
+\subsection{Controlled Distribution-Shift Stress Testing}
+We evaluated model robustness under controlled synthetic domain shifts (as plotted in Fig. \ref{fig:stress_test}). The test split AUC degrades gracefully from 0.7566 to 0.7462 (at severity 2.0) under covariate shift $P(X)$, but drops precipitously to 0.5265 (at severity 2.0) under concept shift $P(Y|X)$ as target labels are flipped. These stress-testing experiments assess sensitivity to controlled synthetic distribution perturbations rather than external clinical generalization, supporting **H6**.
 
 \subsection{System Component Ablation Analysis}
 To evaluate the individual contributions of the DP-FPS components, we conducted an ablation analysis under a representative non-IID configuration (Dirichlet skew $\alpha=1.0$ and target privacy budget $\epsilon=1.0$ where applicable). To ensure methodological clarity and prevent confounding evaluation populations, we analyze global and local components separately.
