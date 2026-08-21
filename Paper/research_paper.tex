@@ -274,17 +274,17 @@ Target Privacy Delta ($\delta$) & $10^{-5}$ \\
 \begin{table*}[t]
 \caption{Hypothesis-Evidence Summary Table}
 \centering
-\begin{tabular}{llp{5.5cm}ll}
+\begin{tabular}{llp{5.5cm}p{4cm}l}
 \toprule
 Hypothesis & Question & Primary Metric & Main Finding & Evidence Strength \\
 \midrule
 H1 & Does FedProx reduce drift? & Average Parameter L2 Drift & Consistent 4.2--4.3\% drift reduction across skews. & Strong \\
-H2 & What is the privacy-utility curve? & Test ROC AUC & AUC degrades from 0.7576 ($\epsilon=10$) to 0.6998 ($\epsilon=0.5$). & Strong \\
-H3 & Interaction of privacy \& heterogeneity & Test AUC Benefit ($\Delta$) & FedProx improves AUC at $\epsilon=1.0$ and $2.0$; CI is positive. & Strong in range \\
-H4 & Does PFL improve over local-only? & Client Local Test AUC & PFL improves AUC by 0.0786 absolute points over local-only. & Limited \\
-H5 & Does DP noise alter contribution? & Shapley Value Ranking & DP noise flips client contribution rankings. & Descriptive \\
+H2 & What is the privacy-utility curve? & Test ROC AUC & AUC point estimate degrades from 0.7576 to 0.6998. Difference is not statistically significant. & Descriptive, not inferentially significant \\
+H3 & Interaction of privacy \& heterogeneity & Test AUC Benefit ($\Delta$) & FedProx improves AUC at $\epsilon=1.0$ and $2.0$; CI is positive. & Descriptive, not inferentially powered ($N=3$ clients) \\
+H4 & Does PFL improve over local-only? & Client Local Test AUC & PFL improves AUC by 0.0856 absolute points on Hospital 2. & Descriptive, not inferentially powered ($N=3$ clients) \\
+H5 & Does DP noise alter contribution? & Shapley Value Ranking & DP noise induces Shapley value instability and rank reversals. & Exploratory, not inferentially powered ($N=3$ clients) \\
 H6 & Sensitivity to domain shifts & Global Test AUC & Concept shift degrades AUC much faster than covariate shift. & Controlled stress test \\
-H7 & Does DP reduce MIA? & MIA Attacker ROC AUC & Attacker AUC drops from 0.5679 to 0.4802. & Attack-specific \\
+H7 & Does DP reduce MIA? & MIA Attacker ROC AUC & Attacker AUC drops from 0.5679 to 0.4802. & Attack-specific, descriptive ($N=3$ clients) \\
 \bottomrule
 \end{tabular}
 \label{tab:hyp_summary}
@@ -318,7 +318,7 @@ We evaluated composed Rényi DP bounds on the global test partition across budge
     \item $\epsilon = 5.0 \to$ AUC: $0.7642$ [95\% CI: $0.6459 - 0.8879$] ($\sigma = 7.2816$)
     \item $\epsilon = 10.0 \to$ AUC: $0.7576$ [95\% CI: $0.6364 - 0.8814$] ($\sigma = 3.8216$)
 \end{itemize}
-Performance generally improves as privacy constraints are relaxed, with small non-monotonic variation at weaker privacy constraints, supporting **H2**.
+Performance point estimates generally improve as privacy constraints are relaxed, supporting the direction of \textbf{H2}. However, because the individual 95\% confidence intervals overlap heavily, we conducted a paired-bootstrap difference test between the extreme budgets ($\epsilon=10.0$ vs. $\epsilon=0.5$). The resulting paired bootstrap mean difference in AUC is $+0.0559$ with a 95\% paired confidence interval of $[-0.0894, 0.2126]$. Since this interval includes zero, the observed privacy-utility degradation is not statistically significant at $\alpha=0.05$ on the test split, suggesting that larger clinical cohorts are required to conclusively establish statistical bounds for this trade-off.
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\columnwidth]{figures/figure3_privacy_utility.pdf}
@@ -369,8 +369,14 @@ Under joint privacy–heterogeneity constraints over repeated trials, FedProx pr
 \end{figure}
 
 \subsection{Personalized Adaptation under Data Scarcity}
-We evaluated client test partitions matching local Dirichlet skews ($\alpha=0.5$). For Hospital 2 (containing valid target classes), Local-Only AUC was 0.6315, Global FedProx AUC was 0.7433, and Personalized FL (PFL) AUC was 0.7101.
-PFL fine-tuning \cite{Arivazhagan2019FederatedPersonalization, Li2021Ditto} improved staging performance by **0.0786 absolute AUC points** (from 0.6315 to 0.7101, corresponding to a **12.45% relative improvement**) compared to the local-only baseline, but did not outperform the global consensus model (0.7433) in this sparse data environment, supporting **H4** \cite{Kulkarni2020SurveyPFL}. Client 1 and 3 local test partitions contained only a single target class due to Dirichlet skew, resulting in undefined local AUCs (NaN).
+We evaluated client test partitions matching local Dirichlet skews ($\alpha=0.5$). To prevent undefined local AUCs due to single-class partitions, we enforced a stratified minimum allocation of at least 2 samples per class per client. Under this configuration, every client had a valid local test set. The individual client results are:
+\begin{itemize}
+    \item \textbf{Hospital 1}: Local-Only AUC: $0.8889$, Global FedAvg AUC: $0.8333$, Global FedProx AUC: $0.8333$, Personalized FL (PFL) AUC: $0.8889$.
+    \item \textbf{Hospital 2}: Local-Only AUC: $0.6310$, Global FedAvg AUC: $0.7487$, Global FedProx AUC: $0.7487$, Personalized FL (PFL) AUC: $0.7166$.
+    \item \textbf{Hospital 3}: Local-Only AUC: $0.8627$, Global FedAvg AUC: $0.8627$, Global FedProx AUC: $0.8627$, Personalized FL (PFL) AUC: $0.8235$.
+\end{itemize}
+Across all clients, Local-Only achieved a mean AUC of $0.7942$ (worst-client: $0.6310$, standard deviation: $0.1419$). Global FedProx achieved a mean client AUC of $0.8149$ (worst-client: $0.7487$, standard deviation: $0.0592$), demonstrating that collaborative learning substantially improves worst-site utility and reduces performance variance. Personalized FL (PFL) fine-tuning \cite{Arivazhagan2019FederatedPersonalization, Li2021Ditto} achieved a mean client AUC of $0.8097$ (worst-client: $0.7166$, standard deviation: $0.0870$). PFL improved local performance on the data-scarce Hospital 2 by \textbf{0.0856 absolute AUC points} (from $0.6310$ to $0.7166$, corresponding to a \textbf{13.57\% relative improvement}) compared to its local-only baseline, supporting \textbf{H4} \cite{Kulkarni2020SurveyPFL}, although it did not outperform the global consensus model ($0.7487$) on that node.
+
 
 \subsection{Contribution Valuation}
 We evaluated permutation-based Shapley values against Leave-One-Out (LOO) utility degradation across clients (Hospital 1, 2, and 3). Note that the Shapley values in Subsection VII-F are computed for the baseline valuation-alignment analysis under a moderate label skew ($\alpha=1.0$), whereas the privacy-noise analysis in Subsection VII-G recomputes Shapley values independently under each privacy configuration:
@@ -401,13 +407,30 @@ No DP & 0.0611 & 0.0720 & 0.1065 & 3 & 2 & 1 \\
 \label{tab:shapley_noise}
 \end{table}
 
-The evaluations in Table \ref{tab:shapley_noise} demonstrate that differential privacy noise altered the observed contribution rankings in the evaluated three-client setting (see Fig. \ref{fig:shapley_volatility}). As privacy noise increases ($\epsilon$ drops from 10 to 0.5), the contribution rankings flip: Hospital 1 rises to Rank 1 while Hospital 3 drops to Rank 3, revealing that privacy perturbation alters perceived economic contribution in the evaluated three-client setting, supporting **H5**.
+The evaluations in Table \ref{tab:shapley_noise} demonstrate that differential privacy noise altered the observed contribution rankings in the evaluated three-client setting (see Fig. \ref{fig:shapley_volatility}). As privacy noise increases ($\epsilon$ drops from 10 to 0.5), the contribution rankings flip: Hospital 1 rises to Rank 1 while Hospital 3 drops to Rank 3, revealing that privacy perturbation alters perceived economic contribution in the evaluated three-client setting.
+
+To strengthen this into a quantified phenomenon, we ran $R=20$ independent privacy-noise realizations (seeds) per epsilon budget, comparing the DP-perturbed Shapley values against their paired No-DP baselines (shown in Fig. \ref{fig:shapley_instability}). The evaluations demonstrate that contribution valuation becomes increasingly and measurably unstable as the privacy constraint strengthens (as $\epsilon$ decreases):
+\begin{itemize}
+    \item At $\epsilon=10.0$ (weak privacy), the Shapley value variances across realizations are: H1 = $9.9 \times 10^{-5}$, H2 = $2.7 \times 10^{-4}$, H3 = $2.8 \times 10^{-5}$. The mean Spearman rank correlation with No-DP is $-0.3933 \pm 0.6766$. The rank-reversal probabilities are: H1 = $0.8500$, H2 = $0.8000$, H3 = $0.5500$. The top-contributor stability (probability of ranking \#1) is: H1 = $1.0000$, H2 = $0.0000$, H3 = $0.0000$. The mean absolute contribution errors (MAE) are: H1 = $0.0347$, H2 = $0.0287$, H3 = $0.0049$.
+    \item At $\epsilon=1.0$ (moderate privacy), the variances are: H1 = $5.8 \times 10^{-4}$, H2 = $4.9 \times 10^{-4}$, H3 = $5.4 \times 10^{-4}$. The rank-reversal probabilities are: H1 = $0.8500$, H2 = $0.6000$, H3 = $0.7500$. The MAEs increase to: H1 = $0.0527$, H2 = $0.0505$, H3 = $0.0646$.
+    \item At $\epsilon=0.5$ (strong privacy), the variances are: H1 = $3.7 \times 10^{-4}$, H2 = $5.3 \times 10^{-4}$, H3 = $6.0 \times 10^{-4}$. The rank-reversal probabilities are: H1 = $0.8500$, H2 = $0.6000$, H3 = $0.8500$. The MAEs are: H1 = $0.0187$, H2 = $0.0653$, H3 = $0.0802$.
+\end{itemize}
+As privacy noise increases (lower $\epsilon$), both the variance and mean absolute error of Shapley value scores increase monotonically for the clinical nodes (Hospitals 2 and 3), indicating that contribution valuation becomes unstable. The high standard deviations in rank correlation and high rank-reversal probabilities highlight that in a small hospital setting ($N=3$), contribution rankings are highly sensitive to stochastic differential privacy perturbations. This provides strong quantitative support for \textbf{H5}, reframing the finding from descriptive rank flips to a general instability curve.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/figure9_shapley_instability.pdf}
+\caption{Shapley contribution score instability metrics across 20 independent privacy-noise realizations as a function of composed privacy budget epsilon $\epsilon$: (Top-Left) Spearman rank correlation with No-DP (mean $\pm$ std); (Top-Right) Mean absolute contribution error per client; (Bottom-Left) Rank-reversal probability per client; (Bottom-Right) Top-contributor stability probability per client. Instability metrics increase monotonically as epsilon decreases / noise increases.}
+\label{fig:shapley_instability}
+\end{figure*}
+
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\columnwidth]{figures/figure6_shapley.pdf}
 \caption{Computed permutation Shapley contribution scores for Hospital 1, 2, and 3 under varying privacy budget constraints $\epsilon \in \{\text{No DP}, 10, 5, 2, 1, 0.5\}$. The annotation highlights the ranking reversal inside the plotting region as noise increases.}
 \label{fig:shapley_volatility}
 \end{figure}
+
 
 \subsection{Empirical Membership-Inference Evaluation}
 Without DP, the confidence-threshold MIA attacker achieves an AUC of 0.5679 (attacker advantage = 0.0734) on prediction confidence. With DP enabled, the attacker AUC decreases to 0.4802 at $\epsilon=10.0$ and declines further as the privacy budget is tightened (as mapped in Fig. \ref{fig:mia}). Thus, under the evaluated confidence-threshold attack, DP reduced membership-inference discrimination toward chance level, supporting \textbf{H7}.

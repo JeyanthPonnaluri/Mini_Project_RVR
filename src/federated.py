@@ -583,37 +583,40 @@ def partition_dirichlet(
         class_indices = np.where(y == c)[0]
         np.random.shuffle(class_indices)
         
-        # Sample proportions from Dirichlet distribution
-        proportions = np.random.dirichlet([alpha] * num_hospitals)
-        
-        # Ensure minimum samples per hospital (at least 1 sample per hospital if possible)
-        min_samples_per_hospital = max(1, len(class_indices) // (num_hospitals * 10))
-        
-        # Assign samples to hospitals based on proportions
-        proportions = (proportions * len(class_indices)).astype(int)
-        
-        # Ensure each hospital gets at least min_samples if available
-        for k in range(num_hospitals):
-            if proportions[k] < min_samples_per_hospital and len(class_indices) >= num_hospitals * min_samples_per_hospital:
-                proportions[k] = min_samples_per_hospital
-        
-        # Adjust last proportion to ensure all samples are assigned
-        proportions[-1] = len(class_indices) - proportions[:-1].sum()
-        
-        # If last proportion is negative, redistribute
-        if proportions[-1] < 0:
-            # Recalculate without minimum constraint
+        # Enforce minimum samples per class per hospital to prevent undefined local/personalization AUC
+        min_class_samples = 2
+        if len(class_indices) >= num_hospitals * min_class_samples:
+            for k in range(num_hospitals):
+                start = k * min_class_samples
+                end = start + min_class_samples
+                hospital_indices[k].extend(class_indices[start:end].tolist())
+            remaining_indices = class_indices[num_hospitals * min_class_samples:]
+        elif len(class_indices) >= num_hospitals:
+            for k in range(num_hospitals):
+                hospital_indices[k].append(class_indices[k])
+            remaining_indices = class_indices[num_hospitals:]
+        else:
+            remaining_indices = class_indices
+            
+        if len(remaining_indices) > 0:
+            # Sample proportions from Dirichlet distribution
             proportions = np.random.dirichlet([alpha] * num_hospitals)
-            proportions = (proportions * len(class_indices)).astype(int)
-            proportions[-1] = len(class_indices) - proportions[:-1].sum()
-        
-        # Distribute samples
-        start_idx = 0
-        for k in range(num_hospitals):
-            end_idx = start_idx + int(proportions[k])
-            if end_idx > start_idx:  # Only add if there are samples
-                hospital_indices[k].extend(class_indices[start_idx:end_idx].tolist())
-            start_idx = end_idx
+            proportions = (proportions * len(remaining_indices)).astype(int)
+            proportions[-1] = len(remaining_indices) - proportions[:-1].sum()
+            
+            # If last proportion is negative, redistribute
+            if proportions[-1] < 0:
+                proportions = np.random.dirichlet([alpha] * num_hospitals)
+                proportions = (proportions * len(remaining_indices)).astype(int)
+                proportions[-1] = len(remaining_indices) - proportions[:-1].sum()
+            
+            # Distribute remaining samples
+            start_idx = 0
+            for k in range(num_hospitals):
+                end_idx = start_idx + int(proportions[k])
+                if end_idx > start_idx:  # Only add if there are samples
+                    hospital_indices[k].extend(remaining_indices[start_idx:end_idx].tolist())
+                start_idx = end_idx
     
     # Create hospital datasets
     hospitals = []
