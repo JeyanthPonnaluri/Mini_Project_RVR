@@ -400,7 +400,7 @@ The observed positive rank association under a single representative partition (
 \subsection{Contribution Valuation under Privacy Noise}
 We swept differential privacy noise constraints over client Shapley values in Table \ref{tab:shapley_noise}:
 
-\begin{table}[ht]
+\begin{table*}[t]
 \caption{Shapley Client Scores and Ranks under Privacy Noise}
 \centering
 \begin{tabular}{ccccccc}
@@ -416,7 +416,7 @@ No DP & 0.0611 & 0.0720 & 0.1065 & 3 & 2 & 1 \\
 \bottomrule
 \end{tabular}
 \label{tab:shapley_noise}
-\end{table}
+\end{table*}
 
 The evaluations in Table \ref{tab:shapley_noise} demonstrate that differential privacy noise altered the observed contribution rankings in the evaluated three-client setting (see Fig. \ref{fig:shapley_volatility}). As privacy noise increases ($\epsilon$ drops from 10 to 0.5), the contribution rankings flip: Hospital 1 rises to Rank 1 while Hospital 3 drops to Rank 3, revealing that privacy perturbation alters perceived economic contribution in the evaluated three-client setting.
 
@@ -479,9 +479,10 @@ First, we compare global staging utility (global test ROC AUC) across training c
 \begin{table}[ht]
 \caption{Global Model Component Ablation (Global Test ROC AUC)}
 \centering
+\small
 \begin{tabular}{lccc}
 \toprule
-Configuration & FedProx Regularization & Differential Privacy ($\epsilon=1.0$) & Global Test AUC \\
+Configuration & FedProx & DP ($\epsilon=1.0$) & Global Test AUC \\
 \midrule
 FedAvg (Baseline) & \texttimes & \texttimes & $0.7514 \pm 0.0073$ \\
 FedProx           & \checkmark & \texttimes & $0.7513 \pm 0.0072$ \\
@@ -497,9 +498,10 @@ Second, we evaluate local adaptation performance across the three individual cli
 \begin{table}[ht]
 \caption{Local Adaptation Analysis (Client-Specific Test AUCs)}
 \centering
+\small
 \begin{tabular}{lccc}
 \toprule
-Client & Local-Only Model & Global FedProx Model ($\epsilon=1.0$) & Personalized FL (PFL) \\
+Client & Local-Only & Global FedProx ($\epsilon=1.0$) & PFL \\
 \midrule
 Hospital 1 & $0.8889$ & $0.8333$ & $0.8889$ \\
 Hospital 2 & $0.6310$ & $0.7487$ & $0.7166$ \\
