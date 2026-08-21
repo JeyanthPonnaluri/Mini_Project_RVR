@@ -131,6 +131,13 @@ where $\mu \ge 0$ controls the penalty strength, limiting local parameter drift 
 
 To provide sample-level privacy guarantees, local gradients are clipped and perturbed using a Gaussian noise mechanism calibrated via Rényi Differential Privacy (RDP). Client contribution valuation is measured using cooperative game theory. Let $S \subseteq \{1, \dots, K\}$ be a client coalition, and $v(S)$ be the utility of the model trained on coalition $S$, evaluated on a held-out validation set. The contribution of client $k$ is measured by its Shapley value $\phi_k$, reflecting its marginal utility across coalitions. The complete experimental system architecture of the DP-FPS clinical federated model is shown in Fig. \ref{fig:architecture}.
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{figures/figure2_architecture.pdf}
+\caption{Experimental system architecture of the DP-FPS clinical federated system, detailing client-level data preprocessing, local gradient clipping and RDP noise additions, FedProx consensus aggregations, and post-aggregation permutation Shapley valuations.}
+\label{fig:architecture}
+\end{figure*}
+
 \section{Mathematical Methodology}
 
 \subsection{Classification Model}
@@ -237,7 +244,7 @@ To ensure statistical rigor, all experimental sweeps are evaluated over 5 indepe
 We utilize clinical and proteomic data from the primary prostate cancer cohort of the Cancer Genome Atlas (TCGA-PRAD) \cite{TCGA2015PRAD}. The raw dataset contains 572 sample records matching 500 unique patient case IDs. Because multiple biological samples can belong to the same patient barcode, the differential privacy guarantee is strictly sample-level. We resolve this by inner-merging the clinical and protein expression datasets on the sample barcode. Since the raw protein expression dataset only contains 352 samples (each from a unique patient), this merge naturally restricts the matched analysis cohort to exactly 352 unique patient samples before pathologic stage filtering.
 
 \subsection{Preprocessing Pipeline}
-To prevent data leakage, we partition the cohort into an 80\% training split (277 samples) and a 20\% test split (70 observations) prior to fitting any preprocessing parameters. Quality control feature matching, missing value exclusion, and imputation are performed. Categorical variables (62 features) are one-hot encoded, and numerical variables (12 features) are standardized. Principal Component Analysis (PCA) is applied to the 456 protein expression features, retaining components explaining 95\% of the variance (115 components). This preprocessing pipeline reduces the matched clinical-protein dataset to exactly 347 samples across 347 unique patients, ensuring a 1:1 patient-to-sample ratio.
+To prevent data leakage, we partition the cohort into an 80\% training split (277 samples) and a 20\% test split (70 observations) prior to fitting any preprocessing parameters. Quality control feature matching, missing value exclusion, and imputation are performed. Categorical variables (62 features) are one-hot encoded, and numerical variables (12 features) are standardized. Principal Component Analysis (PCA) is applied to the 456 protein expression features, retaining components explaining 95\% of the variance (115 components). This preprocessing pipeline reduces the matched clinical-protein dataset to exactly 347 samples across 347 unique patients, ensuring a 1:1 patient-to-sample ratio. Because the final matched analysis cohort contains exactly one sample per patient (347 unique samples matching 347 unique patients), partitioning the dataset at the sample level naturally ensures that all samples belonging to any patient are constrained to the same partition, preventing any cross-partition patient-level leakage.
 
 \subsection{Dirichlet Client Heterogeneity Partitioning}
 To simulate non-IID clinical sites, the training split is distributed among 3 hospitals using a Dirichlet allocation over staging labels. We control the level of statistical skew by varying the concentration parameter $\alpha \in \{10.0, 1.0, 0.5, 0.1\}$, where smaller $\alpha$ indicates extreme label heterogeneity.
@@ -361,7 +368,7 @@ Dirichlet $\alpha$ & Metric / Model & $\epsilon=0.5$ & $\epsilon=1.0$ & $\epsilo
 \label{tab:interaction}
 \end{table*}
 
-Under joint privacy–heterogeneity constraints over 20 random seeds, FedProx produced consistently positive utility differences at moderate privacy budgets ($\epsilon = 1.0$ and $2.0$) as illustrated in Fig. \ref{fig:heatmap}, whereas differences were negligible at weaker privacy constraints ($\epsilon \ge 5.0$). This confirms that the regularization benefit of FedProx is visible when the optimization path is perturbed by privacy noise, supporting the point estimate direction of \textbf{H3}. However, the absolute magnitude of the benefit is extremely modest (approx. $+0.0020$ absolute AUC points).
+Under joint privacy–heterogeneity constraints over 20 random seeds, FedProx produced consistently positive utility differences at moderate privacy budgets ($\epsilon = 1.0$ and $2.0$) as illustrated in Fig. \ref{fig:heatmap}, whereas differences were negligible at weaker privacy constraints ($\epsilon \ge 5.0$). These results support H3 under the evaluated privacy–heterogeneity configurations, although the small number of clients ($N=3$) limits broader inferential generalization. Furthermore, the absolute magnitude of the benefit is extremely modest (approx. $+0.0020$ absolute AUC points), and the omnibus OLS/ANOVA model shows no statistically significant main effect of method or interaction terms.
 
 To rigorously test whether there is a detectable interaction between optimization method, privacy constraint, and label skew, we fit an Ordinary Least Squares (OLS) interaction model of the form $\text{AUC} \sim \text{Method} \times \text{Alpha} \times \text{Epsilon}$ on the full 800 observations (20 seeds $\times$ 4 skews $\times$ 5 budgets $\times$ 2 methods). A Type-II ANOVA test shows that while the main effect of privacy budget Epsilon is highly statistically significant ($F(4, 760) = 441.61$, $P \approx 1.5 \times 10^{-196}$), neither the main effects of Method ($P=0.7418$) and Alpha ($P=0.9996$) nor any of the interaction terms are statistically significant: Method $\times$ Alpha ($P=0.9999$), Method $\times$ Epsilon ($P=0.9978$), Alpha $\times$ Epsilon ($P=1.0000$), and Method $\times$ Alpha $\times$ Epsilon ($P=1.0000$). Fitting a continuous log-transformed model $\text{AUC} \sim \text{Method} \times \log(\text{Alpha}) \times \log(\text{Epsilon})$ yields similar results, with $\log(\text{Epsilon})$ showing a highly significant positive coefficient ($+0.0478$, $t=23.96$, $P < 0.001$) and all interaction terms showing non-significant p-values ($P \ge 0.948$). These results indicate that the primary driver of performance is the privacy budget itself, and the observed regularized aggregation benefits of FedProx at moderate budgets do not support a statistically significant interaction term at the OLS level.
 \begin{figure}[ht]
@@ -378,10 +385,11 @@ We evaluated client test partitions matching local Dirichlet skews ($\alpha=0.5$
     \item \textbf{Hospital 2}: Local-Only AUC: $0.6310$, Global FedAvg AUC: $0.7487$, Global FedProx AUC: $0.7487$, Personalized FL (PFL) AUC: $0.7166$.
     \item \textbf{Hospital 3}: Local-Only AUC: $0.8627$, Global FedAvg AUC: $0.8627$, Global FedProx AUC: $0.8627$, Personalized FL (PFL) AUC: $0.8235$.
 \end{itemize}
-Across all clients, Local-Only achieved a mean AUC of $0.7942$ (worst-client: $0.6310$, standard deviation: $0.1419$). Global FedProx achieved a mean client AUC of $0.8149$ (worst-client: $0.7487$, standard deviation: $0.0592$), demonstrating that collaborative learning substantially improves worst-site utility and reduces performance variance. Personalized FL (PFL) fine-tuning \cite{Arivazhagan2019FederatedPersonalization, Li2021Ditto} achieved a mean client AUC of $0.8097$ (worst-client: $0.7166$, standard deviation: $0.0870$). PFL improved local performance on the data-scarce Hospital 2 by \textbf{0.0856 absolute AUC points} (from $0.6310$ to $0.7166$, corresponding to a \textbf{13.57\% relative improvement}) compared to its local-only baseline, supporting \textbf{H4} \cite{Kulkarni2020SurveyPFL}, although it did not outperform the global consensus model ($0.7487$) on that node.
+Across all clients, Local-Only achieved a mean AUC of $0.7942$ (worst-client: $0.6310$, standard deviation: $0.1419$). Global FedProx achieved a mean client AUC of $0.8149$ (worst-client: $0.7487$, standard deviation: $0.0592$), demonstrating that collaborative learning substantially improves worst-site utility and reduces performance variance. Personalized FL (PFL) fine-tuning \cite{Arivazhagan2019FederatedPersonalization, Li2021Ditto} achieved a mean client AUC of $0.8097$ (worst-client: $0.7166$, standard deviation: $0.0870$). PFL improved local performance on the data-scarce Hospital 2 by \textbf{0.0856 absolute AUC points} (from $0.6310$ to $0.7166$, corresponding to a \textbf{13.57\% relative improvement}) compared to its local-only baseline, supporting the direction of \textbf{H4} in this setting \cite{Kulkarni2020SurveyPFL}, although the small number of clients ($N=3$) limits broader inferential generalization and it did not outperform the global consensus model ($0.7487$) on that node.
 
 
 \subsection{Contribution Valuation}
+\label{sec:contribution_valuation}
 We evaluated permutation-based Shapley values against Leave-One-Out (LOO) utility degradation across clients (Hospital 1, 2, and 3). Note that the Shapley values in Subsection VII-F are computed for the baseline valuation-alignment analysis under a moderate label skew ($\alpha=1.0$), whereas the privacy-noise analysis in Subsection VII-G recomputes Shapley values independently under each privacy configuration:
 \begin{itemize}
     \item Shapley Scores: H1 = 0.0455, H2 = 0.1027, H3 = 0.1094
@@ -412,7 +420,15 @@ No DP & 0.0611 & 0.0720 & 0.1065 & 3 & 2 & 1 \\
 
 The evaluations in Table \ref{tab:shapley_noise} demonstrate that differential privacy noise altered the observed contribution rankings in the evaluated three-client setting (see Fig. \ref{fig:shapley_volatility}). As privacy noise increases ($\epsilon$ drops from 10 to 0.5), the contribution rankings flip: Hospital 1 rises to Rank 1 while Hospital 3 drops to Rank 3, revealing that privacy perturbation alters perceived economic contribution in the evaluated three-client setting.
 
-To strengthen this into a quantified phenomenon, we ran $R=20$ independent privacy-noise realizations (seeds) per epsilon budget, comparing the DP-perturbed Shapley values against their paired No-DP baselines (shown in Fig. \ref{fig:shapley_instability}). In the No-DP baseline, the mean client Shapley values across realizations are stable: H1 = $0.0611$, H2 = $0.0720$, H3 = $0.1065$, yielding a consistent ranking of Hospital 3 (Rank 1), Hospital 2 (Rank 2), and Hospital 1 (Rank 3). The evaluations demonstrate that contribution valuation becomes increasingly and measurably unstable as the privacy constraint strengthens (as $\epsilon$ decreases):
+To strengthen this into a quantified phenomenon, we ran $R=20$ independent privacy-noise realizations (seeds) per epsilon budget, comparing the DP-perturbed Shapley values against their paired No-DP baselines (shown in Fig. \ref{fig:shapley_instability}). In the No-DP baseline, the mean client Shapley values across realizations are stable: H1 = $0.0611$, H2 = $0.0720$, H3 = $0.1065$, yielding a consistent ranking of Hospital 3 (Rank 1), Hospital 2 (Rank 2), and Hospital 1 (Rank 3). Let $\text{rank}_{k,r}^{\text{DP}}$ and $\text{rank}_{k,r}^{\text{No-DP}}$ denote the estimated Shapley rank (1-based, descending) of client $k$ under realization $r$ with and without differential privacy, respectively. We define the rank-reversal probability for client $k$ as:
+\begin{equation}
+RR_k = \frac{1}{R} \sum_{r=1}^R \mathbb{I}(\text{rank}_{k,r}^{\text{DP}} \neq \text{rank}_{k,r}^{\text{No-DP}})
+\end{equation}
+and the top-contributor stability for client $k$ as:
+\begin{equation}
+TS_k = \frac{1}{R} \sum_{r=1}^R \mathbb{I}(\text{rank}_{k,r}^{\text{DP}} = 1)
+\end{equation}
+where $\mathbb{I}(\cdot)$ is the indicator function. The evaluations demonstrate that contribution valuation becomes increasingly and measurably unstable as the privacy constraint strengthens (as $\epsilon$ decreases):
 \begin{itemize}
     \item At $\epsilon=10.0$ (weak privacy), the Shapley value variances across realizations are: H1 = $9.9 \times 10^{-5}$, H2 = $2.7 \times 10^{-4}$, H3 = $2.8 \times 10^{-5}$. The mean Spearman rank correlation with No-DP is $-0.3933 \pm 0.6766$. The rank-reversal probabilities are: H1 = $0.8500$, H2 = $0.8000$, H3 = $0.5500$. The top-contributor stability (probability of ranking \#1) is: H1 = $1.0000$, H2 = $0.0000$, H3 = $0.0000$. The mean absolute contribution errors (MAE) are: H1 = $0.0347$, H2 = $0.0287$, H3 = $0.0049$.
     \item At $\epsilon=5.0$, the variances are: H1 = $1.9 \times 10^{-4}$, H2 = $3.2 \times 10^{-4}$, H3 = $7.1 \times 10^{-5}$. The mean Spearman rank correlation with No-DP is $-0.3933 \pm 0.6766$. The rank-reversal probabilities are: H1 = $0.8500$, H2 = $0.7000$, H3 = $0.6500$. The top-contributor stability is: H1 = $1.0000$, H2 = $0.0000$, H3 = $0.0000$. The MAEs are: H1 = $0.0404$, H2 = $0.0290$, H3 = $0.0114$.
@@ -420,12 +436,12 @@ To strengthen this into a quantified phenomenon, we ran $R=20$ independent priva
     \item At $\epsilon=1.0$ (moderate privacy), the variances are: H1 = $5.8 \times 10^{-4}$, H2 = $4.9 \times 10^{-4}$, H3 = $5.4 \times 10^{-4}$. The mean Spearman rank correlation with No-DP is $-0.3933 \pm 0.6386$. The rank-reversal probabilities are: H1 = $0.8500$, H2 = $0.6000$, H3 = $0.7500$. The top-contributor stability is: H1 = $1.0000$, H2 = $0.0000$, H3 = $0.0000$. The MAEs are: H1 = $0.0527$, H2 = $0.0505$, H3 = $0.0646$.
     \item At $\epsilon=0.5$ (strong privacy), the variances are: H1 = $3.7 \times 10^{-4}$, H2 = $5.3 \times 10^{-4}$, H3 = $6.0 \times 10^{-4}$. The mean Spearman rank correlation with No-DP is $-0.3183 \pm 0.6314$. The rank-reversal probabilities are: H1 = $0.8500$, H2 = $0.6000$, H3 = $0.8500$. The top-contributor stability is: H1 = $1.0000$, H2 = $0.0000$, H3 = $0.0000$. The MAEs are: H1 = $0.0187$, H2 = $0.0653$, H3 = $0.0802$.
 \end{itemize}
-As privacy noise increases (lower $\epsilon$), both the variance and mean absolute error of Shapley value scores increase monotonically for the clinical nodes (Hospitals 2 and 3), indicating that contribution valuation becomes unstable. The high standard deviations in rank correlation and high rank-reversal probabilities highlight that in a small hospital setting ($N=3$), contribution rankings are highly sensitive to stochastic differential privacy perturbations. This provides strong quantitative support for \textbf{H5}, reframing the finding from descriptive rank flips to a general instability curve.
+Shapley variability and contribution error generally increase under stronger privacy constraints, although the relationship is not strictly monotonic for every client and metric. For example, the variance of Hospital 1's Shapley scores rises from $9.9 \times 10^{-5}$ at $\epsilon=10.0$ to $5.8 \times 10^{-4}$ at $\epsilon=1.0$, but decreases to $3.7 \times 10^{-4}$ at $\epsilon=0.5$. The high standard deviations in rank correlation and high rank-reversal probabilities highlight that in a small hospital setting ($N=3$), contribution rankings are highly sensitive to stochastic differential privacy perturbations. These results support H5 under the evaluated privacy-noise configurations, though the three-client setting limits broader generalizability.
 
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figures/figure9_shapley_instability.pdf}
-\caption{Shapley contribution score instability metrics across 20 independent privacy-noise realizations as a function of composed privacy budget epsilon $\epsilon$: (Top-Left) Spearman rank correlation with No-DP (mean $\pm$ std); (Top-Right) Mean absolute contribution error per client; (Bottom-Left) Rank-reversal probability per client; (Bottom-Right) Top-contributor stability probability per client. Instability metrics increase monotonically as epsilon decreases / noise increases.}
+\caption{Shapley contribution score instability metrics across 20 independent privacy-noise realizations as a function of composed privacy budget epsilon $\epsilon$: (Top-Left) Spearman rank correlation with No-DP (mean $\pm$ std); (Top-Right) Mean absolute contribution error per client; (Bottom-Left) Rank-reversal probability per client ($RR_k$); (Bottom-Right) Top-contributor stability probability per client ($TS_k$). Instability metrics generally increase as epsilon decreases / noise increases.}
 \label{fig:shapley_instability}
 \end{figure*}
 
@@ -456,27 +472,45 @@ We evaluated model robustness under controlled synthetic domain shifts (as plott
 \end{figure}
 
 \subsection{System Component Ablation Analysis}
-To evaluate the individual contributions of the DP-FPS components, we conducted an ablation analysis under a representative non-IID configuration (Dirichlet skew $\alpha=1.0$ and target privacy budget $\epsilon=1.0$ where applicable). We compare global staging utility (test ROC AUC) and local adaptation performance as each system component is sequentially enabled (Table \ref{tab:ablation}).
+To evaluate the individual contributions of the DP-FPS components, we conducted an ablation analysis under a representative non-IID configuration (Dirichlet skew $\alpha=1.0$ and target privacy budget $\epsilon=1.0$ where applicable). To ensure methodological clarity and prevent confounding evaluation populations, we analyze global and local components separately.
+
+First, we compare global staging utility (global test ROC AUC) across training configurations evaluated on the same global test set in Table \ref{tab:global_ablation}. The results show that introducing sample-level DP noise at $\epsilon=1.0$ causes a significant utility drop (AUC decreases from 0.7514 to 0.6740), reflecting the privacy--utility trade-off. Adding proximal regularization (FedProx) under these privacy constraints recovers a portion of this utility, improving the test AUC to 0.6761.
 
 \begin{table}[ht]
-\caption{System Component Ablation Analysis}
+\caption{Global Model Component Ablation (Global Test ROC AUC)}
 \centering
-\begin{tabular}{lccccc}
+\begin{tabular}{lccc}
 \toprule
-Configuration & FedProx & DP & PFL & Shapley & Global Test AUC / Metric \\
+Configuration & FedProx Regularization & Differential Privacy ($\epsilon=1.0$) & Global Test AUC \\
 \midrule
-Baseline FedAvg ($\epsilon=10.0$) & \texttimes & \texttimes & \texttimes & \texttimes & $0.7514 \pm 0.0073$ \\
-+ FedProx ($\epsilon=10.0$) & \checkmark & \texttimes & \texttimes & \texttimes & $0.7513 \pm 0.0072$ \\
-+ DP ($\epsilon=1.0$) & \texttimes & \checkmark & \texttimes & \texttimes & $0.6740 \pm 0.0413$ \\
-FedProx + DP ($\epsilon=1.0$) & \checkmark & \checkmark & \texttimes & \texttimes & $0.6761 \pm 0.0421$ \\
-+ PFL (Hospital 2, $\epsilon=1.0$) & \checkmark & \checkmark & \checkmark & \texttimes & $0.7166 \pm 0.0000$ \\
-Full System ($\epsilon=1.0$) & \checkmark & \checkmark & \checkmark & \checkmark & $0.7166 \text{ (Valued)}$ \\
+FedAvg (Baseline) & \texttimes & \texttimes & $0.7514 \pm 0.0073$ \\
+FedProx           & \checkmark & \texttimes & $0.7513 \pm 0.0072$ \\
+DP-FedAvg         & \texttimes & \checkmark & $0.6740 \pm 0.0413$ \\
+DP-FedProx        & \checkmark & \checkmark & $0.6761 \pm 0.0421$ \\
 \bottomrule
 \end{tabular}
-\label{tab:ablation}
+\label{tab:global_ablation}
 \end{table}
 
-The ablation results in Table~\ref{tab:ablation} show that introducing sample-level DP noise at $\epsilon=1.0$ causes a significant utility drop (AUC decreases from 0.7514 to 0.6740), reflecting the privacy--utility trade-off. Adding proximal regularization (FedProx) under these privacy constraints recovers a portion of this utility, improving the test AUC to 0.6761. Personalized local adaptation (PFL) fine-tuning provides a substantial performance lift on the evaluable local test split of Hospital 2 (rising to 0.7166 from a local-only training baseline of 0.6310), demonstrating the utility of local layer adaptation. Finally, integrating permutation-based Shapley valuation computes contribution scores without affecting staging performance, completing the system.
+Second, we evaluate local adaptation performance across the three individual clients on their client-specific test sets in Table \ref{tab:local_adaptation}. Under data scarcity, personalized local adaptation (PFL) fine-tuning provides a substantial performance lift on Hospital 2 (rising to 0.7166 from a local-only training baseline of 0.6310), demonstrating the utility of local layer adaptation. Collaborative training (Global FedProx) stabilizes cross-site utility by improving the worst-client AUC ($0.6310 \to 0.7487$) and reducing performance variance across clients ($0.1419 \to 0.0592$), while PFL achieves personalized local tuning without requiring raw data sharing. Permutation-based Shapley valuation acts as a post-training diagnostic component to compute contribution scores (as detailed in Section \ref{sec:contribution_valuation}) without affecting local or global staging performance.
+
+\begin{table}[ht]
+\caption{Local Adaptation Analysis (Client-Specific Test AUCs)}
+\centering
+\begin{tabular}{lccc}
+\toprule
+Client & Local-Only Model & Global FedProx Model ($\epsilon=1.0$) & Personalized FL (PFL) \\
+\midrule
+Hospital 1 & $0.8889$ & $0.8333$ & $0.8889$ \\
+Hospital 2 & $0.6310$ & $0.7487$ & $0.7166$ \\
+Hospital 3 & $0.8627$ & $0.8627$ & $0.8235$ \\
+\midrule
+Mean & $0.7942$ & $0.8149$ & $0.8097$ \\
+Std Dev & $0.1419$ & $0.0592$ & $0.0870$ \\
+\bottomrule
+\end{tabular}
+\label{tab:local_adaptation}
+\end{table}
 
 \section{Survival Analysis Limitation}
 After preprocessing and cohort matching, the survival-analysis subset contains 347 observations, with 12 observed death events (9 in the training split of size 277, and 0 in the test split of size 70).
@@ -485,13 +519,7 @@ A federated Cox implementation was developed and technically validated \cite{Sad
 \section{Discussion}
 The findings in this study answer our primary research question: privacy constraints and statistical heterogeneity jointly influence both optimization stability and the economics of clinical data sharing. Under extreme non-IID conditions, client parameters drift. FedProx controls this drift by penalizing local optimization steps. Under differential privacy constraints, client updates are perturbed by noise. The results are consistent with the interpretation that proximal regularization may mitigate optimization instability under the combined effects of statistical heterogeneity and privacy perturbation. However, our expanded 20-seed runs show that the absolute regularized aggregation benefit is modest (approx. 0.0020 AUC points) compared to the initial 5-seed estimates of 0.0028--0.0045, and it does not yield a statistically significant interaction term in our omnibus regression model. This shrinkage highlights that small-sample seeds can overestimate effect sizes and underscores the importance of high-replication validation in clinical federated settings.
 
-Importantly, privacy mechanisms have consequences beyond model staging performance. We showed that adding differential privacy noise disrupts contribution valuation, altering client contribution rankings in the evaluated three-client setting. This suggests a conflict between privacy and incentive alignment in collaborative clinical consortia.
-\begin{figure*}[t]
-\centering
-\includegraphics[width=\textwidth]{figures/figure2_architecture.pdf}
-\caption{Experimental system architecture of the DP-FPS clinical federated system, detailing client-level data preprocessing, local gradient clipping and RDP noise additions, FedProx consensus aggregations, and post-aggregation permutation Shapley valuations.}
-\label{fig:architecture}
-\end{figure*}
+Importantly, privacy mechanisms have consequences beyond model staging performance. We showed that adding differential privacy noise disrupts contribution valuation, altering client contribution rankings in the evaluated three-client setting. 
 
 \subsection{Threats to Validity}
 \label{sec:threats_validity}
