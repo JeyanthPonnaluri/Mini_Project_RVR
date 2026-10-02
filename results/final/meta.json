@@ -1,0 +1,67 @@
+{
+ "cohort": {
+  "seconds": 0.4,
+  "seeds": 20,
+  "quick": false,
+  "finished": "2026-10-02 03:47:13"
+ },
+ "base_paper": {
+  "seconds": 17.3,
+  "seeds": 20,
+  "quick": false,
+  "finished": "2026-10-02 03:47:30"
+ },
+ "centralized": {
+  "seconds": 190.4,
+  "seeds": 20,
+  "quick": false,
+  "finished": "2026-10-02 03:50:41"
+ },
+ "drift": {
+  "seconds": 16.3,
+  "seeds": 20,
+  "quick": false,
+  "finished": "2026-10-02 03:50:57"
+ },
+ "privacy_grid": {
+  "seconds": 25.2,
+  "seeds": 20,
+  "quick": false,
+  "finished": "2026-10-02 03:51:22"
+ },
+ "personalization": {
+  "seconds": 7.8,
+  "seeds": 20,
+  "quick": false,
+  "finished": "2026-10-02 03:51:30"
+ },
+ "shapley": {
+  "seconds": 1064.5,
+  "seeds": 20,
+  "quick": false,
+  "finished": "2026-10-02 04:09:14"
+ },
+ "mia": {
+  "seconds": 5.0,
+  "seeds": 20,
+  "quick": false,
+  "finished": "2026-10-02 04:09:19"
+ },
+ "shift": {
+  "seconds": 3.9,
+  "seeds": 20,
+  "quick": false,
+  "finished": "2026-10-02 04:09:23"
+ },
+ "ablation": {
+  "seconds": 17.6,
+  "seeds": 20,
+  "quick": false,
+  "finished": "2026-10-02 04:09:41"
+ },
+ "environment": {
+  "python": "3.11.15",
+  "platform": "Linux-6.18.44-fc-v51-x86_64-with-glibc2.39",
+  "numpy": "2.4.4"
+ }
+}

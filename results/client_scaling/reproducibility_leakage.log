@@ -1,0 +1,26 @@
+[2026-08-24 09:05:12] Starting client-scaling experimental verification pipeline.
+[2026-08-24 09:05:12] Loading TCGA-PRAD dataset...
+[2026-08-24 09:05:12] Global Cohort Preprocessing Complete. Train shape: (277, 1905), Test shape: (70, 1905)
+[2026-08-24 09:05:12] Verifying leakage constraints for N=3, alpha=1.0, seed=42
+[2026-08-24 09:05:12] Programmatic assertions PASS: Leakage check successfully verified.
+[2026-08-24 09:05:12] Verifying leakage constraints for N=10, alpha=0.5, seed=50
+[2026-08-24 09:05:12] Programmatic assertions PASS: Leakage check successfully verified.
+[2026-08-24 09:05:12] Verifying leakage constraints for N=15, alpha=0.1, seed=55
+[2026-08-24 09:05:12] Programmatic assertions PASS: Leakage check successfully verified.
+[2026-08-24 09:05:12] Verifying leakage constraints for N=20, alpha=10.0, seed=61
+[2026-08-24 09:05:12] Programmatic assertions PASS: Leakage check successfully verified.
+[2026-08-24 09:05:12] Checking Experiment A: Client Update Drift Sweep...
+[2026-08-24 09:05:12] Drift Sweep files already exist. Skipping sweep.
+[2026-08-24 09:05:12] Checking Experiment B/C: Global Test AUC Sweep...
+[2026-08-24 09:05:12] AUC Sweep files already exist. Skipping sweep.
+[2026-08-24 09:05:12] Checking Experiment D: Personalized FL Scaling Sweep...
+[2026-08-24 09:05:12] Personalized FL Sweep file already exists. Skipping sweep.
+[2026-08-24 09:05:12] Checking Experiment F: Shapley Convergence Analysis...
+[2026-08-24 09:05:12] Shapley convergence file already exists. Skipping sweep.
+[2026-08-24 09:05:12] Starting Experiment F: Shapley x Privacy Noise Sweep (Multiprocessed)...
+
+[2026-08-24 09:05:12] Spawning 80 seeds in parallel for Shapley sweep...
+[2026-08-24 09:41:34] Raw Shapley sweep complete and saved.
+[2026-08-24 09:41:34] Computing Shapley instability metrics and running Wilcoxon signed-rank tests...
+[2026-08-24 09:41:37] Shapley instability computation and Wilcoxon tests complete.
+[2026-08-24 09:41:37] All client scaling sweeps and statistical tests completed successfully.

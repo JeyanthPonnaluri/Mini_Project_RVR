@@ -1,0 +1,97 @@
+{
+ "raw_records": 572,
+ "raw_patients": 500,
+ "raw_sample_types": {
+  "01": 504,
+  "11": 67,
+  "06": 1
+ },
+ "clinical_cohort": 493,
+ "clinical_cohort_pos": 305,
+ "clinical_sites": 31,
+ "protein_samples": 352,
+ "protein_targets_raw": 487,
+ "protein_targets_kept": 456,
+ "protein_pcs_95pct_full_cohort": 129,
+ "matched_cohort": 347,
+ "matched_pos": 237,
+ "matched_train": 277,
+ "matched_test": 70,
+ "survival_events_matched": 9,
+ "survival_events_train_seed42": 8,
+ "survival_events_test_seed42": 1,
+ "survival_events_all_572": 12,
+ "t_stage_counts_matched": {
+  "T3a": 123,
+  "T3b": 104,
+  "T2c": 97,
+  "T4": 10,
+  "T2b": 7,
+  "T2a": 6
+ },
+ "features_full": [
+  "age",
+  "gleason_primary",
+  "gleason_secondary",
+  "gleason_sum",
+  "race=black or african american",
+  "race=not reported",
+  "race=white",
+  "ethnicity=not hispanic or latino",
+  "ethnicity=not reported",
+  "clinical_t=T2",
+  "clinical_t=T3",
+  "clinical_t=T4",
+  "clinical_t=Unknown",
+  "clinical_m=M1",
+  "clinical_m=Unknown",
+  "prior_malignancy=yes",
+  "pathologic_n=N1",
+  "pathologic_n=Unknown"
+ ],
+ "features_preop": [
+  "age",
+  "race=black or african american",
+  "race=not reported",
+  "race=white",
+  "ethnicity=not hispanic or latino",
+  "ethnicity=not reported",
+  "clinical_t=T2",
+  "clinical_t=T3",
+  "clinical_t=T4",
+  "clinical_t=Unknown",
+  "clinical_m=M1",
+  "clinical_m=Unknown",
+  "prior_malignancy=yes"
+ ],
+ "excluded_columns": {
+  "identifiers": [
+   "sample",
+   "id",
+   "case_id",
+   "submitter_id",
+   "sample_id.samples",
+   "pathology_report_uuid.samples",
+   "treatment_id.treatments.diagnoses",
+   "submitter_id.treatments.diagnoses",
+   "tissue_source_site_id.tissue_source_site"
+  ],
+  "record timestamps": [
+   "created_datetime.treatments.diagnoses",
+   "updated_datetime.treatments.diagnoses"
+  ],
+  "outcome / follow-up (not known at staging time)": [
+   "vital_status.demographic",
+   "days_to_last_follow_up.diagnoses",
+   "treatment_type.treatments.diagnoses",
+   "treatment_or_therapy.treatments.diagnoses"
+  ],
+  "target": [
+   "ajcc_pathologic_t.diagnoses"
+  ],
+  "hospital identity (used to define clients, not as a feature)": [
+   "name.tissue_source_site",
+   "code.tissue_source_site"
+  ]
+ }
+}

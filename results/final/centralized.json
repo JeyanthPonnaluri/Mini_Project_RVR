@@ -1,0 +1,282 @@
+{
+ "table": [
+  {
+   "features": "Clinical (full)",
+   "dim_last_fold": 18,
+   "model": "NumPy LR (federated model, centralised)",
+   "mean": 0.8179879916183108,
+   "sd": 0.045691767213551816,
+   "n": 25,
+   "ci_low": 0.7991273570922524,
+   "ci_high": 0.8368486261443693
+  },
+  {
+   "features": "Clinical (full)",
+   "dim_last_fold": 18,
+   "model": "LR (L2)",
+   "mean": 0.8241356382978724,
+   "sd": 0.04273469779425097,
+   "n": 25,
+   "ci_low": 0.8064956220360399,
+   "ci_high": 0.8417756545597049
+  },
+  {
+   "features": "Clinical (full)",
+   "dim_last_fold": 18,
+   "model": "LR (L1)",
+   "mean": 0.8311295132172792,
+   "sd": 0.04349577241229522,
+   "n": 25,
+   "ci_low": 0.813175340793552,
+   "ci_high": 0.8490836856410064
+  },
+  {
+   "features": "Clinical (full)",
+   "dim_last_fold": 18,
+   "model": "Random forest",
+   "mean": 0.8032926337846551,
+   "sd": 0.04679253361658764,
+   "n": 25,
+   "ci_low": 0.7839776252194138,
+   "ci_high": 0.8226076423498964
+  },
+  {
+   "features": "Clinical (full)",
+   "dim_last_fold": 18,
+   "model": "MLP",
+   "mean": 0.7924061089619598,
+   "sd": 0.052755017887465804,
+   "n": 25,
+   "ci_low": 0.7706299078546396,
+   "ci_high": 0.8141823100692801
+  },
+  {
+   "features": "Clinical (pre-op only)",
+   "dim_last_fold": 13,
+   "model": "NumPy LR (federated model, centralised)",
+   "mean": 0.6421586879432624,
+   "sd": 0.056785667265582915,
+   "n": 25,
+   "ci_low": 0.6187187165451575,
+   "ci_high": 0.6655986593413672
+  },
+  {
+   "features": "Clinical (pre-op only)",
+   "dim_last_fold": 13,
+   "model": "LR (L2)",
+   "mean": 0.6606910863958737,
+   "sd": 0.05308626753074017,
+   "n": 25,
+   "ci_low": 0.6387781521560947,
+   "ci_high": 0.6826040206356527
+  },
+  {
+   "features": "Clinical (pre-op only)",
+   "dim_last_fold": 13,
+   "model": "LR (L1)",
+   "mean": 0.6618375241779496,
+   "sd": 0.05747543059057561,
+   "n": 25,
+   "ci_low": 0.6381128324729816,
+   "ci_high": 0.6855622158829177
+  },
+  {
+   "features": "Clinical (pre-op only)",
+   "dim_last_fold": 13,
+   "model": "Random forest",
+   "mean": 0.6442839297227594,
+   "sd": 0.05235430900762788,
+   "n": 25,
+   "ci_low": 0.6226731331115849,
+   "ci_high": 0.6658947263339339
+  },
+  {
+   "features": "Clinical (pre-op only)",
+   "dim_last_fold": 13,
+   "model": "MLP",
+   "mean": 0.6698762894906511,
+   "sd": 0.048268216130410234,
+   "n": 25,
+   "ci_low": 0.6499521491218703,
+   "ci_high": 0.689800429859432
+  },
+  {
+   "features": "Protein only (PCA)",
+   "dim_last_fold": 115,
+   "model": "NumPy LR (federated model, centralised)",
+   "mean": 0.5741191166989039,
+   "sd": 0.08276815236003425,
+   "n": 25,
+   "ci_low": 0.5399541025780071,
+   "ci_high": 0.6082841308198007
+  },
+  {
+   "features": "Protein only (PCA)",
+   "dim_last_fold": 115,
+   "model": "LR (L2)",
+   "mean": 0.633027885235332,
+   "sd": 0.06206822614291416,
+   "n": 25,
+   "ci_low": 0.6074073807034993,
+   "ci_high": 0.6586483897671648
+  },
+  {
+   "features": "Protein only (PCA)",
+   "dim_last_fold": 115,
+   "model": "LR (L1)",
+   "mean": 0.6366295938104449,
+   "sd": 0.06165599587851538,
+   "n": 25,
+   "ci_low": 0.6111792495685626,
+   "ci_high": 0.6620799380523272
+  },
+  {
+   "features": "Protein only (PCA)",
+   "dim_last_fold": 115,
+   "model": "Random forest",
+   "mean": 0.598908768536428,
+   "sd": 0.06070685430071202,
+   "n": 25,
+   "ci_low": 0.5738502106819877,
+   "ci_high": 0.6239673263908684
+  },
+  {
+   "features": "Protein only (PCA)",
+   "dim_last_fold": 115,
+   "model": "MLP",
+   "mean": 0.5994253707285622,
+   "sd": 0.060694292160320136,
+   "n": 25,
+   "ci_low": 0.574371998270819,
+   "ci_high": 0.6244787431863054
+  },
+  {
+   "features": "Clinical (full) + protein",
+   "dim_last_fold": 133,
+   "model": "NumPy LR (federated model, centralised)",
+   "mean": 0.6588491295938104,
+   "sd": 0.06909605603933427,
+   "n": 25,
+   "ci_low": 0.6303276794590601,
+   "ci_high": 0.6873705797285606
+  },
+  {
+   "features": "Clinical (full) + protein",
+   "dim_last_fold": 133,
+   "model": "LR (L2)",
+   "mean": 0.6819076402321084,
+   "sd": 0.05446105754138241,
+   "n": 25,
+   "ci_low": 0.6594272205672284,
+   "ci_high": 0.7043880598969884
+  },
+  {
+   "features": "Clinical (full) + protein",
+   "dim_last_fold": 133,
+   "model": "LR (L1)",
+   "mean": 0.7120164410058026,
+   "sd": 0.054014378693990596,
+   "n": 25,
+   "ci_low": 0.6897204013070509,
+   "ci_high": 0.7343124807045543
+  },
+  {
+   "features": "Clinical (full) + protein",
+   "dim_last_fold": 133,
+   "model": "Random forest",
+   "mean": 0.7820333655705997,
+   "sd": 0.051592072058245224,
+   "n": 25,
+   "ci_low": 0.7607372049081154,
+   "ci_high": 0.803329526233084
+  },
+  {
+   "features": "Clinical (full) + protein",
+   "dim_last_fold": 133,
+   "model": "MLP",
+   "mean": 0.6642561250805932,
+   "sd": 0.06230766847523244,
+   "n": 25,
+   "ci_low": 0.6385367836117075,
+   "ci_high": 0.6899754665494788
+  },
+  {
+   "features": "Pre-op + protein",
+   "dim_last_fold": 128,
+   "model": "NumPy LR (federated model, centralised)",
+   "mean": 0.5954255319148936,
+   "sd": 0.07886026907472458,
+   "n": 25,
+   "ci_low": 0.562873612732309,
+   "ci_high": 0.6279774510974782
+  },
+  {
+   "features": "Pre-op + protein",
+   "dim_last_fold": 128,
+   "model": "LR (L2)",
+   "mean": 0.6381060606060607,
+   "sd": 0.05810257990062718,
+   "n": 25,
+   "ci_low": 0.6141224943893043,
+   "ci_high": 0.662089626822817
+  },
+  {
+   "features": "Pre-op + protein",
+   "dim_last_fold": 128,
+   "model": "LR (L1)",
+   "mean": 0.6589007092198582,
+   "sd": 0.06257403378330202,
+   "n": 25,
+   "ci_low": 0.6330714175557342,
+   "ci_high": 0.6847300008839823
+  },
+  {
+   "features": "Pre-op + protein",
+   "dim_last_fold": 128,
+   "model": "Random forest",
+   "mean": 0.6274806576402321,
+   "sd": 0.05495128995789535,
+   "n": 25,
+   "ci_low": 0.6047978799794912,
+   "ci_high": 0.650163435300973
+  },
+  {
+   "features": "Pre-op + protein",
+   "dim_last_fold": 128,
+   "model": "MLP",
+   "mean": 0.622861057382334,
+   "sd": 0.054885779756464255,
+   "n": 25,
+   "ci_low": 0.6002053210036942,
+   "ci_high": 0.6455167937609738
+  }
+ ],
+ "comparisons": {
+  "protein_added_to_full": {
+   "mean": -0.1591388620245003,
+   "sd": 0.06987516078419567,
+   "n": 25,
+   "ci_low": -0.18798191079170598,
+   "ci_high": -0.13029581325729464,
+   "wilcoxon_p": 1.1920928955078125e-07
+  },
+  "full_vs_preop": {
+   "mean": 0.17582930367504837,
+   "sd": 0.0662684832913183,
+   "n": 25,
+   "ci_low": 0.14847501820580383,
+   "ci_high": 0.2031835891442929,
+   "wilcoxon_p": 5.960464477539063e-08
+  },
+  "protein_added_to_preop": {
+   "mean": -0.046733156028368826,
+   "sd": 0.08107091173582977,
+   "n": 25,
+   "ci_low": -0.08019758365265914,
+   "ci_high": -0.013268728404078507,
+   "wilcoxon_p": 0.011453330516815186
+  }
+ },
+ "n_folds": 25,
+ "note": "Fold-level paired differences are correlated across folds; CIs are indicative."
+}

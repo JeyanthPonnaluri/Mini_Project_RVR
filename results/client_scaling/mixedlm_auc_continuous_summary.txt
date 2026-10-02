@@ -1,0 +1,29 @@
+                           Mixed Linear Model Regression Results
+===========================================================================================
+Model:                        MixedLM             Dependent Variable:             AUC      
+No. Observations:             3200                Method:                         REML     
+No. Groups:                   20                  Scale:                          0.0007   
+Min. group size:              160                 Log-Likelihood:                 7017.3594
+Max. group size:              160                 Converged:                      Yes      
+Mean group size:              160.0                                                        
+-------------------------------------------------------------------------------------------
+                                                Coef.  Std.Err.    z    P>|z| [0.025 0.975]
+-------------------------------------------------------------------------------------------
+Intercept                                        0.676    0.003 225.184 0.000  0.670  0.682
+Method_binary                                    0.002    0.002   0.681 0.496 -0.003  0.006
+log_Alpha                                       -0.000    0.001  -0.079 0.937 -0.002  0.002
+Method_binary:log_Alpha                          0.000    0.001   0.061 0.952 -0.003  0.003
+log_Epsilon                                      0.046    0.001  35.612 0.000  0.044  0.049
+Method_binary:log_Epsilon                       -0.000    0.002  -0.197 0.844 -0.004  0.003
+log_Alpha:log_Epsilon                            0.000    0.001   0.117 0.907 -0.001  0.002
+Method_binary:log_Alpha:log_Epsilon             -0.000    0.001  -0.065 0.948 -0.002  0.002
+ClientCount                                     -0.004    0.000 -34.161 0.000 -0.005 -0.004
+Method_binary:ClientCount                       -0.000    0.000  -1.268 0.205 -0.001  0.000
+log_Alpha:ClientCount                           -0.000    0.000  -0.076 0.939 -0.000  0.000
+Method_binary:log_Alpha:ClientCount             -0.000    0.000  -0.036 0.971 -0.000  0.000
+log_Epsilon:ClientCount                          0.001    0.000  10.441 0.000  0.001  0.001
+Method_binary:log_Epsilon:ClientCount            0.000    0.000   0.915 0.360 -0.000  0.000
+log_Alpha:log_Epsilon:ClientCount               -0.000    0.000  -0.070 0.944 -0.000  0.000
+Method_binary:log_Alpha:log_Epsilon:ClientCount  0.000    0.000   0.032 0.974 -0.000  0.000
+Group Var                                        0.000    0.002                            
+===========================================================================================

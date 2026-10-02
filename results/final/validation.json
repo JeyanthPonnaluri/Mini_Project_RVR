@@ -1,0 +1,156 @@
+[
+ {
+  "group": "Data",
+  "check": "Raw data: 572 sample records from 500 patients",
+  "passed": true,
+  "detail": "572 records, 500 patients",
+  "seconds": 0.02
+ },
+ {
+  "group": "Data",
+  "check": "Clinical cohort: one primary-tumour sample per patient",
+  "passed": true,
+  "detail": "493 patients, 305 advanced (T3/T4)",
+  "seconds": 0.04
+ },
+ {
+  "group": "Data",
+  "check": "Matched clinical-protein cohort = 347 patients (277 train / 70 test)",
+  "passed": true,
+  "detail": "347 patients (237 T3/T4), split 277/70",
+  "seconds": 0.14
+ },
+ {
+  "group": "Data",
+  "check": "Survival events in matched cohort = 9 (paper previously said 12)",
+  "passed": true,
+  "detail": "9 deaths among 347 patients (12 is the count over all 572 records)",
+  "seconds": 0.12
+ },
+ {
+  "group": "Leakage",
+  "check": "No identifier / timestamp / outcome column is used as a feature",
+  "passed": true,
+  "detail": "18 features: age, gleason_primary, gleason_secondary, gleason_sum, race=black or african american, race=not reported, race=white, ethnicity=not hispanic or latino, ethnicity=not reported, clinical_t=T2, clinical_t=T3, clinical_t=T4, clinical_t=Unknown, clinical_m=M1, clinical_m=Unknown, prior_malignancy=yes, pathologic_n=N1, pathologic_n=Unknown",
+  "seconds": 0.23
+ },
+ {
+  "group": "Leakage",
+  "check": "Pre-op feature set contains no post-surgical pathology",
+  "passed": true,
+  "detail": "13 features: age, race=black or african american, race=not reported, race=white, ethnicity=not hispanic or latino, ethnicity=not reported, clinical_t=T2, clinical_t=T3, clinical_t=T4, clinical_t=Unknown, clinical_m=M1, clinical_m=Unknown, prior_malignancy=yes",
+  "seconds": 0.18
+ },
+ {
+  "group": "Leakage",
+  "check": "Scaler / imputer / PCA are fitted on training rows only",
+  "passed": true,
+  "detail": "age mean in scaler = train mean (61.155); protein PCs: 113 (train-fit) vs 129 if fitted on all 347 rows (explains the 115 vs 129 in the old reports)",
+  "seconds": 0.55
+ },
+ {
+  "group": "Leakage",
+  "check": "Test rows with unseen categories are encoded as the reference level (no crash)",
+  "passed": true,
+  "detail": "shape (3, 18)",
+  "seconds": 0.15
+ },
+ {
+  "group": "Model",
+  "check": "NumPy logistic regression matches scikit-learn (centralised)",
+  "passed": true,
+  "detail": "NumPy AUC 0.803 vs sklearn 0.810",
+  "seconds": 0.18
+ },
+ {
+  "group": "Model",
+  "check": "FedAvg with one client equals centralised training",
+  "passed": true,
+  "detail": "max |diff| = 0.00e+00",
+  "seconds": 0.01
+ },
+ {
+  "group": "Model",
+  "check": "FedAvg with IID equal clients and 1 local epoch equals centralised GD",
+  "passed": true,
+  "detail": "max |diff| = 2.66e-15 (gradient averaging identity)",
+  "seconds": 0.01
+ },
+ {
+  "group": "Model",
+  "check": "Client drift is recorded for FedAvg (was always 0.0) and FedProx reduces it",
+  "passed": true,
+  "detail": "FedAvg drift 0.3777 > FedProx drift 0.2711 > 0",
+  "seconds": 0.02
+ },
+ {
+  "group": "Model",
+  "check": "Dirichlet partition keeps every sample exactly once; small alpha = stronger skew",
+  "passed": true,
+  "detail": "label-rate spread alpha=100: 0.07, alpha=0.1: 0.81",
+  "seconds": 0.02
+ },
+ {
+  "group": "Privacy",
+  "check": "RDP accountant: epsilon matches the closed-form Gaussian optimum",
+  "passed": true,
+  "detail": "grid epsilon within 0.002% above the analytic optimum (never below)",
+  "seconds": 0.0
+ },
+ {
+  "group": "Privacy",
+  "check": "Noise calibration hits the target epsilon and is monotone",
+  "passed": true,
+  "detail": "sigma = 97.01, 49.02, 24.99, 10.55, 5.68 for eps = 0.5, 1, 2, 5, 10 (T=100, delta=1e-5)",
+  "seconds": 0.02
+ },
+ {
+  "group": "Privacy",
+  "check": "DP noise actually added has std = sigma * clip (empirical)",
+  "passed": true,
+  "detail": "empirical noise std 2.992 (expected 3.000 for sigma=3, C=1)",
+  "seconds": 0.29
+ },
+ {
+  "group": "Privacy",
+  "check": "Per-sample gradient clipping bounds every contribution by C",
+  "passed": true,
+  "detail": "max clipped per-sample norm = 1.000000",
+  "seconds": 0.0
+ },
+ {
+  "group": "Valuation",
+  "check": "Vectorised coalition training == one training run per coalition",
+  "passed": true,
+  "detail": "max utility difference over 15 coalitions = 0.0e+00",
+  "seconds": 0.09
+ },
+ {
+  "group": "Valuation",
+  "check": "Shapley axioms: efficiency, symmetry, null player",
+  "passed": true,
+  "detail": "phi = [0.1, 0.1, 0.0, 0.2] (expected [0.1, 0.1, 0.0, 0.2])",
+  "seconds": 0.0
+ },
+ {
+  "group": "Valuation",
+  "check": "Top-contributor stability is no longer identically 1/K",
+  "passed": true,
+  "detail": "stable rankings -> 1.00, top swapped -> 0.00 (old formula gave 0.25 = 1/K for both)",
+  "seconds": 0.01
+ },
+ {
+  "group": "Privacy",
+  "check": "Membership-inference attack detects an over-fitted model (positive control)",
+  "passed": true,
+  "detail": "attack AUC 0.751 (>0.65) on a model that memorised pure-noise labels",
+  "seconds": 0.05
+ },
+ {
+  "group": "Reproducibility",
+  "check": "Experiments are reproducible (same seed -> identical results)",
+  "passed": true,
+  "detail": "two runs of the personalisation experiment with seed 7 are identical",
+  "seconds": 0.51
+ }
+]
