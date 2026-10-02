@@ -1,0 +1,22 @@
+\begin{table*}[t]
+\caption{Base-paper replication on the 9 TCGA tissue-source sites with $\geq 20$ patients: mean per-site test AUC over 20 seeds (LOC = local only, FL = FedAvg over all sites, FR = free-rider, CEN = pooled, BL = Gleason-sum rule) and mean contribution (exact Shapley, leave-one-out). -- = AUC undefined (single-class test split).}
+\centering\small
+\begin{tabular}{lrrrrrrrrr}
+\toprule
+Site & $n$ & T3/T4 & LOC & FL & FR & CEN & BL & Shapley & LOO \\
+\midrule
+Pittsburgh & 95 & 0.59 & 0.843 & 0.824 & 0.795 & 0.825 & 0.682 & +0.048 & +0.0058 \\
+IGC & 65 & 0.40 & 0.741 & 0.771 & 0.772 & 0.764 & 0.682 & +0.045 & +0.0005 \\
+MD Anderson & 45 & 0.73 & 0.900 & 0.914 & 0.911 & 0.914 & 0.779 & +0.045 & -0.0002 \\
+Roswell Park & 43 & 0.60 & 0.698 & 0.735 & 0.722 & 0.735 & 0.710 & +0.034 & -0.0010 \\
+Indivumed & 31 & 0.68 & 0.623 & 0.632 & 0.632 & 0.632 & 0.670 & +0.029 & -0.0006 \\
+UCSF & 31 & 0.68 & 0.750 & 0.745 & 0.745 & 0.742 & 0.660 & +0.027 & +0.0026 \\
+PROCURE & 27 & 1.00 & -- & -- & -- & -- & -- & +0.037 & -0.0008 \\
+Hamburg & 24 & 0.96 & 1.000 & 1.000 & 1.000 & 1.000 & 1.000 & +0.038 & -0.0001 \\
+Lahey Clinic & 23 & 0.39 & 0.783 & 0.825 & 0.808 & 0.825 & 0.775 & +0.035 & +0.0004 \\
+\midrule
+Macro mean & 384 & -- & 0.775 & 0.790 & 0.782 & 0.789 & 0.723 & & \\
+\bottomrule
+\end{tabular}
+\label{tab:base_paper}
+\end{table*}

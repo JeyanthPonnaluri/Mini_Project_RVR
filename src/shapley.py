@@ -8,7 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import itertools
 import math
-from typing import List, Tuple, Dict
+from typing import List, Tuple, Dict, Optional
 from sklearn.metrics import roc_auc_score
 from federated import fedavg_train, fedprox_train
 from logistic_numpy import predict_proba
@@ -28,7 +28,8 @@ def compute_federated_shapley_values(
     dp_enabled: bool = False,
     epsilon: float = 1.0,
     delta: float = 1e-5,
-    clipping_norm: float = 1.0
+    clipping_norm: float = 1.0,
+    permutations: Optional[List[Tuple[int, ...]]] = None
 ) -> pd.DataFrame:
     """
     Compute Federated Shapley Values for hospitals using Monte Carlo permutation approach.
@@ -99,14 +100,16 @@ def compute_federated_shapley_values(
                 subset_hospitals, X_test, y_test,
                 rounds=rounds, epochs=epochs, lr=lr,
                 random_seed=random_seed,
-                dp_enabled=dp_enabled, epsilon=epsilon, delta=delta, clipping_norm=clipping_norm
+                dp_enabled=dp_enabled, epsilon=epsilon, delta=delta, clipping_norm=clipping_norm,
+                evaluate_only_at_end=True
             )
         else:  # fedprox
             res = fedprox_train(
                 subset_hospitals, X_test, y_test,
                 rounds=rounds, epochs=epochs, lr=lr, mu=mu,
                 random_seed=random_seed,
-                dp_enabled=dp_enabled, epsilon=epsilon, delta=delta, clipping_norm=clipping_norm
+                dp_enabled=dp_enabled, epsilon=epsilon, delta=delta, clipping_norm=clipping_norm,
+                evaluate_only_at_end=True
             )
             
         auc = res['round_aucs'][-1]
@@ -114,25 +117,27 @@ def compute_federated_shapley_values(
         return auc
 
     # Determine permutations
-    all_perms_possible = math.factorial(K)
-    
-    if all_perms_possible <= n_permutations:
-        # Run exact Shapley Value by iterating over all permutations
-        permutations = list(itertools.permutations(client_ids))
-        print(f"Running exact Shapley Value over all {len(permutations)} permutations...")
+    if permutations is not None:
+        print(f"Using pre-defined set of {len(permutations)} permutations for Monte Carlo Shapley...")
     else:
-        # Sample permutations
-        permutations = []
-        seen = set()
-        for _ in range(n_permutations):
-            # Try to get a unique permutation
-            for _ in range(100):  # limit retries
-                p = tuple(np.random.permutation(client_ids))
-                if p not in seen:
-                    seen.add(p)
-                    permutations.append(p)
-                    break
-        print(f"Running permutation-based Shapley Value over {len(permutations)} sampled permutations...")
+        all_perms_possible = math.factorial(K)
+        if all_perms_possible <= n_permutations:
+            # Run exact Shapley Value by iterating over all permutations
+            permutations = list(itertools.permutations(client_ids))
+            print(f"Running exact Shapley Value over all {len(permutations)} permutations...")
+        else:
+            # Sample permutations
+            permutations = []
+            seen = set()
+            for _ in range(n_permutations):
+                # Try to get a unique permutation
+                for _ in range(100):  # limit retries
+                    p = tuple(np.random.permutation(client_ids))
+                    if p not in seen:
+                        seen.add(p)
+                        permutations.append(p)
+                        break
+            print(f"Running permutation-based Shapley Value over {len(permutations)} sampled permutations...")
 
     # Compute marginal contributions
     marginal_contribs = {i: [] for i in range(K)}
@@ -149,18 +154,20 @@ def compute_federated_shapley_values(
             marginal_contribs[client].append(marginal_contrib)
             prev_utility = current_utility
             
-    # Calculate Shapley values (average marginal contribution)
+    # Calculate Shapley values (average marginal contribution) and SE
     shapley_values = []
     baseline_auc = get_utility(tuple(client_ids))
     
     for i in range(K):
         sv = np.mean(marginal_contribs[i])
+        sv_se = np.std(marginal_contribs[i]) / np.sqrt(len(marginal_contribs[i])) if len(marginal_contribs[i]) > 0 else 0.0
         num_samples = len(hospitals[i][1])
         shapley_values.append({
             'hospital_id': i + 1,
             'num_samples': num_samples,
             'baseline_auc': baseline_auc,
             'shapley_value': sv,
+            'shapley_value_se': sv_se,
             'shapley_value_pct': (sv / baseline_auc) * 100 if baseline_auc > 0 else 0
         })
         

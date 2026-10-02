@@ -850,8 +850,8 @@ def fedprox_train(
             w_global_new += active_weights[k] * w_k
         w_global = w_global_new
         
-        # Compute weight drift (L2 norm of change)
-        drift = np.linalg.norm(w_global - w_global_prev)
+        # [FIX] client drift = mean_k ||w_k - w_global(start of round)||_2 (paper definition)
+        drift = float(np.mean([np.linalg.norm(w_k - w_global_prev) for w_k in local_weights.values()]))
         weight_drifts.append(drift)
         
         # 4. Compute Communication Costs & Virtual Latency

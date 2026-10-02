@@ -1,0 +1,16 @@
+\begin{table*}[t]
+\caption{Centralised baselines: mean AUC over repeated stratified cross-validation (25 folds, 5$\times$5) on the 347-patient cohort. All preprocessing is fitted inside each training fold.}
+\centering\small
+\begin{tabular}{lccccc}
+\toprule
+Model & Clinical (full) & Clinical (pre-op) & Protein only & Full + protein & Pre-op + protein \\
+\midrule
+NumPy LR (ours) & 0.818 & 0.642 & 0.574 & 0.659 & 0.595 \\
+LR (L2) & 0.824 & 0.661 & 0.633 & 0.682 & 0.638 \\
+LR (L1) & 0.831 & 0.662 & 0.637 & 0.712 & 0.659 \\
+Random forest & 0.803 & 0.644 & 0.599 & 0.782 & 0.627 \\
+MLP & 0.792 & 0.670 & 0.599 & 0.664 & 0.623 \\
+\bottomrule
+\end{tabular}
+\label{tab:centralized}
+\end{table*}

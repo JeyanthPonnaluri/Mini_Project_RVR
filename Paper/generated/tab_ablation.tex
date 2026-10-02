@@ -1,0 +1,18 @@
+\begin{table}[t]
+\caption{Ablation on the global test split ($K=3$, $\alpha=0.5$, 20 seeds, mean $\pm$ sd; paired difference to FedProx with 95\% CI).}
+\centering\scriptsize
+\begin{tabular}{p{3.1cm}cc}
+\toprule
+Configuration & Test AUC & vs FedProx \\
+\midrule
+Centralised (pooled data) & $0.823 \pm 0.042$ & $-0.003\ [-0.008, +0.002]$ \\
+FedAvg & $0.824 \pm 0.041$ & $-0.002\ [-0.006, +0.002]$ \\
+FedProx & $0.826 \pm 0.038$ & reference \\
+FedProx + DP ($\varepsilon$=5) & $0.820 \pm 0.045$ & $-0.006\ [-0.012, +0.001]$ \\
+FedProx + DP ($\varepsilon$=1) & $0.787 \pm 0.058$ & $-0.039\ [-0.056, -0.022]$ \\
+FedProx: pre-op features only & $0.659 \pm 0.062$ & $-0.167\ [-0.193, -0.141]$ \\
+FedProx: clinical (full) + protein PCs & $0.682 \pm 0.050$ & $-0.144\ [-0.166, -0.122]$ \\
+\bottomrule
+\end{tabular}
+\label{tab:global_ablation}
+\end{table}

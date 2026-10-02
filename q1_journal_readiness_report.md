@@ -1,3 +1,5 @@
+> **Superseded (October 2026).** Several claims in this document were produced by a pipeline that used identifier columns as features and contained metric bugs. See `FIXES_AND_VALIDATION.md` and the app (`streamlit run app.py`) for the corrected, validated results.
+
 # Q1 Journal Readiness & Positioning Report
 
 ## 1. Executive Verdict

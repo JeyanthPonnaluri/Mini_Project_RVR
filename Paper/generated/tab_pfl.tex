@@ -1,0 +1,14 @@
+\begin{table*}[t]
+\caption{Mean per-client test AUC ($\alpha=0.5$, 20 seeds) over clients whose local test split contains both classes (\#def. = mean number of such clients). PFL = proximal fine-tuning of the FedProx model. Paired differences with 95\% CI.}
+\centering\small
+\begin{tabular}{ccccccrr}
+\toprule
+$K$ & \#def. & Local & FedAvg & FedProx & PFL & PFL$-$Local & PFL$-$FedProx \\
+\midrule
+3 & 2.2 & 0.754 & 0.810 & 0.811 & 0.805 & $+0.051\ [+0.015, +0.086]$ & $-0.006\ [-0.022, +0.011]$ \\
+5 & 2.9 & 0.796 & 0.820 & 0.817 & 0.814 & $+0.018\ [-0.021, +0.057]$ & $-0.003\ [-0.011, +0.005]$ \\
+10 & 3.5 & 0.785 & 0.840 & 0.841 & 0.838 & $+0.053\ [+0.010, +0.096]$ & $-0.003\ [-0.014, +0.007]$ \\
+\bottomrule
+\end{tabular}
+\label{tab:local_adaptation}
+\end{table*}

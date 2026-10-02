@@ -1,0 +1,26 @@
+\begin{table*}[t]
+\caption{Claim--evidence summary. Verdicts are computed from the result files: `supported' only if the 95\% CI of the paired difference over seeds excludes 0 in the claimed direction.}
+\centering\scriptsize
+\begin{tabular}{p{1.4cm}p{4.2cm}p{8.6cm}p{1.5cm}}
+\toprule
+Area & Claim & Evidence (mean [95\% CI]) & Verdict \\
+\midrule
+Base paper & Federated model beats each hospital's local model (per-site AUC) & FL - LOC = +0.015 {[}-0.007, +0.037{]} & not significant \\
+Base paper & Free-riders get (almost) the same benefit as participants & FR - FL = -0.008 {[}-0.013, -0.003{]} (negative = small free-rider penalty) & supported \\
+Base paper & Federated training approaches centralised (pooled) training & CEN - FL = -0.001 {[}-0.004, +0.002{]} & supported \\
+Base paper & Learned model beats a simple rule baseline (Gleason sum) & FL - rule = +0.067 {[}+0.048, +0.086{]} & supported \\
+Our model & Adding proteomics (PCA) improves staging over clinical features & (full+protein) - full = -0.159 {[}-0.188, -0.130{]} over 25 CV folds & opposite \\
+Our model & H1 FedProx reduces client drift under heterogeneity & relative drift reduction ($\alpha$=100: 32.0\%, $\alpha$=10: 33.2\%, $\alpha$=1: 35.6\%, $\alpha$=0.5: 36.0\%, $\alpha$=0.1: 36.4\%); lowest CI bound 31.4\% & supported \\
+Our model & FedProx improves accuracy without DP ($\alpha$ = 0.1) & FedProx - FedAvg = +0.002 {[}-0.001, +0.004{]} & not significant \\
+Our model & H2 Strong privacy ($\varepsilon$ = 1) costs utility & FedAvg($\varepsilon$=1) - FedAvg(no DP) = -0.063 {[}-0.087, -0.038{]} & supported \\
+Our model & Weak privacy ($\varepsilon$ = 10) costs little utility ($<$ 0.03 AUC) & FedAvg($\varepsilon$=10) - no DP = -0.002 {[}-0.009, +0.005{]} & supported \\
+Our model & H3 FedProx beats FedAvg under joint DP + heterogeneity & CI $>$ 0 in 12/20 ($\alpha$, $\varepsilon$) cells vs FedAvg; in 3/20 cells vs a FedAvg with half the learning rate (step-size control) & explained by step size \\
+Our model & H4a Personalised FL beats local-only training & PFL - Local (K=3, macro client AUC) = +0.051 {[}+0.015, +0.086{]} & supported \\
+Our model & H4b Personalised FL beats the global FedProx model & PFL - FedProx = -0.006 {[}-0.022, +0.011{]} & not significant \\
+Our model & H5 DP noise destabilises Shapley contribution rankings & K=10: Spearman vs no-DP 0.73 ($\varepsilon$=10) $\rightarrow$ 0.36 ($\varepsilon$=0.5); top-contributor kept 0.62 $\rightarrow$ 0.30 & supported \\
+Our model & Shapley and LOO give similar client rankings & Spearman(Shapley, LOO): K=3 0.68, K=10 0.44 & partly \\
+Our model & H7 DP reduces membership-inference vulnerability & attack AUC no-DP 0.511 {[}0.489, 0.533{]} vs $\varepsilon$=1 0.510; positive control (over-fitted) 0.659 & not significant \\
+\bottomrule
+\end{tabular}
+\label{tab:hyp_summary}
+\end{table*}

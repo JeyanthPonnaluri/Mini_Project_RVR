@@ -12,20 +12,39 @@ import pandas as pd
 import numpy as np
 import os
 import sys
+import json
+import traceback
+import subprocess
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score, accuracy_score
 
 # Add src directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 
 # Import VERSION-1 modules
-from preprocessing import load_clinical, create_target, preprocess_features
-from model import train_model, predict_model
+from preprocessing import (
+    load_clinical, create_target, preprocess_features,
+    load_protein, merge_clinical_protein, preprocess_protein, apply_pca,
+    load_survival_data, merge_clinical_survival, generate_domain_shifted_cohort
+)
+from model import (
+    train_model, predict_model, train_regularized_model, train_non_linear_model
+)
 from evaluation import evaluate_model, plot_roc_curve, plot_confusion_matrix
 
 # Import VERSION-2 modules
-from logistic_numpy import predict_proba as numpy_predict_proba
-from federated import partition_equal, fedavg_train, train_local_models
+from logistic_numpy import (
+    predict_proba as numpy_predict_proba,
+    predict_proba as np_pred_proba,
+    local_train
+)
+from federated import (
+    partition_equal, fedavg_train, train_local_models,
+    partition_dirichlet, fedprox_train, partition_imbalanced,
+    generate_imbalanced_distribution, evaluate_personalized_fl, fedavg_cox_train
+)
 from experiments import centralized_train_numpy, save_fedavg_metrics, save_comparison_summary
 
 # Import VERSION-3 modules
@@ -47,12 +66,19 @@ from fedprox_experiments import (
     plot_stability_comparison,
     save_fedprox_results
 )
-from federated import partition_dirichlet, fedprox_train
 
 # Import VERSION-5 modules
 from contribution import measure_hospital_contribution, plot_contribution_analysis
 from shapley import compute_federated_shapley_values, plot_shapley_comparison
 from experiment_manager import ExperimentManager, set_global_seed
+
+# Import Statistical Analysis modules
+from statistical_analysis import (
+    compute_bootstrap_ci_auc,
+    run_dirichlet_heterogeneity_sweep,
+    compute_bootstrap_ci_cindex,
+    run_shapley_stability_analysis
+)
 
 # Import UI components
 from ui_components import (
@@ -249,7 +275,6 @@ def main():
                     else:
                         protein_path = default_protein_path
                     
-                    from preprocessing import load_protein, merge_clinical_protein, preprocess_protein, apply_pca
                     protein_df = load_protein(protein_path)
                     
                     # Merge on sample
@@ -310,7 +335,6 @@ def main():
                     
                 except Exception as e:
                     render_info_box(f"Error processing multi-modal data: {str(e)}", 'error')
-                    import traceback
                     st.code(traceback.format_exc())
                     return
         else:
@@ -370,7 +394,6 @@ def main():
                     render_info_box(f"✅ Leakage-Free Preprocessing complete! Final train shape: {X_train.shape}, test shape: {X_test.shape}", 'success')
                 except Exception as e:
                     render_info_box(f"Error preprocessing features: {str(e)}", 'error')
-                    import traceback
                     st.code(traceback.format_exc())
                     return
         
@@ -460,7 +483,6 @@ def main():
                         
                     except Exception as e:
                         render_experiment_status('error', f'Training failed: {str(e)}')
-                        import traceback
                         st.code(traceback.format_exc())
         
         # VERSION-2: Federated Learning
@@ -511,7 +533,6 @@ def main():
                         
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
-                        import traceback
                         st.code(traceback.format_exc())
             
             # Run FedAvg
@@ -578,7 +599,6 @@ def main():
                         
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
-                        import traceback
                         st.code(traceback.format_exc())
             
             # Run Local Models
@@ -618,7 +638,6 @@ def main():
                         
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
-                        import traceback
                         st.code(traceback.format_exc())
             
             # Comparison summary
@@ -734,7 +753,6 @@ def main():
                         
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
-                        import traceback
                         st.code(traceback.format_exc())
             
             # Run Free-Rider Experiment
@@ -791,7 +809,6 @@ def main():
                         
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
-                        import traceback
                         st.code(traceback.format_exc())
             
             # Partition Comparison Study
@@ -894,7 +911,6 @@ def main():
                         
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
-                        import traceback
                         st.code(traceback.format_exc())
             
             # Combined analysis
@@ -1060,7 +1076,6 @@ def main():
                         
                     except Exception as e:
                         st.error(f"Error: {str(e)}")
-                        import traceback
                         st.code(traceback.format_exc())
         
         # VERSION-5: Research Lab
@@ -1137,7 +1152,6 @@ def main():
                         if partition_type_v5 == 'equal':
                             hospitals = partition_equal(X_train, y_train, num_hospitals_v5, RANDOM_SEED)
                         elif partition_type_v5 == 'imbalanced':
-                            from federated import partition_imbalanced, generate_imbalanced_distribution
                             distribution = generate_imbalanced_distribution(num_hospitals_v5, RANDOM_SEED)
                             hospitals = partition_imbalanced(X_train, y_train, distribution, RANDOM_SEED)
                         else:  # dirichlet
@@ -1284,7 +1298,6 @@ def main():
                         
                     except Exception as e:
                         render_experiment_status('error', f'Analysis failed: {str(e)}')
-                        import traceback
                         st.code(traceback.format_exc())
             
             # Information about other VERSION-5 features
@@ -1404,7 +1417,6 @@ def main():
                     st.markdown("#### Compare regularized and non-linear baselines against custom NumPy model")
                     if st.button("Run Centralized Baseline Benchmark", type="primary", key="run_ieee_cent"):
                         with st.spinner("Running benchmarks..."):
-                            from model import train_regularized_model, train_non_linear_model
                             # Train Lasso
                             model_l1 = train_regularized_model(X_train, y_train, penalty='l1', C=1.0)
                             # Train Ridge
@@ -1416,7 +1428,6 @@ def main():
                             numpy_model = centralized_train_numpy(X_train, y_train, X_test, y_test, epochs=100, lr=0.1, random_seed=RANDOM_SEED)
                             
                             # Evaluate on test set
-                            from evaluation import evaluate_model
                             eval_l1 = evaluate_model(model_l1, X_test, y_test)
                             eval_l2 = evaluate_model(model_l2, X_test, y_test)
                             eval_rf = evaluate_model(model_rf, X_test, y_test)
@@ -1425,12 +1436,10 @@ def main():
                             # Evaluate numpy model
                             y_prob_np = numpy_predict_proba(X_test, numpy_model['w'])
                             y_pred_np = (y_prob_np >= 0.5).astype(int)
-                            from sklearn.metrics import roc_auc_score, accuracy_score
                             auc_np = roc_auc_score(y_test, y_prob_np)
                             acc_np = accuracy_score(y_test, y_pred_np)
                             
                             # Compute bootstrap confidence interval for NumPy model
-                            from statistical_analysis import compute_bootstrap_ci_auc
                             lower_ci, upper_ci, _ = compute_bootstrap_ci_auc(y_test, y_prob_np, n_bootstraps=200, random_seed=RANDOM_SEED)
                             
                             # Show results
@@ -1512,7 +1521,6 @@ def main():
                     st.markdown("Sweep Dirichlet parameter $\\alpha \\in \\{10.0, 1.0, 0.5, 0.1\\}$ to evaluate model convergence under escalating data heterogeneity.")
                     if st.button("Run Dirichlet alpha sweep & weight-drift analysis", key="run_dirichlet_sweep"):
                         with st.spinner("Running Dirichlet heterogeneity sweep..."):
-                            from statistical_analysis import run_dirichlet_heterogeneity_sweep
                             sweep_df = run_dirichlet_heterogeneity_sweep(
                                 X_train, y_train, X_test, y_test,
                                 num_hospitals=3, alphas=[10.0, 1.0, 0.5, 0.1],
@@ -1558,7 +1566,6 @@ def main():
                             w_global = res_global['w_global']
                             
                             # Run PFL evaluation
-                            from federated import evaluate_personalized_fl
                             pfl_res = evaluate_personalized_fl(hospitals, w_global, epochs=pfl_epochs, lr=pfl_lr, random_seed=RANDOM_SEED)
                             
                             st.success("Personalized FL evaluation completed!")
@@ -1592,7 +1599,6 @@ def main():
                             # Load survival
                             default_survival_path = "D:/Mini_project_JP/datasets/TCGA-PRAD.survival.tsv/TCGA-PRAD.survival.tsv"
                             if os.path.exists(default_survival_path):
-                                from preprocessing import load_survival_data, merge_clinical_survival
                                 df_survival = load_survival_data(default_survival_path)
                                 
                                 # Since clinical_df is loaded globally in the app, merge them
@@ -1624,7 +1630,6 @@ def main():
                                 ]
                                 
                                 # Train federated Cox model
-                                from federated import fedavg_cox_train
                                 cox_res = fedavg_cox_train(
                                     hospitals_surv_data, X_te_s, times_te_s, events_te_s,
                                     rounds=cox_rounds, epochs=5, lr=0.01, random_seed=RANDOM_SEED
@@ -1642,8 +1647,7 @@ def main():
                                 ax.legend()
                                 st.pyplot(fig)
                                 
-                                 # Compute bootstrap confidence interval for Cox C-index
-                                from statistical_analysis import compute_bootstrap_ci_cindex
+                                # Compute bootstrap confidence interval for Cox C-index
                                 lower_ci_c, upper_ci_c, _ = compute_bootstrap_ci_cindex(
                                     cox_res['w_global'], X_te_s, times_te_s, events_te_s, n_bootstraps=100, random_seed=RANDOM_SEED
                                 )
@@ -1673,8 +1677,6 @@ def main():
                     
                     if st.button("Run Domain-Shift Generalizability Study", type="primary", key="run_ieee_domain_shift"):
                         with st.spinner("Generating shifted distribution and evaluating models..."):
-                            from preprocessing import generate_domain_shifted_cohort
-                            
                             # Map selected mode to function argument
                             stype = 'covariate' if shift_mode.startswith("Experiment 3A") else 'concept'
                             
@@ -1684,13 +1686,11 @@ def main():
                             )
                             
                             # 1. Train Centralized sklearn baseline on TCGA-PRAD
-                            from sklearn.linear_model import LogisticRegression
                             tcga_model = LogisticRegression(C=1.0, class_weight='balanced', random_state=RANDOM_SEED)
                             tcga_model.fit(X_train, y_train)
                             
                             # Evaluate on shifted distribution (AUC)
                             y_prob_shifted = tcga_model.predict_proba(X_shifted)[:, 1]
-                            from sklearn.metrics import roc_auc_score
                             auc_centralized = roc_auc_score(y_shifted, y_prob_shifted)
                             
                             # 2. Train Federated model on TCGA-PRAD (15 rounds)
@@ -1699,12 +1699,10 @@ def main():
                             w_global = res_fed['w_global']
                             
                             # Evaluate on shifted distribution (AUC)
-                            from logistic_numpy import predict_proba as np_pred_proba
                             y_prob_fed_shifted = np_pred_proba(X_shifted, w_global)
                             auc_federated = roc_auc_score(y_shifted, y_prob_fed_shifted)
                             
                             # 3. Train Local Model (Hospital 1 only) and evaluate on shifted distribution
-                            from logistic_numpy import local_train
                             n_feats = X_train.shape[1]
                             w_loc, _ = local_train(hospitals[0][0], hospitals[0][1], w_init=np.zeros(n_feats), epochs=10, lr=0.1)
                             y_prob_loc_shifted = np_pred_proba(X_shifted, w_loc)
@@ -1821,7 +1819,6 @@ def main():
                         # Partition active data
                         hospitals_shap = partition_dirichlet(X_train, y_train, num_hospitals=3, alpha=0.5, random_seed=RANDOM_SEED)
                         
-                        from statistical_analysis import run_shapley_stability_analysis
                         stability_df = run_shapley_stability_analysis(
                             hospitals_shap, X_test, y_test, rounds=5, epochs=2, lr=0.1, n_seeds=5
                         )
@@ -1837,13 +1834,12 @@ def main():
                 
                 results_path = "reports/comprehensive_9_5_results.json"
                 if os.path.exists(results_path):
-                    import json
                     with open(results_path, "r") as f:
                         pub_data = json.load(f)
                         
                     # 1. Privacy x Heterogeneity 2D Matrix
                     st.markdown("#### 1. Privacy × Heterogeneity Interaction Matrix (Global Test AUC)")
-                    st.markdown("Each cell displays the mean AUC $\pm$ standard deviation across 5 random seeds, along with the FedProx benefit and its 95% paired confidence interval.")
+                    st.markdown(r"Each cell displays the mean AUC $\pm$ standard deviation across 5 random seeds, along with the FedProx benefit and its 95% paired confidence interval.")
                     
                     grid_list = pub_data['privacy_heterogeneity_2d']
                     grid_rows = []
@@ -1994,9 +1990,8 @@ async def websocket_endpoint(websocket: WebSocket):
                 
                 if st.button("Run Real Systems WebSocket Emulation Test", type="primary", key="run_ieee_sys_em"):
                     with st.spinner("Running FastAPI WebSocket server and clients..."):
-                        import subprocess
-                        python_exe = "C:/Users/HP/AppData/Local/Programs/Python/Python312/python.exe"
-                        run_script = "D:/Mini_project_JP/scratch/run_emulated_network.py"
+                        python_exe = sys.executable
+                        run_script = os.path.join(os.path.dirname(__file__), "scratch", "run_emulated_network.py")
                         
                         try:
                             res = subprocess.run([python_exe, run_script], capture_output=True, text=True, check=True)

@@ -1,3 +1,5 @@
+> **Superseded (October 2026).** Several claims in this document were produced by a pipeline that used identifier columns as features and contained metric bugs. See `FIXES_AND_VALIDATION.md` and the app (`streamlit run app.py`) for the corrected, validated results.
+
 # Revised Claim-Evidence Matrix (DP-FPS) - Post-Validation & Interaction Study
 
 This document serves as the finalized Claim-Evidence Matrix for the **DP-FPS** framework. It incorporates the results of the comprehensive advanced validation sweeps across 5 random seeds (Experiments A through J), showing the multi-dimensional interactions of heterogeneity, privacy, personalization, and contribution valuation.

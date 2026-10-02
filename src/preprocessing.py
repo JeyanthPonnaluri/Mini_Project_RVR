@@ -124,6 +124,25 @@ def create_target(df):
     return df_filtered, target
 
 
+# [FIX] Columns that must never be used as model features.
+_EXCLUDE_TOKENS = ('uuid', 'datetime', 'submitter_id', 'sample_id', 'case_id', 'treatment_id',
+                   'tissue_source_site_id', 'vital_status', 'days_to_last_follow_up',
+                   'days_to_death', 'treatment_type', 'treatment_or_therapy', 'OS.time', '_PATIENT')
+
+
+def _is_excluded_column(name, series):
+    """True for identifiers, timestamps and outcome/follow-up columns, and for any
+    text column whose values are (almost) unique per row (an identifier in disguise)."""
+    lname = str(name).lower()
+    if any(tok.lower() in lname for tok in _EXCLUDE_TOKENS) or lname in ('id', 'os'):
+        return True
+    if not pd.api.types.is_numeric_dtype(series) and len(series) > 20:
+        nunique = series.nunique(dropna=True)
+        if nunique > 0.5 * series.notna().sum():
+            return True
+    return False
+
+
 def preprocess_features(df, target_col='ajcc_pathologic_t.diagnoses', preprocessor=None):
     """
     Preprocess features: remove identifiers, encode categoricals, scale numericals.
@@ -152,6 +171,11 @@ def preprocess_features(df, target_col='ajcc_pathologic_t.diagnoses', preprocess
     
     # Remove identifier columns that exist
     cols_to_drop = [col for col in id_columns if col in df.columns]
+    # [FIX] Also drop identifier-like, timestamp and outcome/follow-up columns. Previously
+    # e.g. 'submitter_id.samples', 'sample_id.samples', 'pathology_report_uuid.samples',
+    # treatment ids and created/updated datetimes (unique per patient) were one-hot encoded
+    # into ~1,650 features, and vital status / follow-up time leaked outcome information.
+    cols_to_drop += [col for col in df.columns if col not in cols_to_drop and _is_excluded_column(col, df[col])]
     df_features = df.drop(columns=cols_to_drop, errors='ignore').copy()
     
     if preprocessor is None:
@@ -160,7 +184,8 @@ def preprocess_features(df, target_col='ajcc_pathologic_t.diagnoses', preprocess
         
         # Separate numerical and categorical columns
         numerical_cols = df_features.select_dtypes(include=[np.number]).columns.tolist()
-        categorical_cols = df_features.select_dtypes(include=['object']).columns.tolist()
+        # [FIX] pandas>=3 stores text as 'str' dtype, which include=['object'] misses
+        categorical_cols = [c for c in df_features.columns if c not in numerical_cols]
         
         print(f"[FIT] Numerical features: {len(numerical_cols)}")
         print(f"[FIT] Categorical features: {len(categorical_cols)}")
@@ -384,12 +409,13 @@ def preprocess_protein(protein_df, missing_threshold=0.3, preprocessor=None):
         scaler = preprocessor['scaler']
         
         # Align columns
-        df_aligned = pd.DataFrame(index=protein_features.index)
+        cols_dict = {}
         for col in proteins_to_keep:
             if col in protein_features.columns:
-                df_aligned[col] = protein_features[col].fillna(medians[col])
+                cols_dict[col] = protein_features[col].fillna(medians[col])
             else:
-                df_aligned[col] = medians[col]
+                cols_dict[col] = pd.Series(medians[col], index=protein_features.index)
+        df_aligned = pd.DataFrame(cols_dict, index=protein_features.index)
                 
         # Transform using pre-fitted scaler
         X_protein = scaler.transform(df_aligned)

@@ -142,7 +142,8 @@ def run_fedavg_vs_fedprox_experiment(
     convergence_std = np.std(last_10_aucs)
     
     # Calculate average weight drift
-    avg_drift = np.mean([m['weight_drift'] for m in fedavg_results['round_metrics']]) if 'weight_drift' in fedavg_results['round_metrics'][0] else 0.0
+    # [FIX] fedavg_train now records client drift; never silently fall back to 0.0
+    avg_drift = np.mean(fedavg_results['weight_drifts'])
     
     results.append({
         'algorithm': 'FedAvg',

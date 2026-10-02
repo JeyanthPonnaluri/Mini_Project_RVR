@@ -274,7 +274,8 @@ def fedavg_train(
     clipping_norm: float = 1.0,
     dropout_rate: float = 0.0,
     bandwidth_mbps: float = 10.0,
-    latency_ms: float = 50.0
+    latency_ms: float = 50.0,
+    evaluate_only_at_end: bool = False
 ) -> Dict:
     """
     Train federated model using FedAvg algorithm with client dropouts and virtual latency tracking.
@@ -396,6 +397,9 @@ def fedavg_train(
             local_weights[k] = w_k
             local_losses.append(loss_history[-1])  # Last epoch loss
         
+        # [FIX] client drift = mean_k ||w_k - w_global(start of round)||_2  (paper definition)
+        client_drift = float(np.mean([np.linalg.norm(w_k - w_global) for w_k in local_weights.values()]))
+        
         # 3. Weighted Aggregation (FedAvg over active clients)
         w_global_new = np.zeros_like(w_global)
         for k, w_k in local_weights.items():
@@ -418,10 +422,14 @@ def fedavg_train(
         cumulative_time_s.append(total_time)
         
         # Evaluate global model on test set
-        test_loss = compute_loss(X_test, y_test, w_global)
-        y_pred_proba = predict_proba(X_test, w_global)
-        test_auc = roc_auc_score(y_test, y_pred_proba)
-        
+        if not evaluate_only_at_end or round_idx == rounds - 1:
+            test_loss = compute_loss(X_test, y_test, w_global)
+            y_pred_proba = predict_proba(X_test, w_global)
+            test_auc = roc_auc_score(y_test, y_pred_proba)
+        else:
+            test_loss = 0.0
+            test_auc = 0.5
+            
         round_losses.append(test_loss)
         round_aucs.append(test_auc)
         
@@ -431,6 +439,7 @@ def fedavg_train(
             'test_loss': test_loss,
             'test_auc': test_auc,
             'avg_local_loss': np.mean(local_losses),
+            'weight_drift': client_drift,
             'active_clients': len(active_indices),
             'round_bytes': round_bytes,
             'cumulative_bytes': total_bytes,
@@ -454,6 +463,7 @@ def fedavg_train(
         'round_losses': round_losses,
         'round_aucs': round_aucs,
         'round_metrics': round_metrics,
+        'weight_drifts': [m['weight_drift'] for m in round_metrics],
         'cumulative_bytes': cumulative_bytes,
         'cumulative_time_s': cumulative_time_s
     }
@@ -651,6 +661,61 @@ def partition_dirichlet(
     return hospitals
 
 
+def partition_dirichlet_get_indices(
+    y: np.ndarray,
+    num_hospitals: int,
+    alpha: float = 0.5,
+    random_seed: int = 42
+) -> List[List[int]]:
+    """
+    Get sample indices for Dirichlet partitioning without splitting the feature matrix X.
+    This replicates the exact assignment logic used in partition_dirichlet.
+    """
+    np.random.seed(random_seed)
+    classes = np.unique(y)
+    hospital_indices = [[] for _ in range(num_hospitals)]
+    
+    for c in classes:
+        class_indices = np.where(y == c)[0]
+        np.random.shuffle(class_indices)
+        
+        min_class_samples = 2
+        if len(class_indices) >= num_hospitals * min_class_samples:
+            for k in range(num_hospitals):
+                start = k * min_class_samples
+                end = start + min_class_samples
+                hospital_indices[k].extend(class_indices[start:end].tolist())
+            remaining_indices = class_indices[num_hospitals * min_class_samples:]
+        elif len(class_indices) >= num_hospitals:
+            for k in range(num_hospitals):
+                hospital_indices[k].append(class_indices[k])
+            remaining_indices = class_indices[num_hospitals:]
+        else:
+            remaining_indices = class_indices
+            
+        if len(remaining_indices) > 0:
+            proportions = np.random.dirichlet([alpha] * num_hospitals)
+            proportions = (proportions * len(remaining_indices)).astype(int)
+            proportions[-1] = len(remaining_indices) - proportions[:-1].sum()
+            
+            if proportions[-1] < 0:
+                proportions = np.random.dirichlet([alpha] * num_hospitals)
+                proportions = (proportions * len(remaining_indices)).astype(int)
+                proportions[-1] = len(remaining_indices) - proportions[:-1].sum()
+            
+            start_idx = 0
+            for k in range(num_hospitals):
+                end_idx = start_idx + int(proportions[k])
+                if end_idx > start_idx:
+                    hospital_indices[k].extend(remaining_indices[start_idx:end_idx].tolist())
+                start_idx = end_idx
+                
+    for k in range(num_hospitals):
+        np.random.shuffle(hospital_indices[k])
+        
+    return hospital_indices
+
+
 def local_train_fedprox(
     X: np.ndarray,
     y: np.ndarray,
@@ -732,7 +797,8 @@ def fedprox_train(
     clipping_norm: float = 1.0,
     dropout_rate: float = 0.0,
     bandwidth_mbps: float = 10.0,
-    latency_ms: float = 50.0
+    latency_ms: float = 50.0,
+    evaluate_only_at_end: bool = False
 ) -> Dict:
     """
     Train federated model using FedProx algorithm with client dropouts and virtual latency tracking.
@@ -869,8 +935,10 @@ def fedprox_train(
             w_global_new += active_weights[k] * w_k
         w_global = w_global_new
         
-        # Compute weight drift (L2 norm of change)
-        drift = np.linalg.norm(w_global - w_global_prev)
+        # [FIX] client drift = mean_k ||w_k - w_global(start of round)||_2 (paper definition).
+        # The previous code measured ||w_global(t) - w_global(t-1)||, a different quantity,
+        # and FedAvg recorded no drift at all, so the two algorithms were not comparable.
+        drift = float(np.mean([np.linalg.norm(w_k - w_global_prev) for w_k in local_weights.values()]))
         weight_drifts.append(drift)
         
         # 4. Compute Communication Costs & Virtual Latency
@@ -888,10 +956,14 @@ def fedprox_train(
         cumulative_time_s.append(total_time)
         
         # Evaluate global model on test set
-        test_loss = compute_loss(X_test, y_test, w_global)
-        y_pred_proba = predict_proba(X_test, w_global)
-        test_auc = roc_auc_score(y_test, y_pred_proba)
-        
+        if not evaluate_only_at_end or round_idx == rounds - 1:
+            test_loss = compute_loss(X_test, y_test, w_global)
+            y_pred_proba = predict_proba(X_test, w_global)
+            test_auc = roc_auc_score(y_test, y_pred_proba)
+        else:
+            test_loss = 0.0
+            test_auc = 0.5
+            
         round_losses.append(test_loss)
         round_aucs.append(test_auc)
         

@@ -1,3 +1,5 @@
+> **Superseded (October 2026).** Several claims in this document were produced by a pipeline that used identifier columns as features and contained metric bugs. See `FIXES_AND_VALIDATION.md` and the app (`streamlit run app.py`) for the corrected, validated results.
+
 # Q1 Journal Experimental Results & Analysis
 
 This report documents the results of the four validation experiments executed on the TCGA-PRAD clinical and genomic dataset (n=347 patients). These results provide the empirical backing required for a publication-grade Q1 research paper.

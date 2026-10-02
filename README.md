@@ -1,3 +1,21 @@
+# Federated prostate-cancer staging (TCGA-PRAD): base paper, DP-FPS, validated results
+
+**Start here.**
+
+```bash
+pip install -r requirements.txt
+streamlit run app.py      # showcase: Overview, Base paper, Our model, Final results, Validation, Live demo
+```
+
+* `fl_study/` - corrected, tested code (data, federated training, DP accountant, Shapley, experiments)
+* `results/final/` - results of every experiment (20 seeds), produced by `python run_all.py`
+* `python -m fl_study.validate` - 22 automated correctness checks
+* `Paper/research_paper.tex` - manuscript; its numbers/tables/figures come from `python Paper/generate_paper_assets.py`
+* `FIXES_AND_VALIDATION.md` - what was wrong before and what changed
+* `app_legacy.py` - the previous five-version app (kept for reference; uses the older `src/` code)
+
+---
+
 # TCGA-PRAD Clinical Stage Classification - VERSION 1
 
 ## Project Overview

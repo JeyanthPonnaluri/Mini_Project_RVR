@@ -1,0 +1,30 @@
+\begin{table*}[t]
+\caption{Global test AUC under joint label skew ($\alpha$) and privacy ($\varepsilon$), 3 clients, mean over 20 seeds. FedAvg ($\eta/2$) is a step-size control. $\Delta$ = paired FedProx$-$FedAvg difference; bold = 95\% CI excludes 0.}
+\centering\small
+\begin{tabular}{llcccccc}
+\toprule
+ & Model & no DP & $\varepsilon=10$ & $\varepsilon=5$ & $\varepsilon=2$ & $\varepsilon=1$ & $\varepsilon=0.5$ \\
+\midrule
+$\alpha=10$ & FedAvg & 0.823 & 0.821 & 0.818 & 0.800 & 0.761 & 0.691 \\
+ & FedProx & 0.825 & 0.823 & 0.821 & 0.812 & 0.789 & 0.720 \\
+ & FedAvg ($\eta/2$) & 0.826 & 0.821 & 0.820 & 0.812 & 0.786 & 0.718 \\
+ & $\Delta$ Prox$-$Avg & -- & +0.002 & +0.003 & \textbf{+0.012} & \textbf{+0.028} & \textbf{+0.029} \\
+\midrule
+$\alpha=1$ & FedAvg & 0.823 & 0.821 & 0.818 & 0.801 & 0.757 & 0.688 \\
+ & FedProx & 0.825 & 0.823 & 0.820 & 0.812 & 0.787 & 0.717 \\
+ & FedAvg ($\eta/2$) & 0.825 & 0.821 & 0.820 & 0.812 & 0.786 & 0.715 \\
+ & $\Delta$ Prox$-$Avg & -- & +0.002 & +0.002 & \textbf{+0.012} & \textbf{+0.030} & \textbf{+0.029} \\
+\midrule
+$\alpha=0.5$ & FedAvg & 0.824 & 0.821 & 0.818 & 0.799 & 0.758 & 0.687 \\
+ & FedProx & 0.826 & 0.823 & 0.820 & 0.811 & 0.787 & 0.715 \\
+ & FedAvg ($\eta/2$) & 0.826 & 0.821 & 0.820 & 0.811 & 0.784 & 0.715 \\
+ & $\Delta$ Prox$-$Avg & -- & +0.002 & +0.002 & \textbf{+0.012} & \textbf{+0.029} & \textbf{+0.028} \\
+\midrule
+$\alpha=0.1$ & FedAvg & 0.825 & 0.821 & 0.818 & 0.796 & 0.753 & 0.684 \\
+ & FedProx & 0.826 & 0.823 & 0.820 & 0.809 & 0.782 & 0.713 \\
+ & FedAvg ($\eta/2$) & 0.827 & 0.821 & 0.820 & 0.810 & 0.782 & 0.712 \\
+ & $\Delta$ Prox$-$Avg & -- & +0.002 & +0.002 & \textbf{+0.012} & \textbf{+0.029} & \textbf{+0.029} \\
+\bottomrule
+\end{tabular}
+\label{tab:interaction}
+\end{table*}
