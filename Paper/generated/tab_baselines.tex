@@ -1,0 +1,23 @@
+\begin{table*}[t]
+\caption{Stronger baselines on PCa-19 (20 held-out seeds). Within-hospital: mean per-hospital test AUC over 19 hospitals. Leave-one-country-out: mean AUC over the 8 held-out countries and mean calibration slope; differences vs FedAvg are paired over countries ($n=8$). Last column: federated variants trained with DP at $\varepsilon=1$. FedNova equals FedAvg here (identical local steps at every hospital).}
+\centering\small
+\begin{tabular}{lcccccc}
+\toprule
+& \multicolumn{2}{c}{Within hospital} & \multicolumn{3}{c}{Leave-one-country-out} & DP \\
+Model & AUC & $-$FedAvg [95\% CI] & AUC & $-$FedAvg [95\% CI] & Slope & $\varepsilon=1$ \\
+\midrule
+FedAvg & 0.816 & -- & 0.856 & -- & 1.08 & 0.811 \\
+FedAvg (400 steps) & 0.818 & $+0.002\ [+0.001, +0.003]$ & 0.860 & $+0.004\ [\ensuremath{-}0.001, +0.009]$ & 1.02 & -- \\
+FedProx & 0.811 & $-0.005\ [\ensuremath{-}0.008, \ensuremath{-}0.002]$ & 0.853 & $-0.003\ [\ensuremath{-}0.007, +0.000]$ & 1.12 & 0.809 \\
+SCAFFOLD & 0.816 & $-0.000\ [\ensuremath{-}0.001, +0.000]$ & 0.856 & $+0.000\ [\ensuremath{-}0.001, +0.001]$ & 1.08 & 0.811 \\
+FedAdam & 0.818 & $+0.002\ [+0.000, +0.005]$ & 0.861 & $+0.005\ [\ensuremath{-}0.003, +0.012]$ & 1.07 & 0.807 \\
+Federated MLP & 0.821 & $+0.005\ [+0.001, +0.009]$ & 0.861 & $+0.005\ [\ensuremath{-}0.000, +0.010]$ & 0.92 & -- \\
+\midrule
+Central LR & 0.819 & $+0.003\ [+0.000, +0.005]$ & 0.860 & $+0.005\ [\ensuremath{-}0.002, +0.011]$ & 1.02 & -- \\
+Central gradient boosting & 0.824 & $+0.009\ [+0.004, +0.014]$ & 0.853 & $-0.003\ [\ensuremath{-}0.011, +0.004]$ & 0.91 & -- \\
+Central random forest & 0.820 & $+0.004\ [\ensuremath{-}0.002, +0.011]$ & 0.850 & $-0.006\ [\ensuremath{-}0.013, +0.001]$ & 0.95 & -- \\
+Central MLP & 0.828 & $+0.012\ [+0.007, +0.017]$ & 0.861 & $+0.005\ [\ensuremath{-}0.001, +0.012]$ & 1.00 & -- \\
+\bottomrule
+\end{tabular}
+\label{tab:baselines}
+\end{table*}

@@ -1,0 +1,18 @@
+\begin{table}[t]
+\caption{Stability of Shapley contribution rankings under DP on the real PCa-19 hospitals (20 seeds). $\rho$ = Spearman correlation with the no-DP ranking; Rank rev.\ = share of hospital pairs whose order flips relative to the no-DP ranking; TS = probability that the no-DP top contributor stays first.}
+\centering\scriptsize
+\begin{tabular}{lcccc}
+\toprule
+Hospitals & $\varepsilon$ & $\rho$ [95\% CI] & Rank rev. & TS \\
+\midrule
+10 (exact) & 10 & $0.94\ [0.93, 0.95]$ & 0.44 & 0.75 \\
+10 (exact) & 5 & $0.94\ [0.92, 0.95]$ & 0.45 & 0.75 \\
+10 (exact) & 2 & $0.91\ [0.90, 0.93]$ & 0.57 & 0.80 \\
+10 (exact) & 1 & $0.85\ [0.80, 0.90]$ & 0.64 & 0.70 \\
+10 (exact) & 0.5 & $0.64\ [0.56, 0.71]$ & 0.79 & 0.40 \\
+19 (stratified) & 5 & $0.90\ [0.87, 0.93]$ & 0.80 & 0.45 \\
+19 (stratified) & 1 & $0.76\ [0.71, 0.80]$ & 0.84 & 0.45 \\
+\bottomrule
+\end{tabular}
+\label{tab:pca19_shapley}
+\end{table}

@@ -11,56 +11,56 @@
   "check": "Clinical cohort: one primary-tumour sample per patient",
   "passed": true,
   "detail": "493 patients, 305 advanced (T3/T4)",
-  "seconds": 0.04
+  "seconds": 0.03
  },
  {
   "group": "Data",
   "check": "Matched clinical-protein cohort = 347 patients (277 train / 70 test)",
   "passed": true,
   "detail": "347 patients (237 T3/T4), split 277/70",
-  "seconds": 0.14
+  "seconds": 0.11
  },
  {
   "group": "Data",
   "check": "Survival events in matched cohort = 9 (paper previously said 12)",
   "passed": true,
   "detail": "9 deaths among 347 patients (12 is the count over all 572 records)",
-  "seconds": 0.12
+  "seconds": 0.08
  },
  {
   "group": "Leakage",
   "check": "No identifier / timestamp / outcome column is used as a feature",
   "passed": true,
   "detail": "18 features: age, gleason_primary, gleason_secondary, gleason_sum, race=black or african american, race=not reported, race=white, ethnicity=not hispanic or latino, ethnicity=not reported, clinical_t=T2, clinical_t=T3, clinical_t=T4, clinical_t=Unknown, clinical_m=M1, clinical_m=Unknown, prior_malignancy=yes, pathologic_n=N1, pathologic_n=Unknown",
-  "seconds": 0.23
+  "seconds": 0.11
  },
  {
   "group": "Leakage",
   "check": "Pre-op feature set contains no post-surgical pathology",
   "passed": true,
   "detail": "13 features: age, race=black or african american, race=not reported, race=white, ethnicity=not hispanic or latino, ethnicity=not reported, clinical_t=T2, clinical_t=T3, clinical_t=T4, clinical_t=Unknown, clinical_m=M1, clinical_m=Unknown, prior_malignancy=yes",
-  "seconds": 0.18
+  "seconds": 0.11
  },
  {
   "group": "Leakage",
   "check": "Scaler / imputer / PCA are fitted on training rows only",
   "passed": true,
   "detail": "age mean in scaler = train mean (61.155); protein PCs: 113 (train-fit) vs 129 if fitted on all 347 rows (explains the 115 vs 129 in the old reports)",
-  "seconds": 0.55
+  "seconds": 0.33
  },
  {
   "group": "Leakage",
   "check": "Test rows with unseen categories are encoded as the reference level (no crash)",
   "passed": true,
   "detail": "shape (3, 18)",
-  "seconds": 0.15
+  "seconds": 0.09
  },
  {
   "group": "Model",
   "check": "NumPy logistic regression matches scikit-learn (centralised)",
   "passed": true,
   "detail": "NumPy AUC 0.803 vs sklearn 0.810",
-  "seconds": 0.18
+  "seconds": 0.1
  },
  {
   "group": "Model",
@@ -81,14 +81,14 @@
   "check": "Client drift is recorded for FedAvg (was always 0.0) and FedProx reduces it",
   "passed": true,
   "detail": "FedAvg drift 0.3777 > FedProx drift 0.2711 > 0",
-  "seconds": 0.02
+  "seconds": 0.01
  },
  {
   "group": "Model",
   "check": "Dirichlet partition keeps every sample exactly once; small alpha = stronger skew",
   "passed": true,
   "detail": "label-rate spread alpha=100: 0.07, alpha=0.1: 0.81",
-  "seconds": 0.02
+  "seconds": 0.01
  },
  {
   "group": "Privacy",
@@ -102,14 +102,14 @@
   "check": "Noise calibration hits the target epsilon and is monotone",
   "passed": true,
   "detail": "sigma = 97.01, 49.02, 24.99, 10.55, 5.68 for eps = 0.5, 1, 2, 5, 10 (T=100, delta=1e-5)",
-  "seconds": 0.02
+  "seconds": 0.01
  },
  {
   "group": "Privacy",
   "check": "DP noise actually added has std = sigma * clip (empirical)",
   "passed": true,
   "detail": "empirical noise std 2.992 (expected 3.000 for sigma=3, C=1)",
-  "seconds": 0.29
+  "seconds": 0.15
  },
  {
   "group": "Privacy",
@@ -123,7 +123,7 @@
   "check": "Vectorised coalition training == one training run per coalition",
   "passed": true,
   "detail": "max utility difference over 15 coalitions = 0.0e+00",
-  "seconds": 0.09
+  "seconds": 0.04
  },
  {
   "group": "Valuation",
@@ -137,20 +137,153 @@
   "check": "Top-contributor stability is no longer identically 1/K",
   "passed": true,
   "detail": "stable rankings -> 1.00, top swapped -> 0.00 (old formula gave 0.25 = 1/K for both)",
-  "seconds": 0.01
+  "seconds": 0.0
  },
  {
   "group": "Privacy",
   "check": "Membership-inference attack detects an over-fitted model (positive control)",
   "passed": true,
   "detail": "attack AUC 0.751 (>0.65) on a model that memorised pure-noise labels",
-  "seconds": 0.05
+  "seconds": 0.02
  },
  {
   "group": "Reproducibility",
   "check": "Experiments are reproducible (same seed -> identical results)",
   "passed": true,
   "detail": "two runs of the personalisation experiment with seed 7 are identical",
-  "seconds": 0.51
+  "seconds": 0.37
+ },
+ {
+  "group": "PCa-19",
+  "check": "PCa-19 cohort = base paper Table I: 5,610 patients, 19 hospitals, 8 countries",
+  "passed": true,
+  "detail": "5610 patients, 19 hospitals, 8 countries (paper text says 9), 38.3% csPCa, no missing values, SHA-256 a3130b8ae808\u2026 matches",
+  "seconds": 0.02
+ },
+ {
+  "group": "PCa-19",
+  "check": "PCa-19 features are all pre-biopsy (age, PSA, prostate volume, PI-RADS)",
+  "passed": true,
+  "detail": "features age, log_psa, log_pv, pirads_3, pirads_4, pirads_5; label = ISUP grade group >= 2 at biopsy",
+  "seconds": 0.01
+ },
+ {
+  "group": "PCa-19",
+  "check": "Base-paper protocol re-implementation = the authors' own code (same numbers)",
+  "passed": true,
+  "detail": "noh: max |difference| 1.2e-14 over 5x19 cells (50 repeats); ettala: max |difference| 7.8e-15 over 5x19 cells (50 repeats)",
+  "seconds": 0.0
+ },
+ {
+  "group": "PCa-19",
+  "check": "Published Noh/Ettala calculators reproduce the authors' BL row",
+  "passed": true,
+  "detail": "noh: max |difference| 1.1e-16; ettala: max |difference| 1.1e-16",
+  "seconds": 0.31
+ },
+ {
+  "group": "PCa-19",
+  "check": "Leave-one-country-out: held-out country never influences preprocessing",
+  "passed": true,
+  "detail": "changing the held-out country's values leaves the fitted mean/sd unchanged",
+  "seconds": 0.01
+ },
+ {
+  "group": "PCa-19",
+  "check": "Batched coalition training (any subset of coalitions) == exact all-coalition training",
+  "passed": true,
+  "detail": "max |difference| 0.0e+00 over 15 coalitions",
+  "seconds": 0.03
+ },
+ {
+  "group": "PCa-19",
+  "check": "Stratified-sampling Shapley (used for all 19 hospitals) agrees with exact Shapley",
+  "passed": true,
+  "detail": "6 hospitals: Spearman 1.000, max |error| 0.0026 AUC with 58 coalitions (plain permutation sampling, 400 permutations: 0.0144)",
+  "seconds": 0.42
+ },
+ {
+  "group": "PCa-19",
+  "check": "Calibration, recalibration and decision-curve formulas are correct on known cases",
+  "passed": true,
+  "detail": "calibrated data: O/E 0.997, slope 0.989; distorted model slope 0.62 -> 0.99 after recalibration; biopsy-all net benefit matches formula",
+  "seconds": 0.25
+ },
+ {
+  "group": "Privacy",
+  "check": "Sampled-Gaussian RDP: closed form = numerical R\u00e9nyi divergence; reproduces Abadi et al. (eps 1.26)",
+  "passed": true,
+  "detail": "max relative error vs numerical integration 2.6e-14; q = 1 reduces to alpha/(2 sigma^2); q=0.01, sigma=4, 10,000 steps gives eps = 1.259 (Abadi et al.: 1.26); subsampling amplifies",
+  "seconds": 0.13
+ },
+ {
+  "group": "Privacy",
+  "check": "Poisson-subsampled DP-SGD: noise scale and sampling rate are as specified",
+  "passed": true,
+  "detail": "empirical noise std 2.966 (sigma 3.0); mean update matches; sampling rate 0.200 (q 0.2)",
+  "seconds": 0.75
+ },
+ {
+  "group": "Valuation",
+  "check": "OSA-Shapley: exact vectorised Shapley; equals retraining Shapley ranking without DP",
+  "passed": true,
+  "detail": "vectorised = reference Shapley (3e-17), efficiency holds; Spearman(OSA, retraining) = 1.00 without DP; retraining 10 hospitals at eps = 1 per run really costs eps = 32.8",
+  "seconds": 0.15
+ },
+ {
+  "group": "Model",
+  "check": "SCAFFOLD and FedAdam reduce to FedAvg in the degenerate cases",
+  "passed": true,
+  "detail": "single-client SCAFFOLD = FedAvg (max diff 0.0e+00); FedAdam AUC 0.837 vs FedAvg 0.831",
+  "seconds": 0.01
+ },
+ {
+  "group": "Valuation",
+  "check": "Proposition 2: budget-matched retraining needs sqrt(2^(K-1)) times the per-run noise",
+  "passed": true,
+  "detail": "max relative deviation from 2^((K-1)/2): 0.0e+00 (K = 10: factor 22.6)",
+  "seconds": 0.01
+ },
+ {
+  "group": "Valuation",
+  "check": "Reconstruction competitors (MR/GTG, OR): OR grand coalition = FedAvg model; MR is efficient per round",
+  "passed": true,
+  "detail": "|OR(all) - FedAvg| = 1.1e-15; trace = FedAvg 2.2e-16; MR efficiency gap 0.0e+00",
+  "seconds": 0.03
+ },
+ {
+  "group": "Valuation",
+  "check": "Proposition 3: OSA coalition-model DP noise sd <= lr*sigma*C*sqrt(|S|*steps)/n_S and shrinks with n_S",
+  "passed": true,
+  "detail": "empirical/bound ratio 0.39-0.49; sd(all) 0.223 < sd(smallest) 0.833",
+  "seconds": 0.97
+ },
+ {
+  "group": "Valuation",
+  "check": "Non-convex model: batched coalition FedAvg-MLP = an independent per-model loop; per-record MLP gradients are exact",
+  "passed": true,
+  "detail": "batched vs per-model loop 1.4e-16; per-record vs full 0.0e+00; finite-difference 4.1e-11",
+  "seconds": 0.01
+ },
+ {
+  "group": "Valuation",
+  "check": "Proxy baselines: LOO of averaged releases = v(N) - v(N minus k) recomputed directly; proxies reuse OSA's DP releases; silos are real hospitals",
+  "passed": true,
+  "detail": "LOO diff 0.0e+00, OSA phi diff 0.0e+00, single-model AUC diff 0.0e+00; small-silo group = 10 real hospitals with 16-266 patients",
+  "seconds": 0.08
+ },
+ {
+  "group": "Data",
+  "check": "Second federation (UCI Heart Disease): checksums, 4 real hospitals (303/294/123/200), imputation and scaling from training rows only",
+  "passed": true,
+  "detail": "checksums match; sites [303, 294, 123, 200]; 20 features; max change of training features when test rows change = 0.0e+00",
+  "seconds": 0.04
+ },
+ {
+  "group": "Valuation",
+  "check": "Pre-registered nu sweep: arm A keeps the stated fraction of each hospital's training patients, arm B appends features without touching the reference set",
+  "passed": true,
+  "detail": "kept fractions 0.249-0.250; reference set unchanged; arm B adds 50 columns, original features unchanged",
+  "seconds": 0.11
  }
 ]

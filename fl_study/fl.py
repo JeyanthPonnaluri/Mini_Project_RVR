@@ -79,6 +79,53 @@ def calibrate_sigma(target_eps: float, steps: int, delta: float = 1e-5):
 
 
 # ----------------------------------------------------------------------------
+# Rényi-DP accountant for the POISSON-SUBSAMPLED Gaussian mechanism (q < 1)
+# ----------------------------------------------------------------------------
+RDP_INT_ORDERS = np.concatenate([np.arange(2, 257), np.array([320, 384, 512, 768, 1024])])
+
+
+def rdp_sampled_gaussian(q: float, sigma: float, orders=RDP_INT_ORDERS):
+    """RDP of one step of the sampled Gaussian mechanism (each record included independently with
+    probability q, L2 sensitivity 1, noise multiplier sigma), at integer orders alpha:
+        RDP(alpha) = 1/(alpha-1) * log sum_{k=0}^{alpha} C(alpha,k) (1-q)^(alpha-k) q^k exp((k^2-k)/(2 sigma^2))
+    (Mironov, Talwar & Zhang 2019, integer-order closed form; Zhu & Wang 2019). q = 1 gives alpha/(2 sigma^2)."""
+    orders = np.asarray(orders)
+    if q >= 1.0:
+        return orders / (2 * sigma ** 2)
+    out = np.empty(len(orders))
+    lq, l1q = math.log(q), math.log1p(-q)
+    for i, a in enumerate(orders):
+        a = int(a)
+        k = np.arange(a + 1)
+        logc = np.array([math.lgamma(a + 1) - math.lgamma(j + 1) - math.lgamma(a - j + 1) for j in k])
+        terms = logc + (a - k) * l1q + k * lq + (k * k - k) / (2 * sigma ** 2)
+        m = terms.max()
+        out[i] = (m + math.log(np.exp(terms - m).sum())) / (a - 1)
+    return out
+
+
+def rdp_epsilon_sampled(q: float, sigma: float, steps: int, delta: float = 1e-5, orders=RDP_INT_ORDERS):
+    """(epsilon, best order) after `steps` compositions of the sampled Gaussian mechanism."""
+    if sigma <= 0:
+        return float("inf"), None
+    orders = np.asarray(orders, float)
+    eps = steps * rdp_sampled_gaussian(q, sigma, orders) + math.log(1 / delta) / (orders - 1)
+    i = int(np.argmin(eps))
+    return float(eps[i]), float(orders[i])
+
+
+def calibrate_sigma_sampled(target_eps: float, q: float, steps: int, delta: float = 1e-5):
+    lo, hi = 1e-2, 1e4
+    for _ in range(80):
+        mid = math.sqrt(lo * hi)
+        if rdp_epsilon_sampled(q, mid, steps, delta)[0] > target_eps:
+            lo = mid
+        else:
+            hi = mid
+    return hi
+
+
+# ----------------------------------------------------------------------------
 # Local training
 # ----------------------------------------------------------------------------
 @dataclass
@@ -91,16 +138,25 @@ class TrainConfig:
     epsilon: float | None = None  # None = no DP
     delta: float = 1e-5
     clip: float = 1.0
+    q: float = 1.0                # Poisson sampling rate per local step (1 = full batch)
+
+    @property
+    def steps_per_epoch(self):
+        return 1 if self.q >= 1.0 else int(round(1.0 / self.q))
 
     @property
     def steps(self):
-        return self.rounds * self.epochs
+        return self.rounds * self.epochs * self.steps_per_epoch
 
     def sigma(self):
-        return None if self.epsilon is None else calibrate_sigma(self.epsilon, self.steps, self.delta)
+        if self.epsilon is None:
+            return None
+        if self.q >= 1.0:
+            return calibrate_sigma(self.epsilon, self.steps, self.delta)
+        return calibrate_sigma_sampled(self.epsilon, self.q, self.steps, self.delta)
 
 
-def local_update(X, y, w_start, w_anchor, epochs, lr, l2=0.0, mu=0.0, sigma=None, clip=1.0, rng=None):
+def local_update(X, y, w_start, w_anchor, epochs, lr, l2=0.0, mu=0.0, sigma=None, clip=1.0, rng=None, q=1.0):
     """Full-batch gradient descent on BCE (+ L2) (+ FedProx term).
     With sigma: per-sample gradient clipping to `clip` and Gaussian noise N(0, (sigma*clip)^2)
     added to the summed gradient (DP-SGD with sampling rate q = 1). The L2 and proximal terms
@@ -108,6 +164,8 @@ def local_update(X, y, w_start, w_anchor, epochs, lr, l2=0.0, mu=0.0, sigma=None
     Xb = add_bias(X)
     n = len(y)
     w = w_start.copy()
+    if q < 1.0:
+        return _local_update_sampled(Xb, y, w, w_anchor, epochs, lr, l2, mu, sigma, clip, rng, q)
     for _ in range(epochs):
         p = sigmoid(Xb @ w)
         if sigma is None:
@@ -118,6 +176,32 @@ def local_update(X, y, w_start, w_anchor, epochs, lr, l2=0.0, mu=0.0, sigma=None
             per = per * np.minimum(1.0, clip / norms)
             g = (per.sum(0) + rng.normal(0.0, sigma * clip, size=w.shape)) / n
         g = g + l2 * w
+        if mu > 0:
+            g = g + mu * (w - w_anchor)
+        w = w - lr * g
+    return w
+
+
+def _local_update_sampled(Xb, y, w, w_anchor, epochs, lr, l2, mu, sigma, clip, rng, q):
+    """Poisson-subsampled (DP-)SGD: every record joins each step independently with probability q;
+    the clipped per-record gradients of the sampled records are summed, Gaussian noise
+    N(0, (sigma*clip)^2) is added and the sum is divided by the EXPECTED batch size q*n (a fixed
+    denominator, as required by the sampled-Gaussian analysis). 1/q steps make one epoch."""
+    n = len(y)
+    for _ in range(epochs * int(round(1.0 / q))):
+        mask = rng.random(n) < q
+        Xs, ys = Xb[mask], y[mask]
+        if len(ys):
+            per = Xs * (sigmoid(Xs @ w) - ys)[:, None]
+            if sigma is not None:
+                norms = np.maximum(np.linalg.norm(per, axis=1, keepdims=True), 1e-12)
+                per = per * np.minimum(1.0, clip / norms)
+            gsum = per.sum(0)
+        else:
+            gsum = np.zeros_like(w)
+        if sigma is not None:
+            gsum = gsum + rng.normal(0.0, sigma * clip, size=w.shape)
+        g = gsum / (q * n) + l2 * w
         if mu > 0:
             g = g + mu * (w - w_anchor)
         w = w - lr * g
@@ -136,7 +220,7 @@ def federated_train(clients, cfg: TrainConfig, seed=0, eval_set=None, sigma=None
     weights = sizes / sizes.sum()
     hist_auc, hist_drift = [], []
     for _ in range(cfg.rounds):
-        locals_ = [local_update(X, y, w, w, cfg.epochs, cfg.lr, cfg.l2, cfg.mu, sigma, cfg.clip, rng)
+        locals_ = [local_update(X, y, w, w, cfg.epochs, cfg.lr, cfg.l2, cfg.mu, sigma, cfg.clip, rng, cfg.q)
                    for X, y in clients]
         hist_drift.append(float(np.mean([np.linalg.norm(wk - w) for wk in locals_])))
         w = np.sum([a * wk for a, wk in zip(weights, locals_)], axis=0)
@@ -213,3 +297,65 @@ def mia_confidence_attack(w, X_mem, y_mem, X_non, y_non, seed=0):
     thr = np.unique(scores)
     adv = max(np.mean(sm >= t) - np.mean(sn >= t) for t in thr)
     return float(auc), float(adv)
+
+
+# ----------------------------------------------------------------------------
+# Stronger federated baselines
+# ----------------------------------------------------------------------------
+def federated_train_scaffold(clients, cfg: TrainConfig, seed=0, sigma=None):
+    """SCAFFOLD (Karimireddy et al. 2020), full participation, option-II control-variate update
+    c_k+ = c_k - c + (w_global - w_k) / (E * lr). With DP the local steps are DP-SGD steps; the
+    control variates are computed from released quantities only (post-processing), so they add no
+    privacy cost. The FedProx term is not used (mu ignored)."""
+    rng = np.random.default_rng(seed)
+    d = clients[0][0].shape[1] + 1
+    w = np.zeros(d); c = np.zeros(d); ck = [np.zeros(d) for _ in clients]
+    if sigma is None and cfg.epsilon is not None:
+        sigma = cfg.sigma()
+    sizes = np.array([len(cl[1]) for cl in clients], float); a = sizes / sizes.sum()
+    drift = []
+    for _ in range(cfg.rounds):
+        new_w, new_c = [], []
+        for k, (X, y) in enumerate(clients):
+            Xb = add_bias(X); n = len(y); wk = w.copy()
+            for _e in range(cfg.epochs):
+                p = sigmoid(Xb @ wk)
+                if sigma is None:
+                    g = Xb.T @ (p - y) / n
+                else:
+                    per = Xb * (p - y)[:, None]
+                    nr = np.maximum(np.linalg.norm(per, axis=1, keepdims=True), 1e-12)
+                    per = per * np.minimum(1.0, cfg.clip / nr)
+                    g = (per.sum(0) + rng.normal(0.0, sigma * cfg.clip, size=w.shape)) / n
+                wk = wk - cfg.lr * (g + cfg.l2 * wk - ck[k] + c)
+            new_w.append(wk)
+            new_c.append(ck[k] - c + (w - wk) / (cfg.epochs * cfg.lr))
+        drift.append(float(np.mean([np.linalg.norm(wk - w) for wk in new_w])))
+        dc = np.sum([ak * (nc - oc) for ak, nc, oc in zip(a, new_c, ck)], axis=0)
+        ck = new_c
+        w = np.sum([ak * wk for ak, wk in zip(a, new_w)], axis=0)
+        c = c + dc
+    return {"w": w, "drift_history": drift, "sigma": sigma}
+
+
+def federated_train_fedadam(clients, cfg: TrainConfig, seed=0, sigma=None, server_lr=0.1,
+                            beta1=0.9, beta2=0.99, tau=1e-3):
+    """FedAdam (Reddi et al. 2021): clients run the usual local (DP-)GD; the server treats the
+    weighted mean update as a pseudo-gradient and applies Adam. Server-side post-processing, so
+    the DP guarantee of the client updates is unchanged."""
+    rng = np.random.default_rng(seed)
+    d = clients[0][0].shape[1] + 1
+    w = np.zeros(d); m = np.zeros(d); v = np.zeros(d)
+    if sigma is None and cfg.epsilon is not None:
+        sigma = cfg.sigma()
+    sizes = np.array([len(cl[1]) for cl in clients], float); a = sizes / sizes.sum()
+    drift = []
+    for _ in range(cfg.rounds):
+        locs = [local_update(X, y, w, w, cfg.epochs, cfg.lr, cfg.l2, cfg.mu, sigma, cfg.clip, rng, cfg.q)
+                for X, y in clients]
+        drift.append(float(np.mean([np.linalg.norm(wk - w) for wk in locs])))
+        delta = np.sum([ak * (wk - w) for ak, wk in zip(a, locs)], axis=0)
+        m = beta1 * m + (1 - beta1) * delta
+        v = beta2 * v + (1 - beta2) * delta ** 2
+        w = w + server_lr * m / (np.sqrt(v) + tau)
+    return {"w": w, "drift_history": drift, "sigma": sigma}

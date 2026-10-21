@@ -44,3 +44,11 @@ reports/*.pdf
 # OS
 .DS_Store
 Thumbs.db
+
+# Private deliverables and working files (not for the public repo)
+FINAL/
+outreach/
+Claude outputs/
+scratch/
+*.tgz
+Batch_1_updated.pptx

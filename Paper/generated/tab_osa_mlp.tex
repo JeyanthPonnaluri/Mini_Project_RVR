@@ -1,0 +1,17 @@
+\begin{table}[t]
+\caption{Valuation with a non-convex model: a one-hidden-layer MLP (16 tanh units, weight decay $10^{\ensuremath{-}3}$) trained by FedAvg. Spearman $\rho$ with the exact non-private retraining Shapley ranking of the ten largest PCa-19 hospitals (20 held-out splits; budget-matched retraining on 5 of them). OSA-ens.: coalition prediction = size-weighted average of the members' log-odds; OSA-par.: size-weighted parameter average from a shared initialisation; MR: exact multi-round reconstruction from one DP FedAvg-MLP run. All columns cost the stated $\varepsilon$.}
+\centering\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lccccc}
+\toprule
+$\varepsilon$ & OSA-ens. & OSA-par. & MR & OSA-ens.$-$MR & Budget-m. \\
+\midrule
+none & 0.91 & 0.67 & 0.78 & $+0.13\ [+0.07, +0.19]$ & -- \\
+5 & 0.68 & 0.52 & 0.82 & $-0.14\ [\ensuremath{-}0.19, \ensuremath{-}0.09]$ & -- \\
+2 & 0.65 & 0.65 & 0.82 & $-0.17\ [\ensuremath{-}0.25, \ensuremath{-}0.09]$ & 0.16 \\
+1 & 0.60 & 0.60 & 0.78 & $-0.18\ [\ensuremath{-}0.29, \ensuremath{-}0.07]$ & 0.05 \\
+0.5 & 0.42 & 0.44 & 0.74 & $-0.32\ [\ensuremath{-}0.46, \ensuremath{-}0.18]$ & -- \\
+\bottomrule
+\end{tabular}
+\label{tab:osa_mlp}
+\end{table}

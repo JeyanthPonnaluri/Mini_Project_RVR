@@ -1,0 +1,23 @@
+\begin{table}[t]
+\caption{OSA-Shapley robustness on PCa-19 (ten hospitals, 20 held-out seeds). Top: Spearman $\rho$ with the exact non-private ranking. Bottom: share of splits in which a hospital with random training labels (es6) is ranked last (no-DP retraining Shapley: 100\%).}
+\centering\scriptsize
+\begin{tabular}{lcc}
+\toprule
+Setting & $\varepsilon=2$ & $\varepsilon=1$ \\
+\midrule
+Local steps = 10 & 0.84 & 0.81 \\
+Local steps = 30 (chosen) & 0.89 & 0.80 \\
+Local steps = 60 & 0.90 & 0.72 \\
+Reference set 25\% of hospital test data & 0.77 & 0.67 \\
+Reference set 50\% of hospital test data & 0.87 & 0.77 \\
+\midrule
+\multicolumn{3}{l}{\emph{Useless hospital ranked last}} \\
+OSA (cost $\varepsilon$) & 100\% & 95\% \\
+MR (cost $\varepsilon$) & 70\% & 80\% \\
+OR (cost $\varepsilon$) & 100\% & 100\% \\
+Retraining, budget-matched (cost $\varepsilon$) & 60\% & 45\% \\
+Retraining, per run (true $\varepsilon$ 85 and 33) & 100\% & 100\% \\
+\bottomrule
+\end{tabular}
+\label{tab:osa_robust}
+\end{table}

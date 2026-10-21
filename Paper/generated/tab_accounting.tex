@@ -1,0 +1,23 @@
+\begin{table}[t]
+\caption{The privacy cost that retraining-based valuation actually spends (Proposition~2). $r$: number of DP training runs that contain a given hospital's patients (exact Shapley: $2^{K-1}$; permutation sampling without caching: on average $100(K+1)/2$). Each run is $N=100$ full-batch DP-GD steps calibrated to the per-run $\varepsilon$; the table gives the composed $\varepsilon$ per hospital ($\delta=10^{\ensuremath{-}5}$). Last column: factor by which every run's noise must grow to keep the stated budget ($\sqrt r$). Post-processing valuations spend the stated budget once.}
+\centering\scriptsize
+\setlength{\tabcolsep}{2.5pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrccccr}
+\toprule
+ & & \multicolumn{4}{c}{True $\varepsilon$ for a per-run $\varepsilon$ of} & Noise \\
+\cmidrule(lr){3-6}
+Valuation & $r$ & 10 & 5 & 2 & 1 & factor \\
+\midrule
+Exact, $K=4$ & 8 & 36 & 16 & 6.1 & 2.9 & 2.8 \\
+Exact, $K=10$ & 512 & 988 & 334 & 85 & 33 & 23 \\
+Exact, $K=19$ & $\approx 10^{5}$ & $\approx 10^{5}$ & $\approx 10^{5}$ & 23{,}197 & 6{,}116 & 512 \\
+Exact, $K=50$ & $\approx 10^{14}$ & $\approx 10^{14}$ & $\approx 10^{14}$ & $\approx 10^{13}$ & $\approx 10^{13}$ & $\approx 10^{7}$ \\
+100 permutations, $K=10$ & 550 & 1{,}053 & 354 & 89 & 34 & 23 \\
+100 permutations, $K=19$ & 1{,}000 & 1{,}820 & 597 & 141 & 52 & 32 \\
+100 permutations, $K=50$ & 2{,}550 & 4{,}464 & 1{,}376 & 303 & 103 & 50 \\
+OSA-Shapley, MR, OR (any $K$) & 1 & 10 & 5 & 2 & 1 & 1 \\
+\bottomrule
+\end{tabular}}
+\label{tab:accounting}
+\end{table}

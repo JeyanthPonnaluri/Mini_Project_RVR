@@ -1,0 +1,20 @@
+\begin{table*}[t]
+\caption{Leave-one-country-out external validation on PCa-19: train on the other seven countries, test on all patients of the held-out country (mean of 20 seeds). O/E = observed/expected events; slope = calibration slope (ideal 1).}
+\centering\small
+\begin{tabular}{lrrccccccc}
+\toprule
+& & & \multicolumn{3}{c}{FedAvg} & \multicolumn{2}{c}{FedProx + DP ($\varepsilon=5$)} & \multicolumn{2}{c}{Noh (published)} \\
+Country & $n$ & csPCa\% & AUC & O/E & slope & AUC & slope & AUC & O/E \\
+\midrule
+China & 842 & 31 & 0.872 & 0.78 & 1.08 & 0.851 & 0.81 & 0.874 & 0.97 \\
+Germany & 925 & 43 & 0.842 & 1.01 & 1.07 & 0.844 & 0.79 & 0.833 & 1.12 \\
+Italy & 218 & 12 & 0.821 & 0.47 & 0.89 & 0.819 & 0.67 & 0.825 & 0.54 \\
+Netherlands & 266 & 26 & 0.904 & 0.83 & 1.30 & 0.877 & 1.00 & 0.934 & 1.03 \\
+South Korea & 996 & 33 & 0.896 & 0.83 & 1.45 & 0.890 & 1.01 & 0.886 & 1.00 \\
+Spain & 1640 & 46 & 0.825 & 1.24 & 0.93 & 0.820 & 0.72 & 0.819 & 1.31 \\
+USA & 590 & 47 & 0.783 & 1.30 & 0.86 & 0.776 & 0.65 & 0.765 & 1.55 \\
+United Kingdom & 133 & 29 & 0.905 & 0.78 & 1.10 & 0.903 & 0.83 & 0.907 & 0.88 \\
+\bottomrule
+\end{tabular}
+\label{tab:pca19_loco}
+\end{table*}

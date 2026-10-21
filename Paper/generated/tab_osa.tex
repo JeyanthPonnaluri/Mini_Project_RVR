@@ -1,0 +1,17 @@
+\begin{table*}[t]
+\caption{Contribution valuation under DP on the ten largest PCa-19 hospitals (20 held-out seeds). Agreement with the exact non-private Shapley ranking (Spearman $\rho$) and probability that the true top contributor is ranked first (TS). \emph{Per-run}: every coalition retrained at the stated $\varepsilon$, whose true cost for each hospital is the composed $\varepsilon$ in column 2. \emph{Budget-matched}: retraining with noise calibrated so that the total cost is the stated $\varepsilon$. OSA-Shapley costs the stated $\varepsilon$ once.}
+\centering\small
+\begin{tabular}{lccccccc}
+\toprule
+ & True $\varepsilon$ of & \multicolumn{3}{c}{Spearman $\rho$ with exact Shapley} & \multicolumn{3}{c}{TS} \\
+$\varepsilon$ & per-run retraining & per-run & budget-matched & OSA & per-run & budget-matched & OSA \\
+\midrule
+10 & 988 & 0.94 & 0.47 & \textbf{0.90} & 0.75 & 0.45 & \textbf{0.60} \\
+5 & 334 & 0.94 & 0.32 & \textbf{0.90} & 0.70 & 0.35 & \textbf{0.60} \\
+2 & 85 & 0.90 & 0.18 & \textbf{0.89} & 0.65 & 0.10 & \textbf{0.55} \\
+1 & 33 & 0.76 & 0.10 & \textbf{0.80} & 0.55 & 0.10 & \textbf{0.40} \\
+0.5 & 14 & 0.46 & 0.02 & \textbf{0.54} & 0.50 & 0.05 & \textbf{0.35} \\
+\bottomrule
+\end{tabular}
+\label{tab:osa}
+\end{table*}

@@ -1,0 +1,16 @@
+\begin{table*}[t]
+\caption{Evidence behind the decision rule, from two real federations. $p$: model parameters; $\nu$: median training patients per hospital divided by $\sqrt p$, which sets the signal-to-noise ratio of one DP release (Proposition~3). $\rho$: Spearman correlation with the exact non-private retraining Shapley ranking (20 held-out splits). OSA$-$MR: paired difference with 95\% CI at $\varepsilon=2$. Size: agreement of hospital size with the same ranking.}
+\centering\small
+\begin{tabular}{llrrrcccccl}
+\toprule
+ & & & & & OSA & OSA & MR & & & \\
+Federation & Model & $K$ & $p$ & $\nu$ & no DP & $\varepsilon=2$ & $\varepsilon=2$ & OSA$-$MR & Size & Best at $\varepsilon=2$ \\
+\midrule
+PCa-19, 10 largest & logistic & 10 & 7 & 114 & 0.96 & 0.89 & 0.75 & $+0.14\ [+0.08, +0.19]$ & 0.08 & OSA \\
+PCa-19, 10 smallest & logistic & 10 & 7 & 45 & 0.95 & 0.79 & 0.78 & $+0.00\ [\ensuremath{-}0.06, +0.06]$ & 0.74 & OSA, MR or size \\
+Heart Disease, 4 & logistic & 4 & 21 & 43 & 0.92 & 0.15 & 0.45 & $-0.30\ [\ensuremath{-}0.59, \ensuremath{-}0.01]$ & \ensuremath{-}0.38 & MR \\
+PCa-19, 10 largest & MLP & 10 & 129 & 26 & 0.91 & 0.65 & 0.82 & $-0.17\ [\ensuremath{-}0.25, \ensuremath{-}0.09]$ & -- & MR \\
+\bottomrule
+\end{tabular}
+\label{tab:decision}
+\end{table*}

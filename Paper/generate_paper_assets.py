@@ -254,7 +254,7 @@ for k, r in ab.items():
 open(os.path.join(GEN, "tab_ablation.tex"), "w", encoding="utf-8").write(
     "\\begin{table}[t]\n\\caption{Ablation on the global test split ($K=3$, $\\alpha=0.5$, 20 seeds, "
     "mean $\\pm$ sd; paired difference to FedProx with 95\\% CI).}\n\\centering\\scriptsize\n"
-    "\\begin{tabular}{p{3.1cm}cc}\n\\toprule\nConfiguration & Test AUC & vs FedProx \\\\\n\\midrule\n" +
+    "\\setlength{\\tabcolsep}{4pt}\n\\begin{tabular}{p{2.9cm}cc}\n\\toprule\nConfiguration & Test AUC & vs FedProx \\\\\n\\midrule\n" +
     "\n".join(rows).replace("eps=", "$\\varepsilon$=").replace("FedProx, ", "FedProx: ") +
     "\n\\bottomrule\n\\end{tabular}\n\\label{tab:global_ablation}\n\\end{table}\n")
 m("abCen", f3(ab["Centralised (pooled data)"]["mean"])); m("abAvg", f3(ab["FedAvg"]["mean"]))
@@ -264,20 +264,611 @@ m("abPreop", f3(ab["FedProx, pre-op features only"]["mean"]))
 m("abProt", f3(ab["FedProx, clinical (full) + protein PCs"]["mean"]))
 
 # ------------------------------------------------------------------ hypothesis table (computed verdicts)
+import re as _re2
 rows = []
 for r in claims.build(R):
+    if not r["area"].startswith(("PCa-19", "Heart", "Pre-registered")):
+        continue
     ev = (r["evidence"].replace("%", "\\%").replace("_", "\\_").replace("[", "{[}").replace("]", "{]}")
           .replace(" > ", " $>$ ").replace(" < ", " $<$ ")
-          .replace("->", "$\\rightarrow$").replace("eps", "$\\varepsilon$").replace("alpha", "$\\alpha$"))
-    cl = (r["claim"].replace("eps", "$\\varepsilon$").replace("%", "\\%").replace("<", "$<$")
+          .replace("->", "$\\rightarrow$").replace("alpha", "$\\alpha$").replace("|", "$|$"))
+    ev = _re2.sub(r"\beps\b", r"$\\varepsilon$", ev)
+    cl = (_re2.sub(r"\beps\b", r"$\\varepsilon$", r["claim"]).replace("%", "\\%").replace("<=", "LEQ").replace("<", "$<$").replace("LEQ", "<=")
           .replace("alpha", "$\\alpha$"))
+    import re as _re
+    ev = _re.sub(r"\bnu\b", r"$\\nu$", ev.replace(">=", r"$\ge$").replace("<=", r"$\le$"))
+    cl = _re.sub(r"\bnu\b", r"$\\nu$", cl.replace(">=", r"$\ge$").replace("<=", r"$\le$"))
     rows.append(f"{r['area']} & {cl} & {ev} & {r['verdict']} \\\\")
 open(os.path.join(GEN, "tab_hypotheses.tex"), "w", encoding="utf-8").write(
     "\\begin{table*}[t]\n\\caption{Claim--evidence summary. Verdicts are computed from the result files: "
-    "`supported' only if the 95\\% CI of the paired difference over seeds excludes 0 in the claimed direction.}\n"
+    "`supported' only if the 95\\% CI of the paired difference over seeds excludes 0 in the claimed direction; the pre-registered rows are scored by the criteria fixed in advance "
+    "(Section~\\ref{sec:prereg}).}\n"
     "\\centering\\scriptsize\n\\begin{tabular}{p{1.4cm}p{4.2cm}p{8.6cm}p{1.5cm}}\n\\toprule\nArea & Claim & Evidence "
     "(mean [95\\% CI]) & Verdict \\\\\n\\midrule\n" + "\n".join(rows) +
     "\n\\bottomrule\n\\end{tabular}\n\\label{tab:hyp_summary}\n\\end{table*}\n")
+
+# ------------------------------------------------------------------ PCa-19 (base paper's own 19-hospital cohort)
+def ci2(s, d=3, signed=True):
+    return ci(s, d, signed)
+
+
+P19 = {k[6:]: v for k, v in R.items() if k.startswith("pca19_")}
+pc = P19["cohort"]
+m("pNineN", f"{pc['n']:,}".replace(",", "{,}")); m("pNinePos", f"{pc['n_pos']:,}".replace(",", "{,}"))
+m("pNineHosp", pc["n_hospitals"]); m("pNineCountries", pc["n_countries"])
+m("pNinePrevLo", f"{100 * pc['prevalence_range'][0]:.0f}"); m("pNinePrevHi", f"{100 * pc['prevalence_range'][1]:.0f}")
+m("pNinePrev", f"{100 * pc['n_pos'] / pc['n']:.1f}")
+rows = [f"{h['hospital']} & {h['country']} & {h['n']} & {100 * h['prevalence']:.0f} & {h['age_median']:.0f} & "
+        f"{h['psa_median']:.1f} & {h['pv_median']:.0f} & {100 * h['pirads_ge4']:.0f} \\\\" for h in pc["hospitals"]]
+open(os.path.join(GEN, "tab_pca19_cohort.tex"), "w", encoding="utf-8").write(
+    "\\begin{table}[t]\n\\caption{PCa-19: the base paper's 19-hospital pre-biopsy cohort (" + MAC["pNineN"] +
+    " men). csPCa = ISUP grade group $\\geq 2$ at biopsy; medians of age (years), PSA (ng/mL) and prostate volume (mL); "
+    "PI-RADS $\\geq 4$ in \\%.}\n\\centering\\scriptsize\n\\setlength{\\tabcolsep}{3pt}\n\\begin{tabular}{llrrrrrr}\n\\toprule\n"
+    "Hosp. & Country & $n$ & csPCa\\% & Age & PSA & Vol. & PI-RADS$\\geq$4 \\\\\n\\midrule\n" + "\n".join(rows) +
+    "\n\\bottomrule\n\\end{tabular}\n\\label{tab:pca19_cohort}\n\\end{table}\n")
+
+# authors' protocol reproduction
+rp = {c_: P19.get(f"reproduction_{c_}") for c_ in ("noh", "ettala")}
+if all(rp.values()):
+    m("pNineReps", rp["noh"]["n_repeats"])
+    rows = []
+    for strat, lab in [("BL", "Published calculator (BL)"), ("LOC", "Local (LOC)"), ("CEN", "Centralised (CEN)"),
+                       ("FL", "One-shot FedAvg (FL)"), ("FR", "Free-rider (FR)")]:
+        rows.append(f"{lab} & {rp['noh']['AV'][strat]:.3f} & {rp['noh']['AVW'][strat]:.3f} & "
+                    f"{rp['ettala']['AV'][strat]:.3f} & {rp['ettala']['AVW'][strat]:.3f} \\\\")
+    open(os.path.join(GEN, "tab_pca19_repro.tex"), "w", encoding="utf-8").write(
+        "\\begin{table}[t]\n\\caption{Reproduction of the base paper's protocol on PCa-19 (" + str(rp["noh"]["n_repeats"]) +
+        " Monte-Carlo repeats; AV = mean over hospitals, AVW = patient-weighted). Our re-implementation gives the same "
+        "numbers as the authors' code (Section~\\ref{sec:p19_repro}).}\n\\centering\\footnotesize\n\\begin{tabular}{lcccc}\n"
+        "\\toprule\n& \\multicolumn{2}{c}{Noh variables} & \\multicolumn{2}{c}{Ettala variables} \\\\\nStrategy & AV & AVW & AV & AVW \\\\\n"
+        "\\midrule\n" + "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}\n\\label{tab:pca19_repro}\n\\end{table}\n")
+    for c_, nm in (("noh", "Noh"), ("ettala", "Ett")):
+        for k_ in ("BL", "LOC", "CEN", "FL", "FR"):
+            m(f"pRep{nm}{k_}", f3(rp[c_]["AV"][k_]))
+
+# strategies under our protocol
+s9 = P19["strategies"]
+for k_, nm in [("LOC", "LOC"), ("FL", "FL"), ("FedProx", "Prox"), ("CEN", "CEN"), ("FR_test", "FR"), ("BL_noh", "Noh"), ("BL_ettala", "Ett")]:
+    m(f"pS{nm}", f3(s9["macro"][k_]["mean"])); m(f"pW{nm}", f3(s9["weighted"][k_]["mean"]))
+for k_, nm in [("FL-LOC", "FLminusLOC"), ("FR_test-FL", "FRminusFL"), ("CEN-FL", "CENminusFL"), ("FL-BL_noh", "FLminusNoh"),
+               ("FL-BL_ettala", "FLminusEtt"), ("FedProx-FL", "ProxminusFL")]:
+    m(f"pD{nm}", ci(s9["diff"][k_]))
+m("pGainSig", s9["n_gain_sig"]); m("pLossSig", s9["n_loss_sig"]); m("pGainSizeRho", f"{s9['gain_vs_size_spearman']:.2f}")
+lc9 = s9["learning_curve"]
+m("pLcFrOne", f3(lc9[0]["FR"]["mean"])); m("pLcFrFive", f3(lc9[4]["FR"]["mean"])); m("pLcFrLast", f3(lc9[-1]["FR"]["mean"]))
+fc = s9["fr_calibration_pooled"]
+m("pFrOE", f"{fc['oe']['mean']:.2f}"); m("pFrSlope", f"{fc['slope']['mean']:.2f}")
+
+# privacy & drift on real hospitals
+pv9 = P19["privacy"]
+cells9 = {("none" if x["epsilon"] is None else x["epsilon"]): x for x in pv9["cells"]}
+m("pDriftRed", f"{pv9['drift_reduction_pct']['mean']:.1f}")
+m("pDpLossHalf", ci(cells9[0.5]["FedAvg-noDP"])); m("pDpLossOne", ci(cells9[1.0]["FedAvg-noDP"]))
+m("pDpLossFive", ci(cells9[5.0]["FedAvg-noDP"]))
+m("pProxHalfMax", f"{max(abs(x['FedProx-FedAvg_half_lr']['mean']) for x in pv9['cells']):.3f}")
+m("pSigmaHalf", f"{pv9['sigma']['0.5']:.0f}")
+rows = []
+for k_ in ["none", 10.0, 5.0, 2.0, 1.0, 0.5]:
+    x = cells9[k_]
+    lab = "no DP" if k_ == "none" else f"{k_:g}"
+    sg = "--" if k_ == "none" else f"{pv9['sigma'][str(k_)]:.1f}"
+    dl = "--" if k_ == "none" else ci(x["FedAvg-noDP"])
+    rows.append(f"{lab} & {sg} & {f3(x['FedAvg']['macro']['mean'])} & {f3(x['FedProx']['macro']['mean'])} & "
+                f"{f3(x['FedAvg_half_lr']['macro']['mean'])} & ${dl}$ & ${ci(x['FedProx-FedAvg_half_lr'])}$ & "
+                f"{x['FedAvg']['drift']['mean']:.2f} / {x['FedProx']['drift']['mean']:.2f} \\\\")
+open(os.path.join(GEN, "tab_pca19_privacy.tex"), "w", encoding="utf-8").write(
+    "\\begin{table*}[t]\n\\caption{Privacy and drift on the 19 real hospitals (mean per-hospital test AUC, 20 seeds). "
+    "The last two AUC columns are paired differences with 95\\% CI; drift = mean $\\|w_k-w^{t-1}\\|$.}\n\\centering\\small\n"
+    "\\begin{tabular}{lccccccc}\n\\toprule\n$\\varepsilon$ & $\\sigma$ & FedAvg & FedProx & FedAvg ($\\eta/2$) & FedAvg $-$ no DP & "
+    "FedProx $-$ FedAvg($\\eta/2$) & Drift Avg / Prox \\\\\n\\midrule\n" + "\n".join(rows) +
+    "\n\\bottomrule\n\\end{tabular}\n\\label{tab:pca19_privacy}\n\\end{table*}\n")
+
+# personalisation
+pf9 = P19["personalisation"]["groups"]
+m("pPflSmall", ci(pf9["small (< 100)"]["PFL-FedProx"])); m("pPflAll", ci(pf9["all"]["PFL-FedProx"]))
+m("pPflLarge", ci(pf9["large (>= 400)"]["PFL-FedProx"])); m("pPflLargeLoc", ci(pf9["large (>= 400)"]["FedProx-Local"]))
+m("pNSmall", len(pf9["small (< 100)"]["hospitals"]))
+
+# membership inference
+mi9 = P19["mia"]
+m("pMiaNoDP", f3(mi9["rows"][0]["attack_auc"]["mean"])); m("pMiaCtl", f3(mi9["control"]["mean"]))
+
+# leave-one-country-out
+lo9 = P19["loco"]
+bc9 = lo9["diff_by_country"]
+m("pLocoAvgNoh", ci(bc9["FedAvg - Noh (published)"])); m("pLocoDpFive", ci(bc9["FedProx+DP(eps=5) - FedProx"]))
+m("pLocoAvgCen", ci(bc9["FedAvg - Centralised"]))
+sl9 = lo9["calibration_slope_by_model"]
+m("pSlopeNoDP", ci(sl9["FedProx"], 2, False)); m("pSlopeDpFive", ci(sl9["FedProx+DP(eps=5)"], 2, False))
+m("pSlopeDpOne", ci(sl9["FedProx+DP(eps=1)"], 2, False)); m("pSlopeNoh", ci(sl9["Noh (published)"], 2, False))
+rc9 = lo9["recalibration"]
+m("pRecalOeRaw", f3(rc9["FedAvg"]["raw"]["abs_log_oe"]["mean"])); m("pRecalOeInt", f3(rc9["FedAvg"]["intercept"]["abs_log_oe"]["mean"]))
+m("pRecalOeDiff", ci(rc9["FedAvg"]["intercept_vs_raw_abs_log_oe"]))
+m("pRecalSlopeDpRaw", f"{rc9['FedProx+DP(eps=5)']['raw']['slope']['mean']:.2f}")
+m("pRecalSlopeDpLog", f"{rc9['FedProx+DP(eps=5)']['logistic']['slope']['mean']:.2f}")
+oes = [r["FedAvg"]["oe"] for r in lo9["countries"]]
+m("pOeMin", f"{min(oes):.2f}"); m("pOeMax", f"{max(oes):.2f}")
+rows = []
+for r in lo9["countries"]:
+    rows.append(f"{r['country']} & {r['n']} & {100 * r['prevalence']:.0f} & {f3(r['FedAvg']['auc'])} & {r['FedAvg']['oe']:.2f} & "
+                f"{r['FedAvg']['slope']:.2f} & {f3(r['FedProx+DP(eps=5)']['auc'])} & {r['FedProx+DP(eps=5)']['slope']:.2f} & "
+                f"{f3(r['Noh (published)']['auc'])} & {r['Noh (published)']['oe']:.2f} \\\\")
+open(os.path.join(GEN, "tab_pca19_loco.tex"), "w", encoding="utf-8").write(
+    "\\begin{table*}[t]\n\\caption{Leave-one-country-out external validation on PCa-19: train on the other seven countries, test "
+    "on all patients of the held-out country (mean of 20 seeds). O/E = observed/expected events; slope = calibration "
+    "slope (ideal 1).}\n\\centering\\small\n\\begin{tabular}{lrrccccccc}\n\\toprule\n& & & \\multicolumn{3}{c}{FedAvg} & "
+    "\\multicolumn{2}{c}{FedProx + DP ($\\varepsilon=5$)} & \\multicolumn{2}{c}{Noh (published)} \\\\\nCountry & $n$ & csPCa\\% & "
+    "AUC & O/E & slope & AUC & slope & AUC & O/E \\\\\n\\midrule\n" + "\n".join(rows) +
+    "\n\\bottomrule\n\\end{tabular}\n\\label{tab:pca19_loco}\n\\end{table*}\n")
+rows = []
+for mod, lab in [("FedAvg", "FedAvg"), ("FedProx+DP(eps=5)", "DP $\\varepsilon=5$"),
+                 ("FedProx+DP(eps=1)", "DP $\\varepsilon=1$"), ("Noh (published)", "Noh")]:
+    for meth, ml in [("raw", "none"), ("intercept", "intercept"), ("logistic", "int.\\,+\\,slope")]:
+        x = rc9[mod][meth]
+        rows.append(f"{lab if meth == 'raw' else ''} & {ml} & {f3(x['abs_log_oe']['mean'])} & {x['slope']['mean']:.2f} & "
+                    f"{f3(x['brier']['mean'])} \\\\")
+    rows.append("\\midrule")
+open(os.path.join(GEN, "tab_pca19_recal.tex"), "w", encoding="utf-8").write(
+    "\\begin{table}[t]\n\\caption{Local recalibration on 20\\% of each held-out country, evaluated on the other 80\\% "
+    "(mean over 8 countries and 20 seeds). $|\\log$ O/E$|$ = 0 and slope = 1 are ideal; DP rows are FedProx + DP.}\n\\centering\\scriptsize\n"
+    "\\setlength{\\tabcolsep}{4pt}\n\\begin{tabular}{llccc}\n\\toprule\nModel & Recalibration & $|\\log$ O/E$|$ & Slope & Brier \\\\\n\\midrule\n" +
+    "\n".join(rows[:-1]) + "\n\\bottomrule\n\\end{tabular}\n\\label{tab:pca19_recal}\n\\end{table}\n")
+
+# Shapley under DP on real hospitals
+if "shapley" in P19:
+    sh9 = P19["shapley"]
+    ex9, mc9 = sh9["exact10"], sh9["mc19"]
+    pe = {x["epsilon"]: x for x in ex9["per_epsilon"]}
+    m("pShRhoTen", f"{pe[10.0]['spearman']['mean']:.2f}"); m("pShRhoHalf", f"{pe[0.5]['spearman']['mean']:.2f}")
+    m("pShTSTen", f"{pe[10.0]['top_contributor_stability']['mean']:.2f}"); m("pShTSHalf", f"{pe[0.5]['top_contributor_stability']['mean']:.2f}")
+    m("pShRhoTwo", f"{pe[2.0]['spearman']['mean']:.2f}"); m("pShRhoOne", f"{pe[1.0]['spearman']['mean']:.2f}")
+    phis = [v["mean"] for v in ex9["phi_nodp"].values()]
+    m("pShPhiMin", f"{min(phis):.3f}"); m("pShPhiMax", f"{max(phis):.3f}")
+    pm19 = {x["epsilon"]: x for x in mc9["per_epsilon"]}
+    m("pShNineRhoFive", f"{pm19[5.0]['spearman']['mean']:.2f}"); m("pShNineRhoOne", f"{pm19[1.0]['spearman']['mean']:.2f}")
+    m("pShNineTSFive", f"{pm19[5.0]['top_contributor_stability']['mean']:.2f}"); m("pShNineTSOne", f"{pm19[1.0]['top_contributor_stability']['mean']:.2f}")
+    m("pShNineCoal", f"{mc9['coalitions_per_seed']:,}".replace(",", "{,}"))
+    m("pShLooRho", ci(ex9["spearman_shapley_vs_loo"], 2, False)); m("pShSizeRho", f"{mc9['spearman_shapley_vs_size']:.2f}")
+    rows = []
+    for lab, blk in (("10 (exact)", ex9["per_epsilon"]), ("19 (stratified)", mc9["per_epsilon"])):
+        for x in blk:
+            rows.append(f"{lab} & {x['epsilon']:g} & ${ci(x['spearman'], 2, False)}$ & {x['rank_reversal']['mean']:.2f} & "
+                        f"{x['top_contributor_stability']['mean']:.2f} \\\\")
+    open(os.path.join(GEN, "tab_pca19_shapley.tex"), "w", encoding="utf-8").write(
+        "\\begin{table}[t]\n\\caption{Stability of Shapley contribution rankings under DP on the real PCa-19 hospitals (20 seeds). "
+        "$\\rho$ = Spearman correlation with the no-DP ranking; Rank rev.\\ = share of hospital pairs whose order flips relative to the no-DP ranking; TS = probability that the no-DP top contributor stays first.}\n"
+        "\\centering\\scriptsize\n\\begin{tabular}{lcccc}\n\\toprule\nHospitals & $\\varepsilon$ & $\\rho$ [95\\% CI] & Rank rev. & TS \\\\\n"
+        "\\midrule\n" + "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}\n\\label{tab:pca19_shapley}\n\\end{table}\n")
+
+# ------------------------------------------------------------------ privacy-honest valuation (OSA-Shapley)
+if "private_valuation" in P19:
+    pv_ = P19["private_valuation"]
+    rows = []
+    for x in pv_["rows"]:
+        e = x["epsilon"]
+        rows.append(f"{e:g} & {x['retrain_true_epsilon']:.0f} & {x['retrain_per_run']['spearman']['mean']:.2f} & "
+                    f"{x['retrain_budget_matched']['spearman']['mean']:.2f} & \\textbf{{{x['osa']['spearman']['mean']:.2f}}} & "
+                    f"{x['retrain_per_run']['top_contributor_stability']['mean']:.2f} & {x['retrain_budget_matched']['top_contributor_stability']['mean']:.2f} & "
+                    f"\\textbf{{{x['osa']['top_contributor_stability']['mean']:.2f}}} \\\\")
+    open(os.path.join(GEN, "tab_osa.tex"), "w", encoding="utf-8").write(
+        "\\begin{table*}[t]\n\\caption{Contribution valuation under DP on the ten largest PCa-19 hospitals (" + str(len(pv_["seeds"])) +
+        " held-out seeds). Agreement with the exact non-private Shapley ranking (Spearman $\\rho$) and probability that the true "
+        "top contributor is ranked first (TS). \\emph{Per-run}: every coalition retrained at the stated $\\varepsilon$, whose true "
+        "cost for each hospital is the composed $\\varepsilon$ in column 2. \\emph{Budget-matched}: retraining with noise "
+        "calibrated so that the total cost is the stated $\\varepsilon$. OSA-Shapley costs the stated $\\varepsilon$ once.}\n"
+        "\\centering\\small\n\\begin{tabular}{lccccccc}\n\\toprule\n & True $\\varepsilon$ of & \\multicolumn{3}{c}{Spearman $\\rho$ with exact Shapley} & "
+        "\\multicolumn{3}{c}{TS} \\\\\n$\\varepsilon$ & per-run retraining & per-run & budget-matched & OSA & per-run & budget-matched & OSA \\\\\n"
+        "\\midrule\n" + "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}\n\\label{tab:osa}\n\\end{table*}\n")
+    r = {x["epsilon"]: x for x in pv_["rows"]}
+    m("osaRhoTen", f"{r[10.0]['osa']['spearman']['mean']:.2f}"); m("osaRhoTwo", f"{r[2.0]['osa']['spearman']['mean']:.2f}")
+    m("osaRhoOne", f"{r[1.0]['osa']['spearman']['mean']:.2f}"); m("osaRhoHalf", f"{r[0.5]['osa']['spearman']['mean']:.2f}")
+    m("bmRhoTwo", f"{r[2.0]['retrain_budget_matched']['spearman']['mean']:.2f}")
+    m("bmRhoTen", f"{r[10.0]['retrain_budget_matched']['spearman']['mean']:.2f}"); m("bmRhoOne", f"{r[1.0]['retrain_budget_matched']['spearman']['mean']:.2f}")
+    m("prRhoTen", f"{r[10.0]['retrain_per_run']['spearman']['mean']:.2f}"); m("prRhoOne", f"{r[1.0]['retrain_per_run']['spearman']['mean']:.2f}")
+    m("trueEpsOne", f"{r[1.0]['retrain_true_epsilon']:.0f}"); m("trueEpsFive", f"{r[5.0]['retrain_true_epsilon']:.0f}")
+    m("trueEpsTen", f"{r[10.0]['retrain_true_epsilon']:.0f}")
+    m("osaVsBmTwo", ci(r[2.0]["osa_minus_budget_matched"], 2)); m("osaVsPrTwo", ci(r[2.0]["osa_minus_per_run"], 2))
+    m("osaVsPrOne", ci(r[1.0]["osa_minus_per_run"], 2))
+    m("osaNoDP", f"{pv_['osa_nodp']['spearman']['mean']:.2f}")
+    m("osaSteps", pv_["osa_steps"])
+    k19 = {x["epsilon"]: x for x in pv_["k19"]["per_epsilon"]}
+    m("osaNineRhoFive", f"{k19[5.0]['spearman']['mean']:.2f}"); m("osaNineRhoOne", f"{k19[1.0]['spearman']['mean']:.2f}")
+    m("osaNineTSFive", f"{k19[5.0]['top_contributor_stability']['mean']:.2f}"); m("osaNineTSOne", f"{k19[1.0]['top_contributor_stability']['mean']:.2f}")
+    m("osaNineSize", f"{pv_['k19']['spearman_vs_size']:.2f}")
+if "private_valuation_tcga" in P19:
+    pt_ = {x["epsilon"]: x for x in P19["private_valuation_tcga"]["rows"]}
+    m("tOsaTwo", f"{pt_[2.0]['osa']['spearman']['mean']:.2f}"); m("tPrTwo", f"{pt_[2.0]['retrain_per_run']['spearman']['mean']:.2f}")
+    m("tBmTwo", f"{pt_[2.0]['retrain_budget_matched']['spearman']['mean']:.2f}")
+    m("tOsaTen", f"{pt_[10.0]['osa']['spearman']['mean']:.2f}"); m("tPrTen", f"{pt_[10.0]['retrain_per_run']['spearman']['mean']:.2f}")
+    m("tBmTen", f"{pt_[10.0]['retrain_budget_matched']['spearman']['mean']:.2f}")
+    m("tOsaOne", f"{pt_[1.0]['osa']['spearman']['mean']:.2f}"); m("tPrOne", f"{pt_[1.0]['retrain_per_run']['spearman']['mean']:.2f}")
+    m("tOsaNoDP", f"{P19['private_valuation_tcga']['osa_nodp']['spearman']['mean']:.2f}")
+
+# ------------------------------------------------------------------ OSA-Shapley vs post-processing competitors, robustness
+if "valuation_plus" in P19:
+    vp = P19["valuation_plus"]
+    keys = ["none", "5.0", "2.0", "1.0", "0.5"]
+    lab = lambda k: "none" if k == "none" else f"{float(k):g}"
+    _sm = P19.get("valuation_proxies", {}).get("small10")
+    rows = []
+    for k in keys:
+        a = vp["methods"][k]
+        if _sm is not None and k in _sm["rho"]:
+            t = _sm["rho"][k]; dd = _sm["osa_minus"][k]["mr"]
+            small = (f"\\textbf{{{t['osa']['mean']:.2f}}} & {t['mr']['mean']:.2f} & {t['or']['mean']:.2f} & ${ci(dd, 2)}$")
+        else:
+            small = "-- & -- & -- & --"
+        rows.append(f"{lab(k)} & \\textbf{{{a['osa']['mean']:.2f}}} & {a['mr']['mean']:.2f} & {a['or']['mean']:.2f} & "
+                    f"${ci(vp['osa_minus_mr'][k], 2)}$ & " + small + " \\\\")
+    _smn = "" if _sm is None else f"{min(_sm['sizes'])}--{max(_sm['sizes'])}"
+    open(os.path.join(GEN, "tab_osa_post.tex"), "w", encoding="utf-8").write(
+        "\\begin{table*}[t]\n\\caption{Valuations that cost the privacy budget once (Spearman $\\rho$ with the exact non-private retraining "
+        "Shapley ranking). OSA: one DP model per hospital. MR: exact multi-round reconstruction from one DP-FedAvg run "
+        "(GTG-Shapley is its truncated Monte-Carlo approximation). OR: one-round reconstruction from the same run. All three are "
+        "post-processing of releases that already cost $\\varepsilon$. OSA$-$MR: paired difference with 95\\% CI. Both groups are real "
+        "PCa-19 hospitals, " + str(len(vp["seeds"])) + " held-out splits; no hospital is simulated or partitioned.}\n"
+        "\\centering\\small\n\\begin{tabular}{lcccccccc}\n\\toprule\n & \\multicolumn{4}{c}{Ten largest hospitals (266--763 patients)} & "
+        "\\multicolumn{4}{c}{Ten smallest hospitals (" + _smn + " patients)} \\\\\n\\cmidrule(lr){2-5}\\cmidrule(lr){6-9}\n"
+        "$\\varepsilon$ & OSA & MR & OR & OSA$-$MR & OSA & MR & OR & OSA$-$MR \\\\\n\\midrule\n" + "\n".join(rows) +
+        "\n\\bottomrule\n\\end{tabular}\n\\label{tab:osa_post}\n\\end{table*}\n")
+    for k, nm in (("none", "NoDP"), ("2.0", "Two"), ("1.0", "One"), ("0.5", "Half"), ("5.0", "Five")):
+        m(f"mrRho{nm}", f"{vp['methods'][k]['mr']['mean']:.2f}"); m(f"orRho{nm}", f"{vp['methods'][k]['or']['mean']:.2f}")
+        m(f"osaVsMr{nm}", ci(vp["osa_minus_mr"][k], 2)); m(f"osaVsOr{nm}", ci(vp["osa_minus_or"][k], 2))
+        m(f"tMrRho{nm}", f"{vp['tcga'][k]['mr']['mean']:.2f}"); m(f"tOsaVsMr{nm}", ci(vp["tcga_osa_minus_mr"][k], 2))
+        m(f"tHoOsaVsMr{nm}", ci(vp["tcga_heldout_seeds"]["osa_minus_mr"][k], 2))
+    cr = vp["corrupt"]
+    m("corrHosp", vp["corrupt_hospital"])
+    for k, nm in (("2.0", "Two"), ("1.0", "One")):
+        for meth, tag in (("osa", "Osa"), ("mr", "Mr"), ("or", "Or"), ("retrain_per_run", "Pr"), ("retrain_budget_matched", "Bm")):
+            m(f"corr{tag}{nm}", f"{100 * cr[k][meth]['last']['mean']:.0f}\\%")
+    m("corrTruth", f"{100 * cr['truth']['last']['mean']:.0f}\\%")
+    rm = vp["removal"]["2.0"]
+    for meth, tag in (("osa", "Osa"), ("mr", "Mr"), ("or", "Or"), ("truth", "Truth"), ("random", "Rand"), ("all", "All")):
+        m(f"rem{tag}", f"{rm[meth]['mean']:.3f}")
+    sn = vp["sensitivity"]
+    srows = []
+    for steps in (10, 30, 60):
+        srows.append(f"Local steps = {steps}" + ("" if steps != 30 else " (chosen)") +
+                     f" & {sn[f'steps={steps},eps=2.0']['mean']:.2f} & {sn[f'steps={steps},eps=1.0']['mean']:.2f} \\\\")
+    for frac in (0.25, 0.5):
+        srows.append(f"Reference set {int(100 * frac)}\\% of hospital test data & {sn[f'ref={frac},eps=2.0']['mean']:.2f} & "
+                     f"{sn[f'ref={frac},eps=1.0']['mean']:.2f} \\\\")
+    crows = []
+    for meth, nmx in (("osa", "OSA (cost $\\varepsilon$)"), ("mr", "MR (cost $\\varepsilon$)"), ("or", "OR (cost $\\varepsilon$)"),
+                      ("retrain_budget_matched", "Retraining, budget-matched (cost $\\varepsilon$)"),
+                      ("retrain_per_run", "Retraining, per run (true $\\varepsilon$ 85 and 33)")):
+        crows.append(f"{nmx} & {100 * cr['2.0'][meth]['last']['mean']:.0f}\\% & {100 * cr['1.0'][meth]['last']['mean']:.0f}\\% \\\\")
+    open(os.path.join(GEN, "tab_osa_robust.tex"), "w", encoding="utf-8").write(
+        "\\begin{table}[t]\n\\caption{OSA-Shapley robustness on PCa-19 (ten hospitals, " + str(len(vp["seeds"])) + " held-out seeds). "
+        "Top: Spearman $\\rho$ with the exact non-private ranking. Bottom: share of splits in which a hospital with random training "
+        "labels (" + vp["corrupt_hospital"] + ") is ranked last (no-DP retraining Shapley: " + f"{100 * cr['truth']['last']['mean']:.0f}" + "\\%).}\n"
+        "\\centering\\scriptsize\n\\begin{tabular}{lcc}\n\\toprule\nSetting & $\\varepsilon=2$ & $\\varepsilon=1$ \\\\\n\\midrule\n" +
+        "\n".join(srows) + "\n\\midrule\n\\multicolumn{3}{l}{\\emph{Useless hospital ranked last}} \\\\\n" + "\n".join(crows) +
+        "\n\\bottomrule\n\\end{tabular}\n\\label{tab:osa_robust}\n\\end{table}\n")
+
+# ------------------------------------------------------------------ non-convex model (federated MLP)
+if "valuation_mlp" in P19:
+    vm = P19["valuation_mlp"]
+    keys = ["none", "5.0", "2.0", "1.0", "0.5"]
+    lab = lambda k: "none" if k == "none" else f"{float(k):g}"
+    rows = []
+    for k in keys:
+        r = vm["rho"][k]
+        bm = vm["budget_matched"].get(k)
+        rows.append(f"{lab(k)} & {r['osa_ensemble']['mean']:.2f} & {r['osa_param']['mean']:.2f} & {r['mr']['mean']:.2f} & "
+                    f"${ci(vm['osa_ensemble_minus_mr'][k], 2)}$ & " +
+                    (f"{bm['retrain_budget_matched']['mean']:.2f}" if bm else "--") + " \\\\")
+    open(os.path.join(GEN, "tab_osa_mlp.tex"), "w", encoding="utf-8").write(
+        "\\begin{table}[t]\n\\caption{Valuation with a non-convex model: a one-hidden-layer MLP (16 tanh units, weight decay $10^{-3}$) trained by FedAvg. "
+        "Spearman $\\rho$ with the exact non-private retraining Shapley ranking of the ten largest PCa-19 hospitals (" +
+        str(len(vm["seeds"])) + " held-out splits; budget-matched retraining on " + str(vm["budget_matched"]["2.0"]["n_seeds"]) +
+        " of them). OSA-ens.: coalition prediction = size-weighted average of the members' log-odds; OSA-par.: size-weighted "
+        "parameter average from a shared initialisation; MR: exact multi-round reconstruction from one DP FedAvg-MLP run. All "
+        "columns cost the stated $\\varepsilon$.}\n"
+        "\\centering\\scriptsize\n\\setlength{\\tabcolsep}{4pt}\n\\begin{tabular}{lccccc}\n\\toprule\n$\\varepsilon$ & OSA-ens. & OSA-par. & MR & "
+        "OSA-ens.$-$MR & Budget-m. \\\\\n\\midrule\n" + "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}\n\\label{tab:osa_mlp}\n\\end{table}\n")
+    for k, nm in (("none", "NoDP"), ("2.0", "Two"), ("1.0", "One"), ("5.0", "Five"), ("0.5", "Half")):
+        m(f"mlpOsa{nm}", f"{vm['rho'][k]['osa_ensemble']['mean']:.2f}")
+        m(f"mlpPar{nm}", f"{vm['rho'][k]['osa_param']['mean']:.2f}")
+        m(f"mlpMr{nm}", f"{vm['rho'][k]['mr']['mean']:.2f}")
+        m(f"mlpOsaVsMr{nm}", ci(vm["osa_ensemble_minus_mr"][k], 2))
+    for k, nm in (("2.0", "Two"), ("1.0", "One")):
+        b = vm["budget_matched"][k]
+        m(f"mlpBm{nm}", f"{b['retrain_budget_matched']['mean']:.2f}")
+        m(f"mlpOsaVsBm{nm}", ci(b["osa_ensemble_minus_bm"], 2))
+        m(f"mlpTrueEps{nm}", f"{vm['true_eps_per_run'][k]:.0f}")
+    m("mlpBmSeeds", vm["budget_matched"]["2.0"]["n_seeds"])
+
+# ------------------------------------------------------------------ stronger baselines
+if "baselines" in P19:
+    bl_ = P19["baselines"]
+    rows = []
+    for mname in bl_["models"]:
+        w_ = bl_["within"][mname]; lo_ = bl_["loco"][mname]
+        dw = bl_["within_diff_vs_FedAvg"].get(mname); dl = bl_["loco_diff_vs_FedAvg_by_country"].get(mname)
+        dp = bl_["within_dp_eps1"].get(mname)
+        rows.append(f"{mname} & {w_['macro']['mean']:.3f} & {'--' if dw is None else '$' + ci(dw) + '$'} & "
+                    f"{lo_['auc']['mean']:.3f} & {'--' if dl is None else '$' + ci(dl) + '$'} & {lo_['slope']['mean']:.2f} & "
+                    f"{'--' if dp is None else format(dp['mean'], '.3f')} \\\\")
+        if mname == "Federated MLP":
+            rows.append("\\midrule")
+    open(os.path.join(GEN, "tab_baselines.tex"), "w", encoding="utf-8").write(
+        "\\begin{table*}[t]\n\\caption{Stronger baselines on PCa-19 (" + str(len(bl_["seeds"])) + " held-out seeds). Within-hospital: "
+        "mean per-hospital test AUC over 19 hospitals. Leave-one-country-out: mean AUC over the 8 held-out countries and mean "
+        "calibration slope; differences vs FedAvg are paired over countries ($n=8$). Last column: federated variants trained with "
+        "DP at $\\varepsilon=1$. FedNova equals FedAvg here (identical local steps at every hospital).}\n\\centering\\small\n"
+        "\\begin{tabular}{lcccccc}\n\\toprule\n& \\multicolumn{2}{c}{Within hospital} & \\multicolumn{3}{c}{Leave-one-country-out} & DP \\\\\n"
+        "Model & AUC & $-$FedAvg [95\\% CI] & AUC & $-$FedAvg [95\\% CI] & Slope & $\\varepsilon=1$ \\\\\n\\midrule\n" +
+        "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}\n\\label{tab:baselines}\n\\end{table*}\n")
+    W_ = bl_["within"]
+    m("blAvg", f3(W_["FedAvg"]["macro"]["mean"])); m("blAvgLong", f3(W_["FedAvg (400 steps)"]["macro"]["mean"]))
+    m("blAdam", f3(W_["FedAdam"]["macro"]["mean"])); m("blScaf", f3(W_["SCAFFOLD"]["macro"]["mean"]))
+    m("blMLP", f3(W_["Federated MLP"]["macro"]["mean"])); m("blGB", f3(W_["Central gradient boosting"]["macro"]["mean"]))
+    m("blRF", f3(W_["Central random forest"]["macro"]["mean"])); m("blCMLP", f3(W_["Central MLP"]["macro"]["mean"]))
+    m("blCLR", f3(W_["Central LR"]["macro"]["mean"]))
+    D_ = bl_["within_diff_vs_FedAvg"]
+    m("blDLong", ci(D_["FedAvg (400 steps)"])); m("blDAdam", ci(D_["FedAdam"])); m("blDMLP", ci(D_["Federated MLP"]))
+    m("blDGB", ci(D_["Central gradient boosting"])); m("blDScaf", ci(D_["SCAFFOLD"]))
+    L_ = bl_["loco_diff_vs_FedAvg_by_country"]
+    m("blLMLP", ci(L_["Federated MLP"])); m("blLGB", ci(L_["Central gradient boosting"]))
+    m("blScafDrift", f"{100 * (1 - bl_['drift']['SCAFFOLD']['mean'] / bl_['drift']['FedAvg']['mean']):.0f}")
+    m("blProxDrift", f"{100 * (1 - bl_['drift']['FedProx']['mean'] / bl_['drift']['FedAvg']['mean']):.0f}")
+    dpd = bl_["within_dp_eps1_diff_vs_FedAvg"]
+    m("blDpScaf", ci(dpd["SCAFFOLD"])); m("blDpAdam", ci(dpd["FedAdam"])); m("blDpProx", ci(dpd["FedProx"]))
+if "baselines_tcga" in P19:
+    bt_ = P19["baselines_tcga"]
+    for a_, nm in (("0.1", "Low"), ("1.0", "Mid")):
+        m(f"btScaf{nm}", ci(bt_[a_ + "_diff_vs_FedAvg"]["SCAFFOLD"])); m(f"btAdam{nm}", ci(bt_[a_ + "_diff_vs_FedAvg"]["FedAdam"]))
+        m(f"btMLP{nm}", ci(bt_[a_ + "_diff_vs_FedAvg"]["Federated MLP"])); m(f"btAvg{nm}", f3(bt_[a_]["FedAvg"]["mean"]))
+    m("btGB", f3(bt_["central"]["Central gradient boosting"]["mean"])); m("btCLR", f3(bt_["central"]["Central LR"]["mean"]))
+if "strategies_converged" in P19:
+    sc_ = P19["strategies_converged"]
+    m("cvgFLminusLOC", ci(sc_["diff"]["FL-LOC"])); m("cvgFLminusNoh", ci(sc_["diff"]["FL-BL_noh"]))
+    m("cvgFRminusFL", ci(sc_["diff"]["FR_test-FL"])); m("cvgCENminusFL", ci(sc_["diff"]["CEN-FL"]))
+    m("cvgFL", f3(sc_["macro"]["FL"]["mean"])); m("cvgWFL", f3(sc_["weighted"]["FL"]["mean"])); m("cvgWNoh", f3(sc_["weighted"]["BL_noh"]["mean"]))
+
+# ------------------------------------------------------------------ subsampling
+if "subsampling" in P19:
+    ss_ = P19["subsampling"]
+    rows = []
+    for x in ss_["rows"]:
+        e = "no DP" if x["epsilon"] is None else f"{x['epsilon']:g}"
+        sg = "--" if x["sigma"] is None else f"{x['sigma']:.1f}"
+        vs = "" if x["q"] >= 1 else f" (${x['pca19_macro_vs_full']['mean']:+.3f}$)"
+        rows.append(f"{x['config']} & {e} & {sg} & {x['steps']} & {x['pca19_macro']['mean']:.3f}{vs} & {x['pca19_slope']['mean']:.2f} \\\\")
+        if x["epsilon"] == 0.5:
+            rows.append("\\midrule")
+    open(os.path.join(GEN, "tab_subsampling.tex"), "w", encoding="utf-8").write(
+        "\\begin{table}[t]\n\\caption{Poisson subsampling with sampled-Gaussian RDP accounting (FedProx, " + str(len(ss_["seeds"])) +
+        " held-out seeds). $\\sigma$ = noise multiplier needed for the stated $\\varepsilon$ over the given number of local steps; "
+        "PCa-19: mean per-hospital AUC (difference to full batch in brackets) and "
+        "calibration slope.}\n\\centering\\scriptsize\n\\setlength{\\tabcolsep}{3pt}\n\\begin{tabular}{lccccc}\n\\toprule\n"
+        "Sampling & $\\varepsilon$ & $\\sigma$ & Steps & AUC & Slope \\\\\n\\midrule\n" + "\n".join(rows[:-1]) +
+        "\n\\bottomrule\n\\end{tabular}\n\\label{tab:subsampling}\n\\end{table}\n")
+    R_ = {(x["config"], x["epsilon"]): x for x in ss_["rows"]}
+    m("ssSigFull", f"{R_[('full batch (q=1)', 1.0)]['sigma']:.1f}"); m("ssSigThree", f"{R_[('q=0.3', 1.0)]['sigma']:.1f}")
+    m("ssSigOne", f"{R_[('q=0.1', 1.0)]['sigma']:.1f}")
+    m("ssTThreeOne", ci(R_[("q=0.3", 1.0)]["tcga_auc_vs_full"])); m("ssTThreeHalf", ci(R_[("q=0.3", 0.5)]["tcga_auc_vs_full"]))
+    m("ssTOneOne", ci(R_[("q=0.1", 1.0)]["tcga_auc_vs_full"])); m("ssPThreeOne", ci(R_[("q=0.3", 1.0)]["pca19_macro_vs_full"]))
+    m("ssTFullOne", f3(R_[("full batch (q=1)", 1.0)]["tcga_auc"]["mean"])); m("ssTThreeOneAbs", f3(R_[("q=0.3", 1.0)]["tcga_auc"]["mean"]))
+
+# ------------------------------------------------------------------ OSA-Shapley vs cheap proxies (practicality)
+if "valuation_proxies" in P19:
+    vq = P19["valuation_proxies"]; L, Sm = vq["large10"], vq["small10"]
+    _pv = {x["epsilon"]: x for x in P19["private_valuation"]["rows"]} if "private_valuation" in P19 else {}
+    NAMES = [("size", "Hospital size $n_k$", "size (public)"),
+             ("positives", "Number of csPCa cases", "one count"),
+             ("statistics", "Similarity of summary statistics", "feature means, prevalence"),
+             ("own_test_auc", "Self-reported local AUC", "one AUC (unverifiable)"),
+             ("ref_auc", "Single-model AUC on reference set", "one DP model ($\\varepsilon$)"),
+             ("osa_loo", "Leave-one-out of averaged models", "one DP model ($\\varepsilon$)"),
+             ("or", "OR reconstruction", "DP-FedAvg run ($\\varepsilon$)"),
+             ("mr", "MR reconstruction (GTG bound)", "DP-FedAvg run ($\\varepsilon$)"),
+             ("retrain_budget_matched", "Retraining, budget-matched", "$2^{K-1}$ runs ($\\varepsilon$)"),
+             ("osa", "\\textbf{OSA-Shapley (ours)}", "one DP model ($\\varepsilon$)")]
+    def _cell(blk, k, mth, large=False):
+        if mth == "retrain_budget_matched" and large:
+            if k == "none":
+                return "--"
+            return f"{_pv[float(k)]['retrain_budget_matched']['spearman']['mean']:.2f}" if float(k) in _pv else "--"
+        if k not in blk["rho"] or mth not in blk["rho"][k]:
+            return "--"
+        v = blk["rho"][k][mth]["mean"]
+        return f"\\textbf{{{v:.2f}}}" if mth == "osa" else f"{v:.2f}"
+    def _det(mth):
+        c = L.get("corrupt", {}).get("2.0", {})
+        if mth in c:
+            return f"{100 * c[mth]['mean']:.0f}\\%"
+        if mth in ("mr", "or"):
+            return f"{100 * P19['valuation_plus']['corrupt']['2.0'][mth]['last']['mean']:.0f}\\%"
+        if mth == "retrain_budget_matched":
+            return f"{100 * P19['valuation_plus']['corrupt']['2.0']['retrain_budget_matched']['last']['mean']:.0f}\\%"
+        return "--"
+    rows = []
+    for mth, nm, cost in NAMES:
+        rows.append(f"{nm} & {cost} & " + " & ".join(_cell(L, k, mth, True) for k in ("none", "2.0", "1.0")) +
+                    f" & {_det(mth)} & " + " & ".join(_cell(Sm, k, mth) for k in ("none", "2.0", "1.0")) + " \\\\")
+    open(os.path.join(GEN, "tab_proxies.tex"), "w", encoding="utf-8").write(
+        "\\begin{table*}[t]\n\\caption{Is OSA-Shapley worth its cost? Agreement (Spearman $\\rho$) of cheap contribution proxies and of "
+        "privacy-honest valuations with the exact non-private retraining Shapley ranking, on real PCa-19 hospitals (" + str(len(vq["seeds"])) +
+        " held-out splits). \\emph{What is shared}: what each hospital must reveal. Proxies that use a model use the same DP releases as "
+        "OSA-Shapley and therefore cost the same $\\varepsilon$; size, counts and statistics are shared without DP. \\emph{Useless}: share of "
+        "splits in which a hospital whose training labels were replaced by random labels (" + str(L.get("corrupt_hospital", "")) +
+        ") is ranked last at $\\varepsilon=2$; a tie for last place does not count.}\n\\centering\\scriptsize\n\\setlength{\\tabcolsep}{4pt}\n"
+        "\\begin{tabular}{llccccccc}\n\\toprule\n & & \\multicolumn{4}{c}{Ten largest hospitals} & \\multicolumn{3}{c}{Ten smallest hospitals} \\\\\n"
+        "\\cmidrule(lr){3-6}\\cmidrule(lr){7-9}\nContribution score & What is shared & no DP & $\\varepsilon=2$ & $\\varepsilon=1$ & Useless & "
+        "no DP & $\\varepsilon=2$ & $\\varepsilon=1$ \\\\\n\\midrule\n" + "\n".join(rows) +
+        "\n\\bottomrule\n\\end{tabular}\n\\label{tab:proxies}\n\\end{table*}\n")
+    for tag, blk in (("L", L), ("S", Sm)):
+        for k, nm in (("none", "NoDP"), ("5.0", "Five"), ("2.0", "Two"), ("1.0", "One")):
+            if k not in blk["rho"]:
+                continue
+            for mth, mn in (("size", "Size"), ("positives", "Pos"), ("statistics", "Stat"), ("own_test_auc", "Own"),
+                            ("ref_auc", "Ref"), ("osa_loo", "Loo"), ("osa", "Osa"), ("mr", "Mr"), ("or", "Or"),
+                            ("retrain_budget_matched", "Bm")):
+                if mth in blk["rho"][k]:
+                    m(f"px{tag}{mn}{nm}", f"{blk['rho'][k][mth]['mean']:.2f}")
+                if mth in blk["osa_minus"][k]:
+                    m(f"pxd{tag}{mn}{nm}", ci(blk["osa_minus"][k][mth], 2))
+    for k, nm in (("none", "NoDP"), ("2.0", "Two"), ("1.0", "One")):
+        for mth, mn in (("size", "Size"), ("statistics", "Stat"), ("own_test_auc", "Own"), ("ref_auc", "Ref"), ("osa_loo", "Loo"), ("osa", "Osa")):
+            m(f"pxC{mn}{nm}", f"{100 * L['corrupt'][k][mth]['mean']:.0f}\\%")
+    m("pxSmallMin", min(Sm["sizes"])); m("pxSmallMax", max(Sm["sizes"]))
+    m("pxSmallHosp", ", ".join(Sm["hospitals"]))
+
+# ------------------------------------------------------------------ privacy accounting of retraining-based valuation
+from fl_study import private_valuation as _PV, fl
+_EP = [10.0, 5.0, 2.0, 1.0]
+def _true(eps, runs, steps=100, delta=1e-5):
+    sig = fl.calibrate_sigma(eps, steps, delta)
+    return fl.rdp_epsilon(sig, steps * runs, delta)[0]
+def _fmt(x):
+    if x >= 1e5:
+        e = int(np.floor(np.log10(x))); return f"$\\approx 10^{{{e}}}$"
+    return f"{x:,.0f}".replace(",", "{,}") if x >= 10 else f"{x:.1f}"
+acc_rows = []
+for K in (4, 10, 19, 50):
+    r = 2 ** (K - 1)
+    acc_rows.append(f"Exact, $K={K}$ & {_fmt(float(r)) if r >= 1e5 else str(r).replace('512', '512')} & " + " & ".join(_fmt(_true(e, r)) for e in _EP) +
+                    f" & {_fmt(2 ** ((K - 1) / 2)) if K < 40 else _fmt(2 ** ((K - 1) / 2))} \\\\")
+for K in (10, 19, 50):
+    r = int(100 * (K + 1) / 2)
+    acc_rows.append(f"100 permutations, $K={K}$ & " + f"{r:,}".replace(",", "{,}") + " & " + " & ".join(_fmt(_true(e, r)) for e in _EP) +
+                    f" & {np.sqrt(r):.0f} \\\\")
+acc_rows.append("OSA-Shapley, MR, OR (any $K$) & 1 & 10 & 5 & 2 & 1 & 1 \\\\")
+open(os.path.join(GEN, "tab_accounting.tex"), "w", encoding="utf-8").write(
+    "\\begin{table}[t]\n\\caption{The privacy cost that retraining-based valuation actually spends (Proposition~2). $r$: number of DP training "
+    "runs that contain a given hospital's patients (exact Shapley: $2^{K-1}$; permutation sampling without caching: on average $100(K+1)/2$). "
+    "Each run is $N=100$ full-batch DP-GD steps calibrated to the per-run $\\varepsilon$; the table gives the composed $\\varepsilon$ per hospital "
+    "($\\delta=10^{-5}$). Last column: factor by which every run's noise must grow to keep the stated budget ($\\sqrt r$). Post-processing "
+    "valuations spend the stated budget once.}\n\\centering\\scriptsize\n\\setlength{\\tabcolsep}{2.5pt}\n\\resizebox{\\columnwidth}{!}{%\n\\begin{tabular}{lrccccr}\n\\toprule\n"
+    " & & \\multicolumn{4}{c}{True $\\varepsilon$ for a per-run $\\varepsilon$ of} & Noise \\\\\n\\cmidrule(lr){3-6}\n"
+    "Valuation & $r$ & 10 & 5 & 2 & 1 & factor \\\\\n\\midrule\n" + "\n".join(acc_rows) +
+    "\n\\bottomrule\n\\end{tabular}}\n\\label{tab:accounting}\n\\end{table}\n")
+m("accMcNineteenOne", f"{_true(1.0, 1000):.0f}"); m("accMcTenOne", f"{_true(1.0, 550):.0f}"); m("accMcFiftyOne", f"{_true(1.0, 2550):.0f}")
+m("accFourOne", f"{_true(1.0, 8):.1f}"); m("accFourTwo", f"{_true(2.0, 8):.1f}")
+
+# ------------------------------------------------------------------ second real federation: UCI Heart Disease (4 hospitals)
+_HP = os.path.join(ROOT, "results", "final", "pca19_heart_valuation.json")
+if os.path.exists(_HP):
+    hv = json.load(open(_HP))
+    HN = [("size", "Hospital size $n_k$"), ("statistics", "Similarity of summary statistics"),
+          ("own_test_auc", "Self-reported local AUC"), ("ref_auc", "Single-model AUC on reference set"),
+          ("osa_loo", "Leave-one-out of averaged models"), ("or", "OR reconstruction"), ("mr", "MR reconstruction (GTG bound)"),
+          ("retrain_per_run", "Retraining, per run"), ("retrain_budget_matched", "Retraining, budget-matched"),
+          ("osa", "\\textbf{OSA-Shapley (ours)}")]
+    def _hc(k, mth):
+        if k not in hv["rho"] or mth not in hv["rho"][k]:
+            return "--"
+        v = hv["rho"][k][mth]["mean"]
+        return f"\\textbf{{{v:.2f}}}" if mth == "osa" else f"{v:.2f}"
+    def _hd(mth):
+        c = hv["corrupt"].get("2.0", {})
+        return f"{100 * c[mth]['mean']:.0f}\\%" if mth in c else "--"
+    rows = [f"{nm} & " + " & ".join(_hc(k, mth) for k in ("none", "5.0", "2.0", "1.0")) + f" & {_hd(mth)} \\\\" for mth, nm in HN]
+    sites = ", ".join(f"{x['name'].split(' (')[0]} ({x['n']})" for x in hv["sites"])
+    open(os.path.join(GEN, "tab_heart.tex"), "w", encoding="utf-8").write(
+        "\\begin{table}[t]\n\\caption{Second real federation: the four hospitals of the UCI Heart Disease collection (" + sites + " patients), "
+        "coronary artery disease, " + str(len(hv["seeds"])) + " held-out splits. Spearman $\\rho$ with the exact non-private retraining Shapley "
+        "ranking; with four hospitals $\\rho$ moves in steps of 0.2. Per-run retraining really costs $\\varepsilon\\approx" +
+        f"{hv['true_epsilon']['5.0']:.0f}$, {hv['true_epsilon']['2.0']:.1f} and {hv['true_epsilon']['1.0']:.1f}" +
+        " at a stated 5, 2 and 1. \\emph{Useless}: share of splits in which " + hv["corrupt_hospital"].split(" (")[0] +
+        ", given random training labels, is ranked last at $\\varepsilon=2$.}\n\\centering\\scriptsize\n\\setlength{\\tabcolsep}{3pt}\n"
+        "\\begin{tabular}{lccccc}\n\\toprule\nContribution score & no DP & $\\varepsilon=5$ & $\\varepsilon=2$ & $\\varepsilon=1$ & Useless \\\\\n\\midrule\n" +
+        "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}\n\\label{tab:heart}\n\\end{table}\n")
+    for k, nm in (("none", "NoDP"), ("5.0", "Five"), ("2.0", "Two"), ("1.0", "One")):
+        for mth, mn in (("size", "Size"), ("statistics", "Stat"), ("own_test_auc", "Own"), ("ref_auc", "Ref"), ("osa_loo", "Loo"),
+                        ("osa", "Osa"), ("mr", "Mr"), ("or", "Or"), ("retrain_budget_matched", "Bm"), ("retrain_per_run", "Pr")):
+            if mth in hv["rho"].get(k, {}):
+                m(f"hr{mn}{nm}", f"{hv['rho'][k][mth]['mean']:.2f}")
+            if mth in hv["osa_minus"].get(k, {}):
+                m(f"hrd{mn}{nm}", ci(hv["osa_minus"][k][mth], 2))
+    for k, nm in (("2.0", "Two"), ("1.0", "One")):
+        for mth, mn in (("osa", "Osa"), ("ref_auc", "Ref"), ("size", "Size")):
+            m(f"hrC{mn}{nm}", f"{100 * hv['corrupt'][k][mth]['mean']:.0f}\\%")
+    m("hrN", hv["n"]); m("hrFeat", hv["n_features"]); m("hrAuc", f"{hv['fed_auc']['mean']:.2f}")
+    m("hrCorrupt", hv["corrupt_hospital"].split(" (")[0])
+    m("hrPhiMin", f"{min(hv['truth_mean']):.3f}"); m("hrPhiMax", f"{max(hv['truth_mean']):.3f}")
+    m("hrTrueOne", f"{hv['true_epsilon']['1.0']:.1f}"); m("hrTrueTwo", f"{hv['true_epsilon']['2.0']:.1f}")
+    # evidence behind the decision rule. nu = median training patients per hospital / sqrt(model parameters),
+    # the quantity that sets the signal-to-noise of one DP release (Proposition 3)
+    def _nu(sizes, p):
+        return float(np.median(np.array(sizes, float) * 0.8) / np.sqrt(p))
+    vq_ = P19["valuation_proxies"]; vm_ = P19["valuation_mlp"]
+    p_lr = 7; p_mlp = 6 * 16 + 16 + 16 + 1; p_h = hv["n_features"] + 1
+    sett = [("PCa-19, 10 largest", "logistic", 10, p_lr, _nu(vq_["large10"]["sizes"], p_lr),
+             vq_["large10"]["rho"]["none"]["osa"]["mean"], vq_["large10"]["rho"]["2.0"]["osa"]["mean"], vq_["large10"]["rho"]["2.0"]["mr"]["mean"],
+             vq_["large10"]["osa_minus"]["2.0"]["mr"], vq_["large10"]["rho"]["2.0"]["size"]["mean"], "OSA"),
+            ("PCa-19, 10 smallest", "logistic", 10, p_lr, _nu(vq_["small10"]["sizes"], p_lr),
+             vq_["small10"]["rho"]["none"]["osa"]["mean"], vq_["small10"]["rho"]["2.0"]["osa"]["mean"], vq_["small10"]["rho"]["2.0"]["mr"]["mean"],
+             vq_["small10"]["osa_minus"]["2.0"]["mr"], vq_["small10"]["rho"]["2.0"]["size"]["mean"], "OSA, MR or size"),
+            ("Heart Disease, 4", "logistic", 4, p_h, _nu([x["n"] for x in hv["sites"]], p_h),
+             hv["rho"]["none"]["osa"]["mean"], hv["rho"]["2.0"]["osa"]["mean"], hv["rho"]["2.0"]["mr"]["mean"],
+             hv["osa_minus"]["2.0"]["mr"], hv["rho"]["2.0"]["size"]["mean"], "MR"),
+            ("PCa-19, 10 largest", "MLP", 10, p_mlp, _nu(vq_["large10"]["sizes"], p_mlp),
+             vm_["rho"]["none"]["osa_ensemble"]["mean"], vm_["rho"]["2.0"]["osa_ensemble"]["mean"], vm_["rho"]["2.0"]["mr"]["mean"],
+             vm_["osa_ensemble_minus_mr"]["2.0"], None, "MR")]
+    rows = []
+    for nm, mod, K, p_, nu, a0, a2, m2, d2, sz, best in sett:
+        rows.append(f"{nm} & {mod} & {K} & {p_} & {nu:.0f} & {a0:.2f} & {a2:.2f} & {m2:.2f} & ${ci(d2, 2)}$ & " +
+                    ("--" if sz is None else f"{sz:.2f}") + f" & {best} \\\\")
+        m("nu" + {"PCa-19, 10 largest|logistic": "Large", "PCa-19, 10 smallest|logistic": "Small", "Heart Disease, 4|logistic": "Heart",
+                  "PCa-19, 10 largest|MLP": "Mlp"}[nm + "|" + mod], f"{nu:.0f}")
+    open(os.path.join(GEN, "tab_decision.tex"), "w", encoding="utf-8").write(
+        "\\begin{table*}[t]\n\\caption{Evidence behind the decision rule, from two real federations. $p$: model parameters; "
+        "$\\nu$: median training patients per hospital divided by $\\sqrt p$, which sets the signal-to-noise ratio of one DP release "
+        "(Proposition~3). $\\rho$: Spearman correlation with the exact non-private retraining Shapley ranking (20 held-out splits). "
+        "OSA$-$MR: paired difference with 95\\% CI at $\\varepsilon=2$. Size: agreement of hospital size with the same ranking.}\n"
+        "\\centering\\small\n\\begin{tabular}{llrrrcccccl}\n\\toprule\n & & & & & OSA & OSA & MR & & & \\\\\n"
+        "Federation & Model & $K$ & $p$ & $\\nu$ & no DP & $\\varepsilon=2$ & $\\varepsilon=2$ & OSA$-$MR & Size & Best at $\\varepsilon=2$ \\\\\n\\midrule\n" +
+        "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}\n\\label{tab:decision}\n\\end{table*}\n")
+# ------------------------------------------------------------------ pre-registered test of the decision rule (nu sweep)
+_NP = os.path.join(ROOT, "results", "final", "pca19_nu_sweep.json")
+if os.path.exists(_NP):
+    ns = json.load(open(_NP)); sc = json.load(open(os.path.join(ROOT, "results", "final", "pca19_nu_sweep_scoring.json")))
+    rows = []
+    for c in ns["conditions"]:
+        lab = (f"A: {100 * c['fraction']:.0f}\\% of patients" if c["arm"] == "A" else f"B: +{c['extra_features']} features")
+        rows.append(f"{lab} & {c['p']} & {c['nu']:.0f} & {c['2.0']['osa']['mean']:.2f} & {c['2.0']['mr']['mean']:.2f} & "
+                    f"${ci(c['2.0']['osa_minus_mr'], 2)}$ & {c['1.0']['osa']['mean']:.2f} & {c['1.0']['mr']['mean']:.2f} & "
+                    f"${ci(c['1.0']['osa_minus_mr'], 2)}$ \\\\")
+    open(os.path.join(GEN, "tab_nu_sweep.tex"), "w", encoding="utf-8").write(
+        "\\begin{table*}[t]\n\\caption{Pre-registered test of the decision rule on the ten largest PCa-19 hospitals (" + str(len(ns["seeds"])) +
+        " held-out splits). Arm A keeps a random fraction of every hospital's training patients; arm B adds uninformative features. "
+        "In every condition the reference is the exact non-private retraining Shapley ranking of that condition. $\\rho$: Spearman correlation "
+        "with the reference; OSA$-$MR: paired difference with 95\\% CI.}\n\\centering\\small\n\\begin{tabular}{lrrcccccc}\n\\toprule\n"
+        " & & & \\multicolumn{3}{c}{$\\varepsilon=2$} & \\multicolumn{3}{c}{$\\varepsilon=1$} \\\\\n\\cmidrule(lr){4-6}\\cmidrule(lr){7-9}\n"
+        "Condition & $p$ & $\\nu$ & OSA & MR & OSA$-$MR & OSA & MR & OSA$-$MR \\\\\n\\midrule\n" + "\n".join(rows) +
+        "\n\\bottomrule\n\\end{tabular}\n\\label{tab:nu_sweep}\n\\end{table*}\n")
+    import matplotlib.pyplot as _pl
+    _f, _a = _pl.subplots(figsize=(3.5, 2.5))
+    for arm, mk, nmA in (("A", "o", "fewer patients"), ("B", "s", "more parameters")):
+        for e, col in (("2.0", "#4A3AA7"), ("1.0", "#EB6834")):
+            C_ = sorted([c for c in ns["conditions"] if c["arm"] == arm], key=lambda c: c["nu"])
+            x = [c["nu"] * (0.97 if e == "2.0" else 1.03) for c in C_]; d = [c[e]["osa_minus_mr"] for c in C_]
+            _a.errorbar(x, [v["mean"] for v in d], yerr=[[v["mean"] - v["ci_low"] for v in d], [v["ci_high"] - v["mean"] for v in d]],
+                        fmt=mk + ("-" if arm == "A" else "--"), color=col, ms=3.5, lw=1.1, capsize=2,
+                        label=f"$\\varepsilon$={float(e):g}, {nmA}")
+    _a.axhline(0, color="#8a8985", lw=0.8)
+    _a.axvspan(50, 100, color="#e8e6f6", zorder=0, lw=0)
+    _a.text(70, _a.get_ylim()[1] * 0.92, "predicted\nswitch-over", ha="center", va="top", fontsize=6.5, color="#4A3AA7")
+    from matplotlib.ticker import NullFormatter, FixedLocator
+    _a.set_xscale("log"); _a.xaxis.set_major_locator(FixedLocator([20, 30, 50, 100])); _a.set_xticklabels(["20", "30", "50", "100"])
+    _a.xaxis.set_minor_formatter(NullFormatter())
+    _a.set_xlabel("$\\nu$ = median training patients / $\\sqrt{\\mathrm{parameters}}$", fontsize=7)
+    _a.set_ylabel("OSA $-$ MR (Spearman $\\rho$)", fontsize=7); _a.tick_params(labelsize=6.5)
+    _a.legend(fontsize=5.6, frameon=False, loc="lower right")
+    _a.spines["top"].set_visible(False); _a.spines["right"].set_visible(False)
+    _f.tight_layout(); _f.savefig(os.path.join(FIG, "figure20_nu_sweep.pdf")); _pl.close(_f)
+    C0 = {(c["arm"], c["fraction"], c["extra_features"]): c for c in ns["conditions"]}
+    m("nsCrossTwo", f"{sc['crossover_eps2'][0]:.0f}" if sc["crossover_eps2"] else "--")
+    m("nsCrossOneMax", f"{max(sc['crossover_eps1']):.0f}" if sc["crossover_eps1"] else "--")
+    m("nsCrossOneMin", f"{min(sc['crossover_eps1']):.0f}" if sc["crossover_eps1"] else "--")
+    m("nsSpear", f"{sc['H3_spearman']:.2f}"); m("nsLowerCount", sc["H6_lower_count"])
+    for key, nm in (((("A", 0.4, 0)), "AFortyFive"), ((("A", 0.25, 0)), "ATwentyEight"), ((("A", 0.15, 0)), "ASeventeen"),
+                    ((("A", 0.6, 0)), "ASixtyEight"), ((("B", 1.0, 21)), "BTwentyOne"), ((("B", 1.0, 50)), "BFifty"), ((("B", 1.0, 100)), "BHundred")):
+        c = C0[key]
+        m(f"ns{nm}Nu", f"{c['nu']:.0f}"); m(f"ns{nm}Two", ci(c["2.0"]["osa_minus_mr"], 2)); m(f"ns{nm}One", ci(c["1.0"]["osa_minus_mr"], 2))
 
 with open(os.path.join(GEN, "numbers.tex"), "w", encoding="utf-8") as fh:
     fh.write("% AUTO-GENERATED by Paper/generate_paper_assets.py from results/final/*.json - do not edit by hand\n")
@@ -360,4 +951,101 @@ save(ch.lines([r["K"] for r in lc], [{"name": n, "color": ch.C[cc], "mean": [r[k
                                      for k, n, cc in [("participants", "participants", "FL"), ("free_riders", "free-riders", "FR")]],
               "Federated AUC as hospitals join (TCGA sites)", "hospitals training", "AUC", clip=(0, 1)),
      "figure13_learning_curve.pdf")
+# ------------------------------------------------------------------ PCa-19 figures
+keys9 = ["LOC", "FL", "FedProx", "CEN", "FR_test", "BL_noh", "BL_ettala"]
+save(ch.bar_with_ci(["Local", "FedAvg", "FedProx", "Central.", "Free-rider", "Noh", "Ettala"], [s9["macro"][k] for k in keys9],
+                    [ch.C["LOC"], ch.C["FL"], ch.C["FedProx"], ch.C["CEN"], ch.C["FR"], "#4a3aa7", "#8a8985"],
+                    "PCa-19: mean per-hospital test AUC over 19 hospitals (95% CI, 20 seeds)", ylim=(0.5, 1.0)),
+     "figure14_pca19_strategies.pdf")
+dp9 = [cells9[e] for e in [10.0, 5.0, 2.0, 1.0, 0.5]]
+save(ch.lines([10, 5, 2, 1, 0.5], [{"name": n, "color": col, "dash": dsh, "mean": [x[k]["macro"]["mean"] for x in dp9],
+                                     "low": [x[k]["macro"]["ci_low"] for x in dp9], "high": [x[k]["macro"]["ci_high"] for x in dp9]}
+                                    for k, n, col, dsh in [("FedAvg", "FedAvg", ch.C["FedAvg"], "-"),
+                                                           ("FedProx", "FedProx", ch.C["FedProx"], "-")]],
+              "PCa-19: AUC vs privacy budget (19 real hospitals)", "$\\varepsilon$", "mean per-hospital AUC", xlog=True,
+              xticks=([10, 5, 2, 1, 0.5], ["10", "5", "2", "1", "0.5"]),
+              ref=cells9["none"]["FedAvg"]["macro"]["mean"], ref_label="no DP", ylim=(0.78, 0.86), direct=False),
+     "figure15_pca19_privacy.pdf")
+th9 = lo9["thresholds"]
+ser = [{"name": n, "color": col, "mean": lo9["dca"][n]} for n, col in
+       [("FedAvg", ch.C["FL"]), ("FedProx+DP(eps=5)", ch.C["FedProx"]), ("Noh (published)", "#4a3aa7"), ("Biopsy all", ch.C["reference"])]]
+ser[-1]["dash"] = "--"
+save(ch.lines(th9, ser, "Decision curve on held-out countries (patient-weighted)", "risk threshold for biopsy", "net benefit",
+              ref=0, ref_label="biopsy none", direct=False), "figure16_pca19_dca.pdf")
+mods = ["FedAvg", "FedProx+DP(eps=5)", "FedProx+DP(eps=1)", "Noh (published)"]
+save(ch.grouped_bars(["FedAvg", "DP $\\varepsilon$=5", "DP $\\varepsilon$=1", "Noh"], ["as transported", "intercept", "intercept + slope"],
+                     [[rc9[mm][meth]["slope"]["mean"] for mm in mods] for meth in ("raw", "intercept", "logistic")],
+                     ["#8a8985", "#2a78d6", "#1baf7a"], "Calibration slope on held-out countries (ideal = 1)", "slope",
+                     ref=1.0, ylim=(0.5, 1.3)), "figure17_pca19_recalibration.pdf")
 print("figures written to", FIG)
+
+# ------------------------------------------------------------------ figure 2: system architecture (vector)
+from matplotlib.patches import FancyBboxPatch  # noqa: E402
+
+
+def _box(ax, x, y, w, h, title, lines, fc, ec):
+    ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0.008,rounding_size=0.012", fc=fc, ec=ec, lw=1.0))
+    ax.text(x + w / 2, y + h - 0.03, title, ha="center", va="top", fontsize=7.3, fontweight="bold", color="#1f1f1d")
+    for i, ln in enumerate(lines):
+        ax.text(x + w / 2, y + h - 0.085 - i * 0.052, ln, ha="center", va="top", fontsize=6.1, color="#3d3d3a")
+
+
+def _arrow(ax, x0, y0, x1, y1):
+    ax.annotate("", xy=(x1, y1), xytext=(x0, y0), arrowprops=dict(arrowstyle="-|>", color="#6b6a66", lw=0.9, shrinkA=0, shrinkB=0))
+
+
+fig, ax = plt.subplots(figsize=(7.2, 3.9), dpi=200)
+ax.set_xlim(0, 1); ax.set_ylim(0, 1); ax.axis("off")
+G, B, O, P, Y = ("#eef7f1", "#1baf7a"), ("#eaf2fc", "#2a78d6"), ("#fdf0ea", "#eb6834"), ("#f3effa", "#4a3aa7"), ("#fdf6e3", "#c98a00")
+_box(ax, 0.01, 0.56, 0.20, 0.40, "Cohorts", ["PCa-19: 19 hospitals,", "5,610 men, 8 countries", "UCI Heart: 4 hospitals,", "920 patients", "all real hospitals"], *G)
+_box(ax, 0.25, 0.56, 0.20, 0.40, "Preprocessing", ["leakage-free whitelist", "statistics from training", "rows only (secure sums)", "held-out country never", "seen (LOCO)"], *G)
+_box(ax, 0.49, 0.56, 0.22, 0.40, "Hospital k (local DP)", ["per-patient clipping, C=1", "Gaussian noise sigma*C", "full batch or Poisson q", "FedProx / SCAFFOLD", "control variates"], *B)
+_box(ax, 0.75, 0.56, 0.24, 0.40, "Server", ["FedAvg / FedProx /", "SCAFFOLD / FedAdam", "aggregation", "Renyi-DP accountant", "(full-batch or sampled)"], *B)
+_box(ax, 0.01, 0.02, 0.30, 0.44, "Model evaluation", ["within-hospital AUC (19 sites)", "leave-one-country-out AUC,", "calibration, decision curves", "local recalibration (20%)", "personalisation (PFL)", "membership-inference audit"], *O)
+_box(ax, 0.35, 0.02, 0.34, 0.44, "OSA-Shapley valuation (ours)", ["each hospital releases ONE", "DP-trained local model (eps_v)", "coalition model = size-weighted", "average (post-processing)", "exact Shapley over all 2^K", "coalitions; cost eps_v once"], *P)
+_box(ax, 0.73, 0.02, 0.26, 0.44, "Statistics", ["20 paired splits", "95% CIs, Wilcoxon", "countries as units (n=8)", "tuning splits disjoint", "41 automated checks"], *Y)
+_arrow(ax, 0.21, 0.78, 0.25, 0.78); _arrow(ax, 0.45, 0.78, 0.49, 0.78)
+ax.annotate("", xy=(0.75, 0.82), xytext=(0.71, 0.82), arrowprops=dict(arrowstyle="-|>", color="#6b6a66", lw=0.9))
+ax.annotate("", xy=(0.71, 0.72), xytext=(0.75, 0.72), arrowprops=dict(arrowstyle="-|>", color="#6b6a66", lw=0.9))
+ax.text(0.73, 0.835, "$w_k$", ha="center", va="bottom", fontsize=6.5, color="#6b6a66"); ax.text(0.73, 0.705, "$w$", ha="center", va="top", fontsize=6.5, color="#6b6a66")
+_arrow(ax, 0.87, 0.56, 0.16, 0.46); _arrow(ax, 0.60, 0.56, 0.52, 0.46)
+save(fig, "figure2_architecture.pdf")
+print("architecture figure written")
+
+
+# ------------------------------------------------------------------ main valuation figure (OSA vs competitors)
+if "private_valuation" in P19 and "valuation_plus" in P19:
+    import matplotlib.pyplot as _plt
+    _pv = {x["epsilon"]: x for x in P19["private_valuation"]["rows"]}
+    _vp = P19["valuation_plus"]
+    _E = [5.0, 2.0, 1.0, 0.5]
+    _x = list(range(len(_E)))
+    _fig, _ax = _plt.subplots(figsize=(3.5, 2.6))
+    _ser = [("OSA-Shapley (ours)", [_pv[e]["osa"]["spearman"] for e in _E], "#4A3AA7", "-"),
+            ("MR reconstruction (GTG upper bound)", [_vp["methods"][str(e)]["mr"] for e in _E], "#1BAF7A", "-"),
+            ("Retraining, budget-matched", [_pv[e]["retrain_budget_matched"]["spearman"] for e in _E], "#EB6834", "-"),
+            ("Retraining, per run (true $\\varepsilon$ 14--334)", [_pv[e]["retrain_per_run"]["spearman"] for e in _E], "#8A8985", "--")]
+    for _n, _v, _c, _ls in _ser:
+        _mu = [d["mean"] for d in _v]
+        _ax.errorbar(_x, _mu, yerr=[[d["mean"] - d["ci_low"] for d in _v], [d["ci_high"] - d["mean"] for d in _v]],
+                     fmt="o" + _ls, color=_c, ms=3.5, lw=1.4, capsize=2, label=_n)
+    _ax.set_xticks(_x); _ax.set_xticklabels([f"{e:g}" for e in _E])
+    _ax.set_xlabel("privacy budget $\\varepsilon$", fontsize=8); _ax.set_ylabel("Spearman $\\rho$ with exact Shapley", fontsize=8)
+    _ax.set_ylim(-0.05, 1.0); _ax.tick_params(labelsize=7); _ax.grid(axis="y", color="#dddddd", lw=0.5)
+    for _sp in ("top", "right"):
+        _ax.spines[_sp].set_visible(False)
+    _ax.legend(fontsize=6.3, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=2)
+    _fig.savefig(os.path.join(FIG, "figure19_osa_valuation.pdf"), bbox_inches="tight")
+    _plt.close(_fig)
+
+
+# ------------------------------------------------------------------ typography: true minus signs in every generated file
+import re as _re3
+_MINUS = _re3.compile(r"(?<=[\s\[\(\{=&])-(?=\d)|^-(?=\d)", _re3.M)
+for _f in os.listdir(GEN):
+    if _f.endswith(".tex"):
+        _p = os.path.join(GEN, _f)
+        _t = open(_p, encoding="utf-8").read()
+        _t2 = _MINUS.sub(r"\\ensuremath{-}", _t)
+        if _t2 != _t:
+            open(_p, "w", encoding="utf-8").write(_t2)

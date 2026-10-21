@@ -1,0 +1,451 @@
+\documentclass[journal]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{array}
+\usepackage{siunitx}
+\input{generated/numbers}
+
+\begin{document}
+
+\title{Privacy, Heterogeneity and Contribution Valuation in Federated Prostate Cancer Risk Prediction: Evidence from 19 Real Hospitals and TCGA-PRAD}
+
+\author{Ponnaluri~Jeyanth,
+        Pudota~Jaideep,
+        and~M.~V.~P.~Chandra~Sekhara~Rao%
+\thanks{P. Jeyanth and P. Jaideep are with the Department of Computer Science and Engineering (Data Science), R.V.R. \& J.C. College of Engineering, Guntur, India (e-mail: jeyanthponnaluri08@gmail.com; pudotajaideep@gmail.com).}%
+\thanks{M. V. P. Chandra Sekhara Rao is Professor and Head of the Department of Computer Science and Engineering (Data Science), R.V.R. \& J.C. College of Engineering, Guntur, India (e-mail: manukondach@gmail.com).}%
+\thanks{Code, data provenance and all results: \protect\url{https://github.com/JeyanthPonnaluri/Mini_Project_RVR}.}}
+
+\markboth{Manuscript submitted to IEEE Journal of Biomedical and Health Informatics}%
+{Jeyanth \MakeLowercase{\textit{et al.}}: Privacy, Heterogeneity and Contribution Valuation in Federated Prostate Cancer Risk Prediction}
+
+\maketitle
+
+\begin{abstract}
+Federated learning lets hospitals train a shared model without exchanging patient records, but its value depends on how privacy constraints, statistical heterogeneity and incentives interact. We study these interactions with one leakage-free, validated pipeline and 20 paired splits per experiment. The primary cohort is the exact 19-hospital, \pNineN{}-patient pre-biopsy collection of a recent hospital-participation study (PCa-19: clinically significant cancer from age, PSA, prostate volume and PI-RADS); the secondary cohort is post-surgical staging on TCGA-PRAD. Our re-implementation reproduces the base paper's protocol number for number, and its sustainability finding holds under ours: joining a federation gives no significant average local gain, free-riders obtain nearly the same model, and federated training matches pooled training. Leave-one-country-out validation shows that discrimination transports across countries but calibration does not; differential privacy (DP) costs little AUC but makes predictions over-confident (calibration slope $\pSlopeDpFive$ at $\varepsilon=5$), and local recalibration on 20\% of a new country's patients repairs both. SCAFFOLD, FedAdam, a federated MLP and centralised gradient boosting do not improve on federated logistic regression, and Poisson-subsampled DP with sampled-Gaussian accounting does not improve utility over full-batch DP. We then show that the standard way of valuing hospitals under DP, retraining every coalition with DP, silently spends the budget hundreds of times over (a per-run $\varepsilon=1$ costs $\varepsilon\approx\trueEpsOne$ for ten hospitals), and at an honest budget it loses the contribution ranking ($\rho=\bmRhoOne$ at $\varepsilon=1$). We propose OSA-Shapley, which values all coalitions by post-processing one DP-trained model per hospital. At the same privacy cost it recovers the exact Shapley ranking far better ($\rho=\osaRhoTwo$ at $\varepsilon=2$ and \osaRhoOne{} at $\varepsilon=1$), matches costly retraining, and makes exact valuation of all 19 hospitals tractable. All numbers are regenerated from code and checked by 34 automated tests.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Federated Learning, Differential Privacy, FedProx, Non-IID Learning, Prostate Cancer, Data Valuation, Shapley Value, Membership Inference.
+\end{IEEEkeywords}
+
+\section{Introduction}
+\IEEEPARstart{R}{isk} prediction for prostate cancer guides two key decisions: whether a man with raised PSA needs a biopsy, and, after surgery, how advanced the tumour is. Both are central to clinical risk stratification and treatment planning. Accurate identification of disease severity determines whether a patient undergoes radical prostatectomy, radiotherapy, active surveillance, or systemic androgen deprivation therapy. Machine learning models trained on combined clinical and molecular profiles can support clinicians in identifying high-risk disease. However, clinical and genomic cohorts are frequently isolated across institutions. Centralizing these datasets into a single repository is often impossible due to institutional barriers and data protection regulations (e.g., HIPAA and GDPR).
+
+Federated Learning (FL) has emerged as a promising collaborative paradigm to address these limitations. Under FL, clinical sites cooperatively train a global model by sharing local update gradients or parameters rather than raw clinical records. Yet, clinical federated networks face three major challenges. First, statistical heterogeneity (non-IID data distributions) arising from variations in clinical protocols, regional demographics, and equipment calibration causes client update parameters to diverge from the global optimization trajectory, leading to client drift and suboptimal convergence. Second, the transfer of gradient updates is vulnerable to privacy reconstruction and membership leakage, requiring formal privacy guarantees such as Differential Privacy (DP). Third, participant sites require reliable contribution valuation mechanisms to justify collaboration, but naive metrics fail to capture marginal contributions.
+
+Prior research has largely examined these challenges in isolation. The interactions between statistical heterogeneity, differential privacy noise, local personalization, and contribution valuation remain poorly understood. For example, adding differential privacy noise to local updates disrupts optimization paths, and the severity of this disruption depends on the non-IID label skew across hospitals. Similarly, privacy noise alters computed game-theoretic contribution scores, potentially destabilizing incentive allocation.
+
+To address these gaps, we systematically study the central research question: **How do privacy constraints and statistical heterogeneity jointly affect federated clinical model utility, local adaptation, and participant contribution valuation?** We construct a multi-dimensional conceptual model to characterize these relationships: clinical heterogeneity leads to client optimization drift, which is stabilized by FedProx regularization; this interaction occurs alongside privacy perturbation under sample-level differential privacy, establishing a privacy--utility trade-off; these combined constraints affect both global model utility and local personalized adaptation, which ultimately alters participant contribution valuation and its associated economic incentive allocation. The conceptual framework tracking these causal interactions is depicted in Fig. \ref{fig:conceptual_map}.
+
+We characterise these interactions on two cohorts. The primary cohort is the base paper's own 19-hospital pre-biopsy collection (PCa-19, \pNineN{} men, \pNineCountries{} countries), released by Kazlouski \emph{et al.}\ \cite{Kazlouski2025HospitalParticipation}. It provides real hospitals, PSA and MRI, and enough countries for external validation. The secondary cohort is TCGA-PRAD, a small post-surgical staging cohort on which privacy is expensive. Our main contributions are:
+\begin{itemize}
+    \item \textbf{OSA-Shapley, privacy-honest valuation}: we show that valuing hospitals by retraining coalitions under DP spends the privacy budget $2^{K-1}$ times, and propose a valuation that post-processes one DP-trained model per hospital. At equal privacy it recovers the exact Shapley ranking far better than retraining (Spearman $\rho$ at $\varepsilon=2$: \osaRhoTwo{} vs \bmRhoTwo{}) and allows exact valuation of 19 hospitals.
+    \item \textbf{Stronger baselines and accounting}: SCAFFOLD, FedAdam, federated and centralised non-linear models, a converged FedAvg, and Poisson-subsampled DP with sampled-Gaussian accounting; none changes the conclusions.
+    \item \textbf{Exact reproduction}: our re-implementation of the authors' public protocol gives the same numbers as their code; under our protocol the sustainability finding holds (FL$-$LOC $=\pDFLminusLOC$, FR$-$FL $=\pDFRminusFL$), but a published single-country calculator is not beaten on hospital-averaged AUC.
+    \item \textbf{External validation and calibration}: in leave-one-country-out validation, federated models match pooled training and the published calculator in discrimination, but calibration varies by country, and DP makes predictions over-confident (slope $\pSlopeDpFive$ at $\varepsilon=5$); local recalibration on 20\% of a new country's patients repairs both.
+    \item \textbf{Privacy is nearly free at scale}: with \pNineN{} patients the AUC loss at $\varepsilon=0.5$ is $\pDpLossHalf$, against $\auLossOne$ at $\varepsilon=1$ on TCGA.
+    \item \textbf{Valuation under privacy}: Shapley rankings of real hospitals hold at weak privacy (Spearman \pShRhoTen{} at $\varepsilon=10$) but break down at strong privacy (\pShRhoHalf{} at $\varepsilon=0.5$) although accuracy is unchanged, and the top contributor keeps its place in only \pShTSTen{} of runs even at $\varepsilon=10$; a stratified Shapley estimator makes 19-hospital valuation feasible.
+    \item \textbf{Personalisation} improves on the global model only for hospitals with fewer than 100 patients ($\pPflSmall$ AUC).
+\end{itemize}
+Further findings on PCa-19 and TCGA-PRAD:
+\begin{itemize}
+    \item \textbf{Base-paper replication}: on \nSites{} real TCGA sites, federated training brings no significant local gain over local models (FL$-$LOC $=\bpFLminusLOC$) while free-riders obtain nearly the same performance as participants (FR$-$FL $=\bpFRminusFL$).
+    \item \textbf{Drift containment (H1)}: FedProx reduces client drift by \driftRedMin--\driftRedMax\% at every level of label skew; without DP this does not change accuracy.
+    \item \textbf{Privacy--utility (H2)}: utility is nearly unchanged at $\varepsilon \ge 5$ but drops significantly at $\varepsilon \le 2$ (paired loss at $\varepsilon=1$: $\auLossOne$).
+    \item \textbf{Joint constraints (H3)}: under DP, FedProx beats FedAvg in \gridSup{} of \gridCells{} privacy--heterogeneity cells, but a FedAvg with half the learning rate matches it, so the gain is a step-size (noise-damping) effect.
+    \item \textbf{Personalisation (H4)}: proximal fine-tuning improves on local-only models (e.g.\ $\pflGainThree$ AUC for three clients) but not on the global model.
+    \item \textbf{Valuation under privacy (H5)}: DP noise destabilises exact Shapley rankings monotonically in $\varepsilon$; in larger federations exact ranks and the top contributor are the least stable.
+    \item \textbf{Empirical privacy audit (H7)}: a confidence-threshold membership-inference attack is at chance even without DP for this model, so no empirical DP benefit can be shown.
+    \item \textbf{Feature evidence}: protein principal components reduce discrimination ($\cvProtDiff$ AUC), and post-surgical pathology variables carry most of the signal.
+\end{itemize}
+
+\begin{figure}[!t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/figure1_conceptual_map.pdf}
+    \caption{Conceptual model of the privacy--heterogeneity--optimization--valuation relationships investigated in this study, tracking variables from data skew to client optimization drift, proximal stabilization, privacy perturbation, staging utility, and collaborative incentive implications.}
+    \label{fig:conceptual_map}
+\end{figure}
+
+The remainder of this manuscript is organised as follows. Section II reviews related work, Sections III--IV give the system model and methodology, Section V describes both cohorts and the preprocessing, and Section VI the protocol. Section VII presents the primary evaluation on the 19 real hospitals of PCa-19, Section VIII the secondary evaluation on TCGA-PRAD, and the remaining sections discuss limitations, future work and conclusions.
+
+\section{Related Work}
+
+
+
+\subsection{Federated Learning for Healthcare}
+Cross-silo federated learning has attracted significant interest in clinical AI due to its ability to train models across institutions without direct data sharing \cite{Rieke2020DigitalHealth, Sheller2020MedicineFL, Li2021SurveyFLMedical}. Clinical studies have applied FL to tasks such as brain tumor segmentation, medical imaging, rare cancer research, and tabular clinical risk prediction \cite{Pati2022GFLMedical}. Recently, federated transfer learning has been applied to transfer prognostic models across related cancers under differential privacy \cite{Wen2025Federated}, and decentralized networks have been developed to model pan-cancer survival using clinical-protein sequences \cite{Chai2024AdFed}. To facilitate standardized implementations of these multi-modal models, benchmarks such as FedMultimodal have been established to provide unified recipes for processing multi-site clinical and genomic features \cite{feng2023fedmultimodal}. Tabular databases containing demographic variables, lab values, and genomic markers are highly sensitive, and institutional boundaries prevent their aggregation. While early work assumed identical client data distributions, clinical datasets exhibit severe statistical skew due to differences in patient demographics, diagnostics, and regional pathology characteristics \cite{Kairouz2021FLAdvances, Yang2019ConceptFL}.
+
+\subsection{Non-IID Optimization and Client Drift}
+When local datasets are non-IID, the local optimization objectives of clinical clients diverge. Standard Federated Averaging (FedAvg) aggregates updates by computing weighted averages of client parameters \cite{McMahan2017FedAvg}. However, client drift causes local updates to guide parameters away from the global optimum, slowing convergence and reducing utility \cite{Zhao2018NonIID, Wang2021FieldGuide}. To mitigate drift, FedProx adds a proximal regularization term to the local loss, penalizing deviations from the global model \cite{Li2020FedProx}. Alternative approaches like SCAFFOLD use control variates to correct drift, but increase communication overhead by transmitting auxiliary parameters \cite{Karimireddy2020Scaffold}; adaptive server optimisers such as FedAdam apply Adam to the averaged update \cite{Reddi2021FedOpt}, and FedNova normalises updates by the number of local steps \cite{Wang2020FedNova}.
+
+\subsection{Differential Privacy and Rényi DP}
+Exposing model weights to a coordinator introduces privacy risks, as membership inference and model inversion attacks can reconstruct patient information. Differential Privacy (DP) provides mathematical guarantees against such leakage \cite{Dwork2008DPSurvey, Dwork2006CalibratingNoise}. DP-SGD applies gradient clipping to limit the influence of individual records, followed by Gaussian noise addition to perturb the aggregated update \cite{Abadi2016DPSGD}. Tracking privacy leakage across communication rounds requires advanced composition methods. Rényi Differential Privacy (RDP) provides tight composition bounds for the Gaussian mechanism, making it suitable for multi-round federated training \cite{Mironov2017RDP, Mironov2019SampledGaussian}. Recent work has extended these mechanisms to handle across-silo user-level differential privacy, guaranteeing that an entire hospital's dataset remains protected against aggregation leaks \cite{Kato2024ULDP}. Furthermore, adaptive weight-based differential privacy (AWDP-FL) has been proposed to dynamically adjust gradient clipping thresholds based on neural network layers, minimizing the utility loss commonly associated with static clipping \cite{Chen2024AWDP}.
+
+\subsection{Client Contribution Valuation}
+To keep clinical federations stable, hospitals' contributions must be valued, for example to reward participation \cite{Kazlouski2025HospitalParticipation, Lyu2020FairnessFL}. Leave-One-Out (LOO) methods assess a client's marginal value by comparing global performance with and without that client \cite{Ghorbani2019DataShapley}; LOO ignores synergies between clients and assigns near-zero value to redundant ones. The Shapley value \cite{Shapley1953} averages marginal contributions over all coalitions and is the unique value satisfying efficiency, symmetry, null player and additivity; it has been adapted to data valuation \cite{Ghorbani2019DataShapley, Jia2019KNNShapley, Ghorbani2020NeuronShapley} and to federated clients \cite{Song2019BlockchainFL, Wei2020DataValuation}. Exact Shapley values need a model for each of the $2^K$ coalitions, so federated valuation either samples coalitions \cite{Maleki2013Bounding, Jia2020EfficientShapley} or reconstructs coalition models from the updates of a single training run instead of retraining them \cite{Song2019BlockchainFL, Wei2020DataValuation, Liu2022GTG}. Valuation under privacy constraints is less studied. Zhou \emph{et al.}\ \cite{Zhou2025Data} show that with independent DP noise the uncertainty of data values grows with the estimation budget, and that re-using already released private gradients (correlated noise) avoids this at no extra privacy cost. To improve efficiency, VerFedSV values feature contributions in vertical federated learning \cite{Fan2024VerFedSV}, and threshold KNN-Shapley achieves linear-time valuation with native differential privacy \cite{wang2023threshold}.
+
+\subsection{Membership Inference Attacks in Clinical AI}
+While differential privacy provides formal mathematical bounds, empirical privacy audits are needed to measure practical resistance to leakage. Membership Inference Attacks (MIA) aim to determine whether a specific patient record was used in training \cite{Shokri2017MIA}. In clinical applications, the prediction confidence difference between members and non-members serves as an information leak channel. Noise calibration under DP aims to obfuscate this confidence gap, reducing attacker advantage to random guess levels. Recent surveys categorize these attacks into loss-based, shadow-model, and decision-boundary strategies, analyzing diverse countermeasures across federated settings \cite{Bai2025MIA}. Moreover, advanced attacks like FedMIA have demonstrated that adversaries can exploit updates across multiple communication rounds to execute multi-stage inference attacks, highlighting the necessity of robust privacy audits beyond static confidence threshold evaluations \cite{Zhu2025FedMIA}.
+
+\subsection{Research Gap Analysis}
+Prior works have typically evaluated heterogeneity, differential privacy, personalization, and contribution valuation as isolated components. The multi-dimensional interactions between these constraints remain under-studied. For instance, the impact of DP noise on game-theoretic client rankings under heterogeneous skews has not been systematically characterized. This study addresses this gap. Table \ref{tab:lit_comparison} contrasts our approach with existing literature.
+
+\begin{table*}[t]
+\caption{Comparison of Our Approach with Existing Federated Learning Literature}
+\centering
+\resizebox{\textwidth}{!}{
+\begin{tabular}{lcccccccc}
+\toprule
+Study & Clinical FL & Non-IID Skew & FedProx & DP & PFL & Shapley & MIA & Privacy $\times$ Heterogeneity \\
+\midrule
+McMahan et al. \cite{McMahan2017FedAvg} & Yes & Yes & No & No & No & No & No & No \\
+Li et al. \cite{Li2020FedProx} & Yes & Yes & Yes & No & No & No & No & No \\
+Abadi et al. \cite{Abadi2016DPSGD} & No & No & No & Yes & No & No & No & No \\
+Ghorbani et al. \cite{Ghorbani2019DataShapley} & No & No & No & No & No & Yes & No & No \\
+Kazlouski et al. \cite{Kazlouski2025HospitalParticipation} & Yes & Yes (real sites) & No & No & No & No & No & No \\
+Liu et al. (GTG-Shapley) \cite{Liu2022GTG} & No & Yes & No & No & No & Yes & No & No \\
+Zhou et al. \cite{Zhou2025Data} & No & No & No & Yes & No & Yes & No & No \\
+\textbf{Ours, PCa-19 (same 19 hospitals)} & \textbf{Yes} & \textbf{Yes (real sites)} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes (OSA)} & \textbf{Yes} & \textbf{Yes} \\
+\textbf{Ours (DP-FPS)} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} \\
+\bottomrule
+\end{tabular}
+}
+\label{tab:lit_comparison}
+\end{table*}
+
+\section{System Model and Problem Formulation}
+Consider a federated network of $K$ clinical clients and a central coordinator.
+Each client $k \in \{1, \dots, K\}$ holds a private dataset $D_k = \{(x_{i,k}, y_{i,k})\}_{i=1}^{n_k}$, where $x_{i,k} \in \mathbb{R}^d$ is a clinical feature vector and $y_{i,k} \in \{0, 1\}$ is the pathologic staging target (1 = T3/T4). Let $n = \sum_{k=1}^K n_k$.
+
+The global objective is
+\begin{equation}
+\min_w F(w) = \sum_{k=1}^K \frac{n_k}{n} F_k(w),
+\end{equation}
+where $F_k(w) = \frac{1}{n_k} \sum_{i=1}^{n_k} \ell(w; x_{i,k}, y_{i,k}) + \frac{\lambda}{2}\|w\|_2^2$. Under FedAvg, each client performs $E$ local epochs of gradient descent from the current global model and the server averages the results:
+\begin{equation}
+w^{t+1} = \sum_{k=1}^K \frac{n_k}{n} w_k^{t+1}.
+\end{equation}
+FedProx adds a proximal term to the local objective,
+\begin{equation}
+h_k(w; w^t) = F_k(w) + \frac{\mu}{2} \|w - w^t\|_2^2 ,
+\end{equation}
+which limits how far local models move away from $w^t$ ($\mu=0$ recovers FedAvg).
+
+Local gradients are clipped and perturbed with Gaussian noise calibrated by a Rényi-DP accountant. Client contributions are measured with the Shapley value of the utility $v(S)$, the test AUC of the FedAvg model trained on coalition $S$. The architecture is shown in Fig.~\ref{fig:architecture}.
+
+\begin{figure*}[!t]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/figure2_architecture.pdf}
+    \caption{Experimental system architecture of the DP-FPS clinical federated system: client-level preprocessing, local gradient clipping and RDP-calibrated noise, FedProx aggregation, and post-training Shapley valuation.}
+    \label{fig:architecture}
+\end{figure*}
+
+\section{Mathematical Methodology}
+
+\subsection{Classification Model}
+Staging is modelled with logistic regression with an intercept,
+\begin{equation}
+p_i = \sigma(z_i) = \frac{1}{1 + e^{-z_i}}, \qquad z_i = x_i^T w + b,
+\end{equation}
+trained on binary cross-entropy $\ell(w; x_i, y_i) = - [y_i \ln p_i + (1 - y_i) \ln(1 - p_i)]$ with a small $L_2$ penalty ($\lambda = 10^{-3}$).
+
+\subsection{FedProx Local Optimization}
+At round $t$ client $k$ starts from $w^t$ and performs $E$ full-batch steps
+\begin{equation}
+w_k^{t, \tau+1} = w_k^{t, \tau} - \eta \left( \nabla F_k(w_k^{t, \tau}) + \mu (w_k^{t, \tau} - w^t) \right).
+\end{equation}
+We measure client drift, for both FedAvg and FedProx, as
+\begin{equation}
+\bar d = \frac{1}{T}\sum_{t=1}^{T} \frac{1}{K}\sum_{k=1}^{K} \big\| w_k^{t} - w^{t-1} \big\|_2 ,
+\label{eq:drift}
+\end{equation}
+the distance between each local model after local training and the global model it started from.
+
+\subsection{Rényi Differential Privacy and Sensitivity Analysis}
+
+\subsubsection{Privacy Unit and Adjacency}
+We use add/remove adjacency of single records, $D \sim D' \iff |D \triangle D'| = 1$. Because the analysis cohort keeps exactly one primary-tumour sample per patient (Section~\ref{sec:data}), a record is a patient and the guarantee is patient-level for this cohort.
+
+Each per-sample gradient is clipped to $L_2$ norm $C$,
+\begin{equation}
+\bar{g}_i = g_i / \max\left(1, \frac{\|g_i\|_2}{C}\right),
+\end{equation}
+so adding or removing one patient changes the summed gradient by at most $C$. The released (noisy) gradient is
+\begin{equation}
+\tilde{g} = \frac{1}{n_k}\Big(\sum_{i=1}^{n_k} \bar{g}_i + z\Big), \quad z \sim \mathcal{N}\left(0, \sigma^2 C^2 I\right),
+\end{equation}
+i.e.\ a Gaussian mechanism with noise multiplier $\sigma$ on a sum query of sensitivity $C$ (client sizes $n_k$ are treated as public). The $L_2$ and proximal terms do not access data and are post-processing.
+
+\subsubsection{Rényi DP Composition}
+Updates are full-batch (sampling rate $q=1$), so no subsampling amplification is claimed. A Gaussian mechanism with multiplier $\sigma$ satisfies RDP of order $\alpha>1$ with $\epsilon_{RDP}(\alpha) = \alpha/(2\sigma^2)$. Every patient participates in each of the $N = T \times E$ local steps of its own client, and clients hold disjoint patients, so
+\begin{equation}
+\epsilon = \min_{\alpha \in \mathcal{A}} \left\{ N \cdot \frac{\alpha}{2 \sigma^2} + \frac{\ln(1/\delta)}{\alpha - 1} \right\},
+\end{equation}
+with a dense order grid $\mathcal{A}$ (1.1--4096). The accountant agrees with the closed-form optimum $\rho + 2\sqrt{\rho \ln(1/\delta)}$, $\rho = N/(2\sigma^2)$, to within 0.01\% and is never below it. For $N=100$ and $\delta=10^{-5}$ the calibrated multipliers are $\sigma = \sigmaTen, \sigmaFive, \sigmaTwo, \sigmaOne, \sigmaHalf$ for $\varepsilon = 10, 5, 2, 1, 0.5$.
+
+\subsubsection{Subsampled Accounting}
+As an alternative we also train with Poisson subsampling: in every local step each patient is included independently with probability $q<1$, the clipped gradients of the included patients are summed, noise $\mathcal{N}(0,\sigma^2C^2I)$ is added and the sum is divided by the \emph{expected} batch size $q\,n_k$; $1/q$ steps make one epoch, so $N = T\,E/q$. One step is then a sampled Gaussian mechanism, whose RDP at integer order $\alpha$ is \cite{Mironov2019SampledGaussian, Zhu2019Poisson, Wang2019SubsampledRDP}
+\begin{equation}
+\epsilon_{RDP}(\alpha) = \frac{1}{\alpha-1}\ln \sum_{j=0}^{\alpha} \binom{\alpha}{j} (1-q)^{\alpha-j} q^{j} \exp\!\Big(\frac{j^2-j}{2\sigma^2}\Big),
+\end{equation}
+composed over the $N$ steps and converted as above (orders 2--1024). For $q=1$ it reduces to $\alpha/(2\sigma^2)$. Our implementation matches a numerical evaluation of the Rényi divergence to $10^{-13}$ and reproduces the value $\varepsilon \approx 1.26$ reported by Abadi \emph{et al.}\ \cite{Abadi2016DPSGD} for $q=0.01$, $\sigma=4$, $10{,}000$ steps and $\delta=10^{-5}$. Subsampling lowers the noise multiplier required for a given $\varepsilon$ (privacy amplification \cite{Balle2018Amplification}) at the price of more, smaller-batch steps; whether this improves utility is an empirical question (Section~\ref{sec:p19_subsampling}).
+
+\subsection{Exact Shapley Valuation}
+The Shapley value of client $k$ is
+\begin{equation}
+\phi_k = \sum_{S \subseteq \mathcal{N} \setminus \{k\}} \frac{|S|!(K - |S| - 1)!}{K!} \left[ v(S \cup \{k\}) - v(S) \right],
+\end{equation}
+with $v(\emptyset)=0.5$. We compute it \emph{exactly} by training all $2^K-1$ coalitions (vectorised across coalitions; numerically identical to separate training runs) for $K \le 10$, so no Monte-Carlo error confounds the effect of DP noise. Leave-one-out (LOO) is $v(\mathcal{N}) - v(\mathcal{N}\setminus\{k\})$. Under DP every coalition run draws independent noise. Note that this \emph{retraining} approach releases $2^{K-1}$ privately trained models that involve each hospital; by composition, its total privacy loss is far larger than the per-run $\varepsilon$ (for $K=10$, $N=100$ and a per-run $\varepsilon=1$ it is $\varepsilon\approx\trueEpsOne$; Table~\ref{tab:osa}). We report it because it is the standard way to study valuation under DP, and contrast it with the privacy-honest estimator below.
+
+\subsection{Privacy-Honest Valuation: OSA-Shapley}
+\label{sec:osa}
+We propose to value hospitals with \emph{one-shot-averaging Shapley} (OSA-Shapley), which spends the privacy budget once:
+\begin{enumerate}
+\item Each hospital $k$ releases one logistic-regression model $\hat w_k$ trained locally by DP gradient descent at valuation budget $\varepsilon_v$ (\osaSteps{} full-batch steps, per-patient clipping $C=1$, Gaussian noise calibrated with the accountant above). The released model is the average of the iterates of the second half of training, which damps the injected noise.
+\item The server forms the model of every coalition as the size-weighted average $w_S = \sum_{k\in S} (n_k/n_S)\,\hat w_k$. For a convex model trained to convergence this one-shot average approximates the FedAvg solution of the coalition; the base paper itself trains its federated models this way.
+\item $v(S)$ is the AUC of $w_S$ on the server's reference set, and exact Shapley values follow from all $2^K-1$ utilities by vectorised bitmask summation.
+\end{enumerate}
+\emph{Privacy.} Steps 2--3 only post-process the $K$ released models, so by the post-processing property of DP the valuation of \emph{all} coalitions is $(\varepsilon_v,\delta)$-DP for every patient, independently of $K$; if it is released together with the training run, the two budgets compose. \emph{Noise.} Every coalition shares the same released models, so the injected noise is common to all coalitions and largely cancels in marginal contributions. This is the mechanism that Zhou \emph{et al.}\ \cite{Zhou2025Data} exploit by re-using released private gradients, here realised through model reconstruction in the spirit of \cite{Song2019BlockchainFL, Wei2020DataValuation, Liu2022GTG}. \emph{Cost.} Only $K$ local trainings are needed, and the $2^K$ evaluations are cheap: exact Shapley values for all 19 PCa-19 hospitals ($524{,}287$ coalitions) take about a minute on one CPU core. The number of local steps was chosen on four tuning splits that are disjoint from the evaluation splits.
+
+\subsubsection{Ranking Stability Metrics}
+For each partition and DP noise realisation $r$ we compare the DP Shapley ranking with the no-DP ranking of the same partition using Spearman's $\rho$, the rank-reversal rate $RR = \frac{1}{K}\sum_k \mathbb{I}(\mathrm{rank}^{DP}_k \neq \mathrm{rank}^{noDP}_k)$, and the top-contributor stability
+\begin{equation}
+TS = \frac{1}{R} \sum_{r=1}^{R} \mathbb{I}\big(\arg\max_k \phi^{DP}_{k,r} = \arg\max_k \phi^{noDP}_{k}\big),
+\end{equation}
+whose chance level is $1/K$. (An earlier version averaged $\mathbb{I}(\mathrm{rank}^{DP}_{k,r}=1)$ over clients, which equals $1/K$ by construction for every configuration.)
+
+\subsection{Membership Inference Attack Formulation}
+We audit empirical leakage with a confidence-threshold membership-inference attack. The score of a record is the model's confidence in its true label, $s_i = y_i p_i + (1 - y_i)(1 - p_i)$. Members (training patients) are subsampled to the number of non-members (test patients) and the attack is summarised by its ROC AUC. As a positive control, the same attack is applied to a deliberately over-fitted model (200 random noise features, no regularisation).
+
+\subsection{Domain Shift Formulations}
+Robustness is probed with synthetic perturbations of the held-out split: covariate shift scales each numeric feature by $\beta_j \sim U(1-0.25s, 1+0.25s)$ and adds $\mathcal{N}(0, (0.5s)^2)$ noise; concept shift flips a fraction $\min(0.25s, 0.5)$ of labels, for severity $s$.
+
+\subsection{Statistical Analysis}
+Every experiment is repeated over 20 seeds. A seed re-draws the stratified 80/20 split, the client partition, model noise and DP noise, so seed-to-seed variation covers all sources of randomness. We report means with $t$-based 95\% confidence intervals over seeds. Comparisons between methods are \emph{paired} by seed; we report the mean paired difference with its 95\% CI and a two-sided Wilcoxon signed-rank test, and call a difference significant only if its CI excludes zero. For ranking stability we additionally apply a one-sided Wilcoxon test of $d_i = \rho_i - 0.90 < 0$, where $\rho_i$ is the seed-level Spearman correlation. Per-client AUCs are averaged only over clients whose local test split contains both classes (macro AUC); we do not pool predictions of different local models, because pooling rewards each model for learning its own client's base rate.
+
+\section{Datasets and Preprocessing}
+\label{sec:data}
+
+\subsection{PCa-19: The Base Paper's 19-Hospital Cohort}
+PCa-19 is the patient-level collection used by the base paper, released in the authors' public repository (MIT licence) \cite{Kazlouski2025HospitalParticipation}. The authors harmonised it from the supplementary files of 19 peer-reviewed prostate-cancer studies. It contains \pNineN{} men from \pNineHosp{} hospitals (Table~\ref{tab:pca19_cohort}); \pNinePos{} (\pNinePrev\%) have clinically significant cancer (csPCa, ISUP grade group $\geq 2$ at biopsy), ranging from \pNinePrevLo\% to \pNinePrevHi\% per hospital. The base paper's text states nine countries, but its Table~I and the released data contain eight (Spain, South Korea, Germany, China, USA, Netherlands, Italy, UK); we use the released data unchanged. Every variable is available before biopsy: age, PSA, prostate volume (PV) and the highest PI-RADS score. (A 5-$\alpha$-reductase-inhibitor flag is 0 for all patients and is not used.) Our feature set is age, $\log$ PSA, $\log$ PV and indicators for PI-RADS 3, 4 and 5. The logarithms keep the extreme PSA values of one hospital (median 277~ng/mL) from dominating, and standardisation statistics are computed from training rows only. For the reproduction of the authors' protocol we use their exact Ettala and Noh variables.
+
+\input{generated/tab_pca19_cohort}
+
+\subsection{TCGA-PRAD Cohorts}
+We use the clinical, survival and RPPA protein data of TCGA-PRAD \cite{TCGA2015PRAD}. The clinical file contains \nRaw{} sample records from \nRawPatients{} patients, including normal-tissue and metastatic samples. We keep primary-tumour samples (barcode type \texttt{-01}) with a recorded pathologic T stage and one sample per patient, giving a \emph{clinical cohort} of \nClinical{} patients (\nClinicalPos{} T3/T4). Restricting to patients with protein data (\nProteinSamples{} samples) gives the \emph{matched cohort} of \nMatched{} patients (\nMatchedPos{} T3/T4), used for all DP-FPS experiments so that clinical-only and multimodal models are compared on identical patients. Each seed splits it 80/20 into \nTrain{} training and \nTest{} test patients.
+
+\subsection{Feature Whitelist and Leakage Control}
+Features are taken from an explicit whitelist: age, race, ethnicity, clinical T and M stage, prior malignancy (pre-operative), plus primary and secondary Gleason pattern, Gleason sum and pathologic N stage (post-surgical pathology). After one-hot encoding (reference level dropped) this gives \nFeatFull{} features (\nFeatPreop{} pre-operative). Identifiers (sample, case, treatment and pathology-report IDs), record timestamps, and outcome or follow-up variables (vital status, days to last follow-up, treatment fields) are excluded; an earlier version of the pipeline admitted about 1{,}650 one-hot columns built from such per-patient identifiers. Gleason pattern and pathologic N come from the same prostatectomy report as the pathologic T label, so they are strong but label-adjacent predictors; we therefore also report a pre-operative-only model. Imputation (median, or an explicit \emph{Unknown} level), scaling and encoding are fitted on training rows only.
+
+For the multimodal ablation, the \nProteinRaw{} RPPA targets are filtered to the \nProteinKept{} with at most 30\% missing values, median-imputed, standardised and reduced by PCA to 95\% explained variance, all fitted on the training split (about 115 components, depending on the split; \nPCAll{} if PCA were fitted on all \nMatched{} patients).
+
+\subsection{Client Partitions}
+\emph{Real sites.} For the replication of the base paper we use the TCGA tissue-source site as the hospital: the \nSites{} sites with at least 20 patients (\nSiteTotal{} patients) are clients, each split 80/20 (stratified when possible); the \nExternal{} patients of smaller sites never train and act as external free-riders. Preprocessing statistics are shared across sites (as obtainable by secure aggregation).
+
+\emph{Dirichlet label skew.} For DP-FPS we draw, for each class, client proportions from $\mathrm{Dir}(\alpha)$ and apply the \emph{same} proportions to the training and the test split, so every client has a local test set with its own label skew; $\alpha \in \{100, 10, 1, 0.5, 0.1\}$ (smaller = more heterogeneous). Unless stated otherwise $K=3$.
+
+\subsection{Survival Events}
+The matched cohort contains only \nEvents{} deaths (\nEventsTrain{} in the training and \nEventsTest{} in the test split for the reference seed; \nEventsAll{} deaths over all \nRaw{} records). Survival modelling is therefore not evaluated.
+
+\section{Experimental Protocol}
+Unless stated otherwise: $T=20$ rounds, $E=5$ local epochs ($N=100$ steps), learning rate $\eta=0.5$, $\lambda=10^{-3}$, $\mu=0.5$, $C=1$, $\delta=10^{-5}$, 20 seeds (Table~\ref{tab:protocol}). The optimiser settings were chosen by cross-validation of the centralised NumPy model, whose AUC then matches scikit-learn's logistic regression (\cvFull{} vs \cvSkFull{}, Table~\ref{tab:centralized}).
+
+\begin{table}[ht]
+\caption{Experimental Protocol}
+\centering
+\footnotesize
+\begin{tabular}{ll}
+\toprule
+Parameter & Value \\
+\midrule
+Raw records / patients & \nRaw{} / \nRawPatients{} \\
+Clinical cohort (1 sample/patient) & \nClinical{} \\
+Matched cohort (train/test) & \nMatched{} (\nTrain{}/\nTest{}) \\
+Clinical features (full / pre-op) & \nFeatFull{} / \nFeatPreop{} \\
+Proteins (ablation) & \nProteinRaw{} $\to$ \nProteinKept{} $\to$ PCA 95\% \\
+Rounds $T$ / local epochs $E$ & 20 / 5 \\
+Learning rate $\eta$ / $L_2$ $\lambda$ & 0.5 / $10^{-3}$ \\
+FedProx $\mu$ & 0.5 \\
+Clipping $C$ / $\delta$ & 1.0 / $10^{-5}$ \\
+Seeds per experiment & 20 \\
+\bottomrule
+\end{tabular}
+\label{tab:protocol}
+\end{table}
+
+\input{sec_pca19}
+
+\input{generated/tab_hypotheses}
+
+\section{Secondary Evaluation: TCGA-PRAD}
+The following results come from the post-surgical TCGA-PRAD setting (Section~\ref{sec:data}). They complement PCa-19 with a small cohort, simulated label skew and exact Shapley values for up to ten clients.
+
+\subsection{Replication of the Base Paper on Real Sites}
+Table~\ref{tab:base_paper} and Fig.~\ref{fig:base_paper} replicate the strategy comparison of Kazlouski \emph{et al.} \cite{Kazlouski2025HospitalParticipation} on the \nSites{} TCGA sites. Averaged over sites with a defined AUC (\bpMacroSites{} per seed), local training reaches \bpLOC{}, FedAvg \bpFL{}, free-riding \bpFR{}, centralised training \bpCEN{} and the Gleason-sum rule \bpBL{}. The gain of joining the federation over training locally is not significant (FL$-$LOC $=\bpFLminusLOC$), FedAvg matches centralised training (CEN$-$FL $=\bpCENminusFL$), and the free-rider penalty is small (FR$-$FL $=\bpFRminusFL$). These reproduce the base paper's central observations: hospitals gain little \emph{locally} from participating, while a federated model serves non-participating hospitals almost as well. The learning curve (Fig.~\ref{fig:learning_curve}) shows free-rider AUC rising from \bpLcFrOne{} with one training site to \bpLcFrAll{} with all \nSites{}, with most of the gain reached after four to five sites. All learned strategies clearly beat the training-free rule (FL$-$BL $=\bpFLminusBL$). LOO contributions are close to zero for every site, whereas exact Shapley values are positive and distinguishable; the two rankings agree only moderately (Spearman $\rho = \bpLooShapRho$).
+
+\input{generated/tab_base_paper}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure12_base_paper.pdf}
+\caption{Base-paper strategies on the TCGA sites: mean per-site test AUC with 95\% CI over 20 seeds.}
+\label{fig:base_paper}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure13_learning_curve.pdf}
+\caption{FedAvg AUC for participating sites and for free-riders (non-participating sites and the external small-site pool) as sites join in random order.}
+\label{fig:learning_curve}
+\end{figure}
+
+\subsection{Centralised Baselines and Feature Sets}
+Table~\ref{tab:centralized} compares feature sets with repeated cross-validation. The full clinical set reaches \cvFull{} with the NumPy model used in federation. Adding the protein principal components \emph{lowers} discrimination (paired difference $\cvProtDiff$), and protein features alone reach only \cvProt{}: with roughly 115 components for \nTrain{} training patients the linear model over-fits. Removing the post-surgical pathology features costs $\cvPreopDiff$ (pre-operative model \cvPreop{}). The remaining experiments therefore use the full clinical feature set; the multimodal and pre-operative variants are reported in the ablation.
+
+\input{generated/tab_centralized}
+
+\subsection{Client Drift under Statistical Heterogeneity (H1)}
+Table~\ref{tab:drift} and Fig.~\ref{fig:drift} report client drift (Eq.~\ref{eq:drift}). Drift grows with heterogeneity (FedAvg: \driftAvgIID{} at $\alpha=100$ to \driftAvgSkew{} at $\alpha=0.1$), and FedProx reduces it by \driftRedMin--\driftRedMax\% at every $\alpha$, with 95\% CIs far from zero; increasing $\mu$ from 0 to 1 lowers drift monotonically (\driftMuZero{} to \driftMuOne{} at $\alpha=0.5$). H1 is supported. The reduction in drift does not translate into higher test AUC without DP: no paired AUC difference is significant, because the convex logistic objective lets FedAvg reach a good solution regardless.
+
+\input{generated/tab_drift}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure5_drift.pdf}
+\caption{Client drift (Eq.~\ref{eq:drift}) of FedAvg and FedProx across Dirichlet $\alpha$ (mean and 95\% CI over 20 seeds).}
+\label{fig:drift}
+\end{figure}
+
+\subsection{Privacy--Utility Trade-off (H2)}
+Fig.~\ref{fig:privacy_utility} shows global test AUC against the privacy budget at $\alpha=10$. Without DP FedAvg reaches \auNoDP{}. Weak privacy is almost free ($\varepsilon=10$: \auAvgTen{}, paired loss $\auLossTen$), whereas strong privacy is costly ($\varepsilon=2$: $\auLossTwo$; $\varepsilon=1$: $\auLossOne$; $\varepsilon=0.5$: $\auLossHalf$). With 20 paired seeds the degradation at $\varepsilon \le 2$ is significant, supporting H2.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure3_privacy_utility.pdf}
+\caption{Global test AUC versus privacy budget $\varepsilon$ ($\alpha=10$, $K=3$; mean and 95\% CI over 20 seeds).}
+\label{fig:privacy_utility}
+\end{figure}
+
+\subsection{FedProx under Joint Privacy and Heterogeneity (H3)}
+Table~\ref{tab:interaction} and Fig.~\ref{fig:heatmap} cross label skew with privacy. Without DP, FedProx and FedAvg are indistinguishable (largest mean difference \gridNoDPmax). Under DP, FedProx is significantly better in \gridSup{} of \gridCells{} cells, by \gridOneHalfMin--\gridOneHalfMax{} AUC at $\varepsilon \in \{1, 0.5\}$, largely independent of $\alpha$. A step-size control explains this: a FedAvg run with half the learning rate matches FedProx (FedProx better in only \gridSupCtl{} of \gridCells{} cells; largest mean difference \gridCtlOneHalfMax{} at $\varepsilon \le 1$). Under DP the proximal term acts mainly as a smaller effective step that damps the injected noise, rather than as a correction for heterogeneity. H3 is therefore supported only in this qualified sense.
+
+\input{generated/tab_grid}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure4_heatmap.pdf}
+\caption{Paired FedProx$-$FedAvg test-AUC difference across $\alpha$ and $\varepsilon$ (20 seeds; * = 95\% CI excludes 0).}
+\label{fig:heatmap}
+\end{figure}
+
+\subsection{Personalised Adaptation (H4)}
+Table~\ref{tab:local_adaptation} and Fig.~\ref{fig:pfl} evaluate each client on its own test split ($\alpha=0.5$). With three clients, FedProx reaches \pflProxThree{} per client against \pflLocalThree{} for local-only models, and personalised fine-tuning (PFL) reaches \pflPFLThree{} (PFL$-$Local $=\pflGainThree$). PFL does not improve on the global FedProx model (PFL$-$FedProx $=\pflVsProxThree$ for $K=3$, $\pflVsProxTen$ for $K=10$). With $K=10$ the comparison is again in favour of collaboration (PFL$-$Local $=\pflGainTen$). Because many clients have a single-class test split under strong skew, these averages cover only the clients with a defined AUC (Table~\ref{tab:local_adaptation}). H4 is supported for PFL versus local training, but not for PFL versus the global model.
+
+\input{generated/tab_pfl}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure10_fedprox_scaling_benefit.pdf}
+\caption{Mean per-client test AUC of local, FedAvg, FedProx and personalised models for $K \in \{3, 5, 10\}$ clients ($\alpha=0.5$, 20 seeds).}
+\label{fig:pfl}
+\end{figure}
+
+\subsection{Contribution Valuation under Privacy Noise (H5)}
+\label{sec:contribution_valuation}
+Without DP, exact Shapley values are positive for every client and track client size only moderately (Spearman with size: \shSizeThree{} for $K=3$, \shSizeTen{} for $K=10$); LOO rankings agree with Shapley rankings only partially (\shLooThree{} for $K=3$, \shLooTen{} for $K=10$), because LOO ignores sub-coalitions and becomes nearly zero when one client is redundant.
+
+Table~\ref{tab:wilcoxon_results} and Figs.~\ref{fig:shapley_instability}--\ref{fig:shapley_scaling_instability} quantify how DP changes these values. Each DP realisation is compared with the no-DP ranking of the same partition, so the Shapley computation itself contributes no randomness (exact enumeration). Rank agreement falls monotonically as privacy strengthens: for $K=3$, Spearman $\rho$ drops from \shRhoTenThree{} at $\varepsilon=10$ to \shRhoHalfThree{} at $\varepsilon=0.5$, and for $K=10$ from \shRhoTenTen{} to \shRhoHalfTen{}. Even the weakest budget leaves $\rho$ well below 0.90 (one-sided Wilcoxon $p<0.01$ in every configuration). The probability that the no-DP top contributor is still ranked first falls from \shTSTenThree{} to \shTSHalfThree{} for $K=3$ (chance 0.33) and from \shTSTenTen{} to \shTSHalfTen{} for $K=10$ (chance 0.10), and at $\varepsilon=0.5$ the rank-reversal rate reaches \shRRHalfTen{} for $K=10$. The overall rank correlation degrades by a similar amount for every federation size, whereas exact ranks and the top contributor are least stable in larger federations. H5 is supported: an incentive scheme that pays hospitals according to Shapley values computed from DP-trained models would frequently reward the wrong hospital.
+
+\input{generated/tab_shapley}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure9_shapley_instability.pdf}
+\caption{Spearman correlation between DP and no-DP exact Shapley rankings versus $\varepsilon$ for $K \in \{3, 5, 10\}$ clients (20 partitions).}
+\label{fig:shapley_instability}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure11_shapley_scaling_instability.pdf}
+\caption{Top-contributor stability (probability that the no-DP top contributor stays first under DP) versus $\varepsilon$; chance level is $1/K$.}
+\label{fig:shapley_scaling_instability}
+\end{figure}
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure6_shapley.pdf}
+\caption{Exact Shapley values of three clients for one partition: no DP and one DP noise draw per $\varepsilon$.}
+\label{fig:shapley_volatility}
+\end{figure}
+
+\subsection{Empirical Membership-Inference Evaluation (H7)}
+Without DP the confidence-threshold attack is at chance level (attack AUC $\miaNoDP$), and it stays there under DP ($\varepsilon=1$: $\miaOne$; $\varepsilon=0.5$: $\miaHalf$). The positive control confirms that the attack works when a model memorises its training data (AUC $\miaCtl$). The 18-feature logistic model generalises well (train$-$test AUC gap $\miaGap$), so there is little membership signal for DP to remove. The formal DP guarantee still holds, but its \emph{empirical} benefit cannot be demonstrated with this attack, and H7 is not supported. (The previously reported reduction from 0.568 to 0.480 arose in a pipeline whose identifier features let the model memorise individual patients.)
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure7_mia.pdf}
+\caption{Membership-inference attack AUC (mean and 95\% CI over 20 seeds) without DP, under DP, and for an over-fitted positive control. 0.5 = chance.}
+\label{fig:mia}
+\end{figure}
+
+\subsection{Controlled Distribution-Shift Stress Test (H6)}
+Under synthetic covariate shift the FedProx model degrades gracefully (AUC \shiftBase{} $\to$ \shiftCovTwo{} at severity 2), while concept shift, which flips labels, drives it to \shiftConTwo{} (Fig.~\ref{fig:stress_test}). This is a sensitivity analysis on perturbed copies of the test split, not an external validation.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure8_stress_test.pdf}
+\caption{FedProx test AUC under synthetic covariate and concept shift of the test split (20 seeds).}
+\label{fig:stress_test}
+\end{figure}
+
+\subsection{Ablation}
+Table~\ref{tab:global_ablation} summarises the components on the global test split ($K=3$, $\alpha=0.5$). FedAvg (\abAvg{}) and FedProx (\abProx{}) match centralised training (\abCen{}). DP costs little at $\varepsilon=5$ (\abDPFive{}) and more at $\varepsilon=1$ (\abDPOne{}). Using only pre-operative features (\abPreop{}) or adding protein components (\abProt{}) both reduce discrimination substantially.
+
+\input{generated/tab_ablation}
+
+\section{Survival Analysis Limitation}
+A federated Cox model was implemented, but the matched cohort contains only \nEvents{} deaths among \nMatched{} patients (\nEventsTest{} in the reference test split), so out-of-sample survival discrimination cannot be estimated reliably. No survival claims are made.
+
+\section{Discussion}
+The 19-hospital evaluation changes the weight of the evidence in three ways. First, the base paper's sustainability argument is now confirmed on its own data and under a different training protocol, and extended to leave-one-country-out external validation. Second, the cost of DP depends mainly on cohort size: it is almost free with \pNineN{} patients and substantial with 347. Third, DP's main clinical side effect at scale is not lost discrimination but over-confident predictions, which a cheap local recalibration fixes. That is a concrete deployment recipe: train with DP in the federation, then let each new hospital recalibrate on a small local sample. The instability of Shapley rankings under DP also holds on real hospitals: it is milder than on TCGA at weak privacy, but appears at strong privacy where accuracy is unchanged, and the top contributor is fragile at every privacy level. Contribution-based payments in private federations therefore need noise-robust valuation regardless of how cheap privacy is for accuracy. OSA-Shapley provides one: it accounts for privacy honestly, re-uses common noise across coalitions and, at the same budget, recovers rankings that retraining loses. Its limitation is the one-shot approximation of the federated model, which is accurate for convex models trained to convergence but untested for deep networks.
+
+On TCGA-PRAD, four results stand out. First, replicating the base paper on real TCGA sites reproduces its sustainability argument: joining a federation brings a hospital no significant local gain over its own model, yet a federated model serves non-participating hospitals almost as well as participants, and most of the free-rider benefit is reached with four to five contributing sites. Second, privacy has a clear utility price below $\varepsilon \approx 2$, and FedProx softens it, but a step-size control shows that the benefit comes from damping noisy local steps rather than from correcting heterogeneity; without DP, FedProx reduces client drift by about a third without changing accuracy. Third, DP noise severely destabilises Shapley-based contribution rankings at every federation size, which matters for any payment or reputation scheme built on valuations of privately trained models. Fourth, the empirical privacy audit is uninformative for this low-capacity model: membership inference is at chance even without DP.
+
+The corrected pipeline also changes two substantive conclusions of earlier drafts. Proteomic principal components do not improve staging on this cohort; they reduce AUC. And much of the predictive signal comes from post-surgical pathology variables that are recorded together with the pathologic T label, so the clinically realistic pre-operative task is considerably harder (AUC \cvPreop{}).
+
+\subsection{Threats to Validity}
+\label{sec:threats_validity}
+
+\subsubsection{Internal Validity}
+Hyper-parameters introduced in the revision (OSA-Shapley local steps, FedAdam server learning rate, federated MLP learning rate, learning rates for subsampled DP) were tuned on four splits and evaluated on twenty disjoint ones. PCa-19 hospitals are real, but its data were harmonised by the base paper's authors from published supplementary files, and records with missing values were discarded by them. Two PCa-19 hospitals have fewer than 50 patients, so their per-hospital AUCs are noisy; we therefore report both hospital-averaged and patient-weighted summaries. On TCGA, Dirichlet clients are simulated; the real-site analysis uses TCGA tissue-source sites, which are biobanks rather than independent clinical deployments, and their test splits are small (5--19 patients), so single-site AUCs are noisy and only averages over seeds should be interpreted. Hyper-parameters were selected by cross-validation on the same cohort. Exact Shapley values were computed for up to 10 clients; larger federations would require approximation.
+
+\subsubsection{External Validity}
+Both evaluations are retrospective. PCa-19 covers eight countries with pre-biopsy variables, and its leave-one-country-out results are the strongest evidence of transportability in this study; prospective validation is still required before clinical use. On TCGA-PRAD the strongest predictors (Gleason pattern, pathologic N) are post-surgical, and PSA is unavailable, so TCGA results concern methodology rather than a deployable tool.
+
+\subsubsection{Privacy Validity}
+The guarantee is per patient for the analysed cohort (one sample per patient) and treats client sizes and the shared preprocessing statistics as public. The main experiments use full-batch updates ($q=1$) with conservative accounting; Poisson subsampling with sampled-Gaussian accounting gives a tighter bound but no utility gain. OSA-Shapley's guarantee covers the valuation release; if the training run is also released, the two budgets compose. The empirical audit uses one confidence-threshold attack and does not cover gradient-reconstruction or model-inversion attacks.
+
+\subsubsection{Statistical Validity}
+All comparisons are paired over 20 seeds; seed-level replicates share the same patients, so the CIs describe variability across splits and partitions rather than across independent cohorts. For leave-one-country-out results we therefore treat the eight countries as the independent units ($n=8$). Cross-validation fold differences are correlated, so their CIs are indicative.
+
+\subsection{Reproducibility Statement}
+All results, tables and figures are regenerated from code: \texttt{python run\_all.py} and \texttt{python run\_pca19.py} recompute every experiment into \texttt{results/final/}, \texttt{python -m fl\_study.validate} runs 34 automated checks (cohort counts, the sampled-Gaussian accountant against numerical integration and a published value, subsampled DP-SGD, OSA-Shapley against exact retraining, the SCAFFOLD and FedAdam implementations, agreement of our re-implementation with the base paper's own code on PCa-19, leave-one-country-out preprocessing isolation, stratified-vs-exact Shapley agreement, calibration and recalibration formulas, absence of identifier features, train-only preprocessing, RDP accountant against the closed form, empirical noise scale, clipping bound, Shapley axioms, equivalence of vectorised and per-coalition training, and reproducibility), and \texttt{python Paper/generate\_paper\_assets.py} writes every number in this manuscript. Code: \url{https://github.com/JeyanthPonnaluri/Mini_Project_RVR}.
+
+\section{Future Work}
+Future work will extend OSA-Shapley to non-convex models (where one-shot averaging is a poorer proxy), combine it with secure aggregation, study privacy-preserving federated recalibration, validate the PCa-19 model prospectively, and use cohorts with enough survival events.
+
+\section{Conclusion}
+We studied privacy, heterogeneity, personalisation and contribution valuation in federated prostate-cancer risk prediction with one leakage-free pipeline, on the base paper's own 19 real hospitals and on TCGA-PRAD. On the base paper's data, we reproduce its published protocol exactly and confirm its sustainability argument under ours: federated models match pooled training, joining brings no significant average local gain, and free-riders are served almost as well. Leave-one-country-out validation shows that discrimination transports but calibration does not. DP is nearly free in AUC at this scale but makes predictions over-confident, and local recalibration on a small sample repairs both problems. On both cohorts, FedProx's advantage under DP equals that of a smaller learning rate, and DP noise destabilises Shapley contribution rankings, even on real hospitals where it does not change accuracy. Retraining-based valuation under DP spends the privacy budget hundreds of times over and, at an honest budget, loses the ranking. OSA-Shapley, which post-processes one DP-trained model per hospital, recovers it at a single budget and makes exact valuation of all 19 hospitals tractable. Stronger optimisers, non-linear models and subsampled DP accounting did not change these conclusions.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

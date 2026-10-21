@@ -1,0 +1,73 @@
+\documentclass[journal]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{array}
+\usepackage{siunitx}
+\input{generated/numbers}
+\usepackage{xr}
+\externaldocument[M-]{research_paper}
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\thesection}{S\arabic{section}}
+\renewcommand{\theequation}{S\arabic{equation}}
+
+\begin{document}
+\title{Supplementary Material for: The Hidden Privacy Cost of Valuing Hospitals in Federated Learning: Accounting, a Decision Rule, and Evidence from Real Federations}
+\author{Ponnaluri~Jeyanth, Pudota~Jaideep, and~M.~V.~P.~Chandra~Sekhara~Rao}
+\markboth{Supplementary Material}{Jeyanth \MakeLowercase{\textit{et al.}}: Supplementary Material}
+\maketitle
+
+This supplement contains additional methods, the reproduction of the base paper, the full analyses of the federation that is valued (federated training, differential privacy, transport and calibration; summarised in Section~\ref{M-sec:federation} of the main paper), detailed tables, and all claims with verdicts computed from the result files. All analyses use real hospitals as released (the 19 PCa-19 hospitals and the four UCI Heart Disease hospitals); no hospital is simulated and no data set is partitioned artificially. Numbers without the prefix ``S'' refer to the main paper.
+
+\section{Additional Methods}
+\label{sec:methods_more}
+\subsection{Subsampled Accounting}
+As an alternative we also train with Poisson subsampling: in every local step each patient is included independently with probability $q<1$, the clipped gradients of the included patients are summed, noise $\mathcal{N}(0,\sigma^2C^2I)$ is added and the sum is divided by the \emph{expected} batch size $q\,n_k$; $1/q$ steps make one epoch, so $N = T\,E/q$. One step is then a sampled Gaussian mechanism, whose RDP at integer order $\alpha$ is \cite{Mironov2019SampledGaussian, Zhu2019Poisson, Wang2019SubsampledRDP}
+\begin{equation}
+\epsilon_{RDP}(\alpha) = \frac{1}{\alpha-1}\ln \sum_{j=0}^{\alpha} \binom{\alpha}{j} (1-q)^{\alpha-j} q^{j} \exp\!\Big(\frac{j^2-j}{2\sigma^2}\Big),
+\end{equation}
+composed over the $N$ steps and converted as above (orders 2--1024). For $q=1$ it reduces to $\alpha/(2\sigma^2)$. Our implementation matches a numerical evaluation of the Rényi divergence to $10^{-13}$ and reproduces the value $\varepsilon \approx 1.26$ reported by Abadi \emph{et al.}\ \cite{Abadi2016DPSGD} for $q=0.01$, $\sigma=4$, $10{,}000$ steps and $\delta=10^{-5}$. Subsampling lowers the noise multiplier required for a given $\varepsilon$ (privacy amplification \cite{Balle2018Amplification}) at the price of more, smaller-batch steps; whether this improves utility is an empirical question (Section~\ref{sec:p19_subsampling}).
+
+\subsection{Membership Inference Attack Formulation}
+We audit empirical leakage with a confidence-threshold membership-inference attack. The score of a record is the model's confidence in its true label, $s_i = y_i p_i + (1 - y_i)(1 - p_i)$. Members (training patients) are subsampled to the number of non-members (test patients) and the attack is summarised by its ROC AUC. As a positive control, the same attack is applied to a deliberately over-fitted model (200 random noise features, no regularisation).
+
+\input{sec_supp_pca19}
+
+\section{Detailed PCa-19 Tables}
+This section collects the detailed tables of the PCa-19 evaluation referred to in the main text.
+
+\input{generated/tab_pca19_cohort}
+\input{generated/tab_pca19_privacy}
+\input{generated/tab_pca19_recal}
+\input{generated/tab_pca19_shapley}
+\input{generated/tab_subsampling}
+\input{generated/tab_osa_robust}
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{figures/figure19_osa_valuation.pdf}
+\caption{Agreement of each valuation with the exact non-private Shapley ranking of the ten largest PCa-19 hospitals (20 held-out splits, 95\% CI). OSA-Shapley, MR reconstruction and budget-matched retraining all cost the stated $\varepsilon$; per-run retraining costs the composed $\varepsilon$ of Table~\ref{tab:osa}.}
+\label{fig:osa}
+\end{figure}
+\input{generated/tab_osa}
+\input{generated/tab_osa_mlp}
+\input{generated/tab_osa_post}
+
+\section{Pre-Registered Test of the Decision Rule}
+\label{sec:prereg}
+\input{generated/tab_decision}
+The design and hypotheses below were written before the sweep was run and fixed by their SHA-256 hash (\texttt{results/preregistration\_nu\_sweep.md}, hash \texttt{3d5dfcdf\ldots68a1}, 17 Oct 2026, 08:19 UTC); a copy was saved on a second machine at the same time. The registration is internal (a hash, not a public registry such as OSF), and the protocol was written and run on the same day. Hypotheses at $\varepsilon=2$: (H1) OSA$-$MR $>0$ for $\nu\ge100$; (H2) OSA$-$MR not positive for $\nu\le50$; (H3) OSA$-$MR increases with $\nu$; (H4) the sign change lies between $\nu=50$ and 100; (H5) both arms agree at matched $\nu$; (H6) at $\varepsilon=1$ the switch-over lies at higher $\nu$, or OSA$-$MR is lower in at least six of eight conditions. Outcome: H1, H3, H5 and H6 supported (H6 through the higher switch-over; OSA$-$MR was lower at $\varepsilon=1$ in \nsLowerCount{} of 8 conditions); H2 and H4 not supported. No condition, seed or setting was changed after the results were seen. Full results are in Table~\ref{tab:nu_sweep}.
+
+\input{generated/tab_nu_sweep}
+
+\section{Claims and Computed Verdicts}
+Table~\ref{tab:hyp_summary} lists every claim of the study with the evidence and the verdict computed from the result files.
+\input{generated/tab_hypotheses}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+\end{document}

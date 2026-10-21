@@ -1,0 +1,17 @@
+\begin{table*}[t]
+\caption{Privacy and drift on the 19 real hospitals (mean per-hospital test AUC, 20 seeds). The last two AUC columns are paired differences with 95\% CI; drift = mean $\|w_k-w^{t-1}\|$.}
+\centering\small
+\begin{tabular}{lccccccc}
+\toprule
+$\varepsilon$ & $\sigma$ & FedAvg & FedProx & FedAvg ($\eta/2$) & FedAvg $-$ no DP & FedProx $-$ FedAvg($\eta/2$) & Drift Avg / Prox \\
+\midrule
+no DP & -- & 0.824 & 0.821 & 0.821 & $--$ & $+0.000\ [\ensuremath{-}0.001, +0.002]$ & 0.33 / 0.23 \\
+10 & 5.7 & 0.822 & 0.819 & 0.819 & $-0.002\ [\ensuremath{-}0.007, +0.003]$ & $+0.000\ [\ensuremath{-}0.001, +0.002]$ & 0.35 / 0.24 \\
+5 & 10.5 & 0.822 & 0.819 & 0.819 & $-0.002\ [\ensuremath{-}0.007, +0.003]$ & $+0.000\ [\ensuremath{-}0.001, +0.002]$ & 0.48 / 0.33 \\
+2 & 25.0 & 0.821 & 0.819 & 0.820 & $-0.003\ [\ensuremath{-}0.007, +0.001]$ & $-0.001\ [\ensuremath{-}0.003, +0.001]$ & 0.91 / 0.61 \\
+1 & 49.0 & 0.820 & 0.819 & 0.819 & $-0.004\ [\ensuremath{-}0.008, +0.001]$ & $-0.001\ [\ensuremath{-}0.003, +0.002]$ & 1.69 / 1.13 \\
+0.5 & 97.0 & 0.819 & 0.818 & 0.819 & $-0.005\ [\ensuremath{-}0.011, +0.001]$ & $-0.001\ [\ensuremath{-}0.003, +0.001]$ & 3.30 / 2.19 \\
+\bottomrule
+\end{tabular}
+\label{tab:pca19_privacy}
+\end{table*}

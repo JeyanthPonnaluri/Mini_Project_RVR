@@ -1,0 +1,21 @@
+\begin{table*}[t]
+\caption{Pre-registered test of the decision rule on the ten largest PCa-19 hospitals (20 held-out splits). Arm A keeps a random fraction of every hospital's training patients; arm B adds uninformative features. In every condition the reference is the exact non-private retraining Shapley ranking of that condition. $\rho$: Spearman correlation with the reference; OSA$-$MR: paired difference with 95\% CI.}
+\centering\small
+\begin{tabular}{lrrcccccc}
+\toprule
+ & & & \multicolumn{3}{c}{$\varepsilon=2$} & \multicolumn{3}{c}{$\varepsilon=1$} \\
+\cmidrule(lr){4-6}\cmidrule(lr){7-9}
+Condition & $p$ & $\nu$ & OSA & MR & OSA$-$MR & OSA & MR & OSA$-$MR \\
+\midrule
+A: 100\% of patients & 7 & 113 & 0.89 & 0.75 & $+0.14\ [+0.08, +0.19]$ & 0.80 & 0.65 & $+0.15\ [+0.03, +0.26]$ \\
+A: 60\% of patients & 7 & 68 & 0.80 & 0.72 & $+0.08\ [+0.00, +0.16]$ & 0.65 & 0.51 & $+0.14\ [+0.02, +0.26]$ \\
+A: 40\% of patients & 7 & 45 & 0.74 & 0.55 & $+0.18\ [+0.08, +0.29]$ & 0.48 & 0.36 & $+0.12\ [\ensuremath{-}0.04, +0.27]$ \\
+A: 25\% of patients & 7 & 28 & 0.58 & 0.46 & $+0.12\ [+0.00, +0.24]$ & 0.40 & 0.36 & $+0.04\ [\ensuremath{-}0.07, +0.16]$ \\
+A: 15\% of patients & 7 & 17 & 0.52 & 0.61 & $-0.09\ [\ensuremath{-}0.20, +0.03]$ & 0.35 & 0.53 & $-0.18\ [\ensuremath{-}0.32, \ensuremath{-}0.03]$ \\
+B: +21 features & 28 & 57 & 0.78 & 0.71 & $+0.07\ [\ensuremath{-}0.03, +0.18]$ & 0.66 & 0.54 & $+0.13\ [+0.01, +0.24]$ \\
+B: +50 features & 57 & 40 & 0.75 & 0.70 & $+0.05\ [\ensuremath{-}0.02, +0.12]$ & 0.64 & 0.62 & $+0.01\ [\ensuremath{-}0.08, +0.10]$ \\
+B: +100 features & 107 & 29 & 0.75 & 0.71 & $+0.05\ [\ensuremath{-}0.02, +0.11]$ & 0.60 & 0.68 & $-0.07\ [\ensuremath{-}0.15, +0.00]$ \\
+\bottomrule
+\end{tabular}
+\label{tab:nu_sweep}
+\end{table*}

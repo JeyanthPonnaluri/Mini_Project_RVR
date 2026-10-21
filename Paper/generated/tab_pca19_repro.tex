@@ -1,0 +1,17 @@
+\begin{table}[t]
+\caption{Reproduction of the base paper's protocol on PCa-19 (50 Monte-Carlo repeats; AV = mean over hospitals, AVW = patient-weighted). Our re-implementation gives the same numbers as the authors' code (Section~\ref{sec:p19_repro}).}
+\centering\footnotesize
+\begin{tabular}{lcccc}
+\toprule
+& \multicolumn{2}{c}{Noh variables} & \multicolumn{2}{c}{Ettala variables} \\
+Strategy & AV & AVW & AV & AVW \\
+\midrule
+Published calculator (BL) & 0.827 & 0.847 & 0.792 & 0.830 \\
+Local (LOC) & 0.818 & 0.847 & 0.799 & 0.847 \\
+Centralised (CEN) & 0.827 & 0.849 & 0.813 & 0.852 \\
+One-shot FedAvg (FL) & 0.826 & 0.848 & 0.803 & 0.843 \\
+Free-rider (FR) & 0.827 & 0.847 & 0.803 & 0.840 \\
+\bottomrule
+\end{tabular}
+\label{tab:pca19_repro}
+\end{table}

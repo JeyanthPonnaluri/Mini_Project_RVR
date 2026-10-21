@@ -1,0 +1,32 @@
+\begin{table}[t]
+\caption{Poisson subsampling with sampled-Gaussian RDP accounting (FedProx, 20 held-out seeds). $\sigma$ = noise multiplier needed for the stated $\varepsilon$ over the given number of local steps; PCa-19: mean per-hospital AUC (difference to full batch in brackets) and calibration slope.}
+\centering\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lccccc}
+\toprule
+Sampling & $\varepsilon$ & $\sigma$ & Steps & AUC & Slope \\
+\midrule
+full batch (q=1) & no DP & -- & 100 & 0.811 & 1.08 \\
+full batch (q=1) & 10 & 5.7 & 100 & 0.811 & 0.78 \\
+full batch (q=1) & 5 & 10.5 & 100 & 0.810 & 0.78 \\
+full batch (q=1) & 2 & 25.0 & 100 & 0.810 & 0.77 \\
+full batch (q=1) & 1 & 49.0 & 100 & 0.809 & 0.76 \\
+full batch (q=1) & 0.5 & 97.0 & 100 & 0.806 & 0.72 \\
+\midrule
+q=0.3 & no DP & -- & 300 & 0.810 ($-0.001$) & 1.09 \\
+q=0.3 & 10 & 3.1 & 300 & 0.810 ($-0.001$) & 0.79 \\
+q=0.3 & 5 & 5.6 & 300 & 0.810 ($+0.000$) & 0.79 \\
+q=0.3 & 2 & 13.1 & 300 & 0.809 ($-0.001$) & 0.79 \\
+q=0.3 & 1 & 25.6 & 300 & 0.810 ($+0.001$) & 0.78 \\
+q=0.3 & 0.5 & 50.5 & 300 & 0.809 ($+0.003$) & 0.75 \\
+\midrule
+q=0.1 & no DP & -- & 1000 & 0.810 ($-0.001$) & 1.08 \\
+q=0.1 & 10 & 2.0 & 1000 & 0.810 ($-0.001$) & 0.79 \\
+q=0.1 & 5 & 3.5 & 1000 & 0.809 ($-0.000$) & 0.79 \\
+q=0.1 & 2 & 8.0 & 1000 & 0.810 ($-0.000$) & 0.78 \\
+q=0.1 & 1 & 15.6 & 1000 & 0.809 ($+0.000$) & 0.77 \\
+q=0.1 & 0.5 & 30.8 & 1000 & 0.807 ($+0.000$) & 0.73 \\
+\bottomrule
+\end{tabular}
+\label{tab:subsampling}
+\end{table}

@@ -1,25 +1,44 @@
 \begin{table*}[t]
-\caption{Claim--evidence summary. Verdicts are computed from the result files: `supported' only if the 95\% CI of the paired difference over seeds excludes 0 in the claimed direction.}
+\caption{Claim--evidence summary. Verdicts are computed from the result files: `supported' only if the 95\% CI of the paired difference over seeds excludes 0 in the claimed direction; the pre-registered rows are scored by the criteria fixed in advance (Section~\ref{sec:prereg}).}
 \centering\scriptsize
 \begin{tabular}{p{1.4cm}p{4.2cm}p{8.6cm}p{1.5cm}}
 \toprule
 Area & Claim & Evidence (mean [95\% CI]) & Verdict \\
 \midrule
-Base paper & Federated model beats each hospital's local model (per-site AUC) & FL - LOC = +0.015 {[}-0.007, +0.037{]} & not significant \\
-Base paper & Free-riders get (almost) the same benefit as participants & FR - FL = -0.008 {[}-0.013, -0.003{]} (negative = small free-rider penalty) & supported \\
-Base paper & Federated training approaches centralised (pooled) training & CEN - FL = -0.001 {[}-0.004, +0.002{]} & supported \\
-Base paper & Learned model beats a simple rule baseline (Gleason sum) & FL - rule = +0.067 {[}+0.048, +0.086{]} & supported \\
-Our model & Adding proteomics (PCA) improves staging over clinical features & (full+protein) - full = -0.159 {[}-0.188, -0.130{]} over 25 CV folds & opposite \\
-Our model & H1 FedProx reduces client drift under heterogeneity & relative drift reduction ($\alpha$=100: 32.0\%, $\alpha$=10: 33.2\%, $\alpha$=1: 35.6\%, $\alpha$=0.5: 36.0\%, $\alpha$=0.1: 36.4\%); lowest CI bound 31.4\% & supported \\
-Our model & FedProx improves accuracy without DP ($\alpha$ = 0.1) & FedProx - FedAvg = +0.002 {[}-0.001, +0.004{]} & not significant \\
-Our model & H2 Strong privacy ($\varepsilon$ = 1) costs utility & FedAvg($\varepsilon$=1) - FedAvg(no DP) = -0.063 {[}-0.087, -0.038{]} & supported \\
-Our model & Weak privacy ($\varepsilon$ = 10) costs little utility ($<$ 0.03 AUC) & FedAvg($\varepsilon$=10) - no DP = -0.002 {[}-0.009, +0.005{]} & supported \\
-Our model & H3 FedProx beats FedAvg under joint DP + heterogeneity & CI $>$ 0 in 12/20 ($\alpha$, $\varepsilon$) cells vs FedAvg; in 3/20 cells vs a FedAvg with half the learning rate (step-size control) & explained by step size \\
-Our model & H4a Personalised FL beats local-only training & PFL - Local (K=3, macro client AUC) = +0.051 {[}+0.015, +0.086{]} & supported \\
-Our model & H4b Personalised FL beats the global FedProx model & PFL - FedProx = -0.006 {[}-0.022, +0.011{]} & not significant \\
-Our model & H5 DP noise destabilises Shapley contribution rankings & K=10: Spearman vs no-DP 0.73 ($\varepsilon$=10) $\rightarrow$ 0.36 ($\varepsilon$=0.5); top-contributor kept 0.62 $\rightarrow$ 0.30 & supported \\
-Our model & Shapley and LOO give similar client rankings & Spearman(Shapley, LOO): K=3 0.68, K=10 0.44 & partly \\
-Our model & H7 DP reduces membership-inference vulnerability & attack AUC no-DP 0.511 {[}0.489, 0.533{]} vs $\varepsilon$=1 0.510; positive control (over-fitted) 0.659 & not significant \\
+PCa-19 (19 hospitals) & Joining FL gives hospitals a significant average local gain & FL - LOC (mean per-hospital AUC) = \ensuremath{-}0.005 {[}-0.015, +0.006{]} & not significant \\
+PCa-19 (19 hospitals) & Free-riders get (almost) the same model as participants & FR - FL = \ensuremath{-}0.002 {[}-0.002, \ensuremath{-}0.001{]} & supported \\
+PCa-19 (19 hospitals) & Federated training matches pooled training & CEN - FL = +0.002 {[}-0.001, +0.004{]} & supported \\
+PCa-19 (19 hospitals) & FL beats the published Noh calculator (hospital-averaged AUC) & FL - Noh = \ensuremath{-}0.010 {[}-0.016, \ensuremath{-}0.005{]}; patient-weighted FL 0.856 vs Noh 0.850 & opposite \\
+PCa-19 (19 hospitals) & Our re-implementation reproduces the base paper's code exactly & noh: max $|$difference$|$ 1.2e-14 over 5x19 cells (50 repeats); ettala: max $|$difference$|$ 7.8e-15 over 5x19 cells (50 repeats) & supported \\
+PCa-19 (19 hospitals) & Federated model transports to unseen countries as well as pooled training & leave-one-country-out, FedAvg - centralised = \ensuremath{-}0.000 {[}-0.001, +0.001{]} (8 countries) & supported \\
+PCa-19 (19 hospitals) & DP lowers the calibration slope (predictions more extreme) on held-out countries & slope at $\varepsilon$=5 = 0.81 {[}0.70, 0.92{]} over 8 countries (no DP 1.12) & supported \\
+PCa-19 (19 hospitals) & Local recalibration (20\% of a new country) fixes calibration-in-the-large & $|$log O/E$|$ recalibrated - transported = \ensuremath{-}0.193 {[}-0.347, \ensuremath{-}0.038{]} & supported \\
+PCa-19 (19 hospitals) & Strong privacy ($\varepsilon$ = 0.5) costs $<$ 0.02 AUC at this scale & FedAvg($\varepsilon$=0.5) - no DP = \ensuremath{-}0.005 {[}-0.011, +0.001{]} & supported \\
+PCa-19 (19 hospitals) & FedProx's effect equals halving FedAvg's learning rate & largest $|$FedProx - FedAvg(lr/2)$|$ over 6 privacy levels = 0.0009 AUC; drift reduction 30.8\% & explained by step size \\
+PCa-19 (19 hospitals) & Personalisation helps small hospitals ($<$ 100 patients) & PFL - FedProx = +0.039 {[}+0.013, +0.065{]} & supported \\
+PCa-19 (19 hospitals) & DP noise destabilises Shapley rankings of real hospitals & 10 hospitals: Spearman 0.94 ($\varepsilon$=10) $\rightarrow$ 0.64 ($\varepsilon$=0.5) & supported \\
+PCa-19 (19 hospitals) & OSA-Shapley beats retraining at the same real privacy cost ($\varepsilon$ = 2) & Spearman with exact Shapley: OSA - budget-matched retraining = +0.71 {[}+0.58, +0.84{]} & supported \\
+PCa-19 (19 hospitals) & OSA-Shapley is not significantly worse than per-run retraining, which spends far more privacy ($\varepsilon$ = 2) & OSA - per-run retraining = \ensuremath{-}0.02 {[}-0.06, +0.03{]} (per-run real $\varepsilon$ = 85) & supported \\
+PCa-19 (19 hospitals) & OSA-Shapley beats reconstruction from the DP training run (MR, GTG upper bound) at the same cost ($\varepsilon$ = 2) & OSA - MR = +0.14 {[}+0.08, +0.19{]}; OSA - OR = +0.37 {[}+0.26, +0.48{]} & supported \\
+PCa-19 (19 hospitals) & OSA-Shapley ranks a hospital with random labels last more often than budget-matched retraining ($\varepsilon$ = 2) & ranked last: OSA 100\%, MR 70\%, budget-matched retraining 60\% & supported \\
+PCa-19 (19 hospitals) & OSA-Shapley beats sharing hospital size (10 largest hospitals, $\varepsilon$ = 2) & OSA - size = +0.80 {[}+0.70, +0.91{]}; rho size 0.08, statistics \ensuremath{-}0.18 & supported \\
+PCa-19 (19 hospitals) & OSA-Shapley beats the single-model AUC of the same DP releases (10 largest, $\varepsilon$ = 1) & OSA - single-model AUC = +0.10 {[}+0.05, +0.14{]} ($\varepsilon$ = 1); +0.04 {[}-0.00, +0.08{]} ($\varepsilon$ = 2) & supported \\
+PCa-19 (19 hospitals) & On the 10 smallest real hospitals OSA-Shapley beats reconstruction ($\varepsilon$ = 2) & OSA - MR = +0.00 {[}-0.06, +0.06{]}; OSA - size = +0.05 {[}-0.01, +0.10{]} & not significant \\
+PCa-19 (19 hospitals) & OSA-Shapley also beats reconstruction with a non-convex model (federated MLP, $\varepsilon$ = 2) & OSA-ensemble - MR = \ensuremath{-}0.17 {[}-0.25, \ensuremath{-}0.09{]} (rho 0.65 vs 0.82) & opposite \\
+PCa-19 (19 hospitals) & With an MLP, post-processing valuation beats budget-matched retraining ($\varepsilon$ = 2) & OSA-ensemble - budget-matched = +0.47 {[}-0.34, +1.28{]} on 5 splits; MR 0.80 & not significant \\
+PCa-19 (19 hospitals) & A stronger federated algorithm or federated MLP beats converged FedAvg & best: Federated MLP +0.005 {[}+0.001, +0.009{]} vs FedAvg; converged FedAvg (400 steps) +0.002 {[}+0.001, +0.003{]} & not significant \\
+PCa-19 (19 hospitals) & Non-linear models (gradient boosting) transport better to unseen countries & leave-one-country-out AUC, gradient boosting - FedAvg = \ensuremath{-}0.003 {[}-0.011, +0.004{]} (8 countries); slope 0.91 & not significant \\
+PCa-19 (19 hospitals) & SCAFFOLD reduces client drift more than FedProx without changing AUC & drift FedAvg 0.322, FedProx 0.223, SCAFFOLD 0.113; AUC SCAFFOLD - FedAvg = \ensuremath{-}0.000 {[}-0.001, +0.000{]} & supported \\
+PCa-19 (19 hospitals) & Subsampled DP (q = 0.3) improves utility over full batch at $\varepsilon$ = 1 & mean per-hospital AUC difference = +0.001 {[}-0.003, +0.004{]} & not significant \\
+Heart (4 hospitals) & Without DP, OSA-Shapley beats reconstruction in a second real federation & OSA - MR = +0.22 {[}+0.05, +0.39{]} (rho 0.92 vs 0.70) & supported \\
+Heart (4 hospitals) & Under DP, OSA-Shapley also beats reconstruction in the heart federation ($\varepsilon$ = 2) & OSA - MR = \ensuremath{-}0.30 {[}-0.59, \ensuremath{-}0.01{]} (rho 0.15 vs 0.45); about 43 patients per parameter & opposite \\
+Heart (4 hospitals) & Hospital size identifies contributions (no DP) & rho size \ensuremath{-}0.38; OSA - size = +1.30 {[}+1.12, +1.48{]} & not supported \\
+Pre-registered rule test & Pre-registered H1: OSA beats MR wherever $\nu$ $\ge$ 100 ($\varepsilon$ = 2) & OSA - MR at $\nu$ = 113: +0.14 {[}+0.08, +0.19{]} & supported \\
+Pre-registered rule test & Pre-registered H2: OSA stops beating MR at $\nu$ $\le$ 50 ($\varepsilon$ = 2) & OSA - MR at $\nu$ = 45: +0.18 {[}+0.08, +0.29{]}; $\nu$ = 28: +0.12 {[}+0.00, +0.24{]} & not supported \\
+Pre-registered rule test & Pre-registered H3: OSA - MR increases with $\nu$ & Spearman($\nu$, OSA - MR) = 0.57 & supported \\
+Pre-registered rule test & Pre-registered H4: the switch-over lies between $\nu$ = 50 and 100 & observed switch-over at $\nu$ = 21 & not supported \\
+Pre-registered rule test & Pre-registered H5: fewer patients and more parameters agree at matched $\nu$ & $\nu$ = 45 (fewer patients) +0.18 {[}+0.08, +0.29{]} vs $\nu$ = 40 (more parameters) +0.05 {[}-0.02, +0.12{]} & supported \\
+Pre-registered rule test & Pre-registered H6: stronger privacy ($\varepsilon$ = 1) moves the switch-over up & $\varepsilon$ = 1 lower in 5 of 8 conditions; switch-overs at $\nu$ = 26, 29, 38 & supported \\
 \bottomrule
 \end{tabular}
 \label{tab:hyp_summary}

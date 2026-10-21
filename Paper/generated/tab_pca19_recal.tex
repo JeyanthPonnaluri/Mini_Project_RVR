@@ -1,0 +1,27 @@
+\begin{table}[t]
+\caption{Local recalibration on 20\% of each held-out country, evaluated on the other 80\% (mean over 8 countries and 20 seeds). $|\log$ O/E$|$ = 0 and slope = 1 are ideal; DP rows are FedProx + DP.}
+\centering\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{llccc}
+\toprule
+Model & Recalibration & $|\log$ O/E$|$ & Slope & Brier \\
+\midrule
+FedAvg & none & 0.263 & 1.09 & 0.145 \\
+ & intercept & 0.071 & 1.09 & 0.136 \\
+ & int.\,+\,slope & 0.074 & 0.99 & 0.138 \\
+\midrule
+DP $\varepsilon=5$ & none & 0.260 & 0.81 & 0.150 \\
+ & intercept & 0.080 & 0.81 & 0.140 \\
+ & int.\,+\,slope & 0.074 & 0.99 & 0.140 \\
+\midrule
+DP $\varepsilon=1$ & none & 0.263 & 0.80 & 0.151 \\
+ & intercept & 0.081 & 0.80 & 0.140 \\
+ & int.\,+\,slope & 0.074 & 1.00 & 0.140 \\
+\midrule
+Noh & none & 0.205 & 0.97 & 0.144 \\
+ & intercept & 0.075 & 0.97 & 0.137 \\
+ & int.\,+\,slope & 0.077 & 0.97 & 0.138 \\
+\bottomrule
+\end{tabular}
+\label{tab:pca19_recal}
+\end{table}

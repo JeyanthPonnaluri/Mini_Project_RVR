@@ -25,9 +25,9 @@
 \newcommand{\bpFR}{0.782}
 \newcommand{\bpCEN}{0.789}
 \newcommand{\bpBL}{0.723}
-\newcommand{\bpFLminusLOC}{+0.015\ [-0.007, +0.037]}
-\newcommand{\bpFRminusFL}{-0.008\ [-0.013, -0.003]}
-\newcommand{\bpCENminusFL}{-0.001\ [-0.004, +0.002]}
+\newcommand{\bpFLminusLOC}{+0.015\ [\ensuremath{-}0.007, +0.037]}
+\newcommand{\bpFRminusFL}{\ensuremath{-}0.008\ [\ensuremath{-}0.013, \ensuremath{-}0.003]}
+\newcommand{\bpCENminusFL}{\ensuremath{-}0.001\ [\ensuremath{-}0.004, +0.002]}
 \newcommand{\bpFLminusBL}{+0.067\ [+0.048, +0.086]}
 \newcommand{\bpLcPartOne}{0.696}
 \newcommand{\bpLcFrOne}{0.751}
@@ -43,9 +43,9 @@
 \newcommand{\cvSkFull}{0.824}
 \newcommand{\cvRFFullProt}{0.782}
 \newcommand{\cvRFFull}{0.803}
-\newcommand{\cvProtDiff}{-0.159\ [-0.188, -0.130]}
+\newcommand{\cvProtDiff}{\ensuremath{-}0.159\ [\ensuremath{-}0.188, \ensuremath{-}0.130]}
 \newcommand{\cvPreopDiff}{+0.176\ [+0.148, +0.203]}
-\newcommand{\cvProtPreopDiff}{-0.047\ [-0.080, -0.013]}
+\newcommand{\cvProtPreopDiff}{\ensuremath{-}0.047\ [\ensuremath{-}0.080, \ensuremath{-}0.013]}
 \newcommand{\nFolds}{25}
 \newcommand{\driftRedMin}{32.0}
 \newcommand{\driftRedMax}{36.4}
@@ -61,19 +61,19 @@
 \newcommand{\auNoDP}{0.823}
 \newcommand{\auAvgTen}{0.821}
 \newcommand{\auProxTen}{0.823}
-\newcommand{\auLossTen}{-0.002\ [-0.009, +0.005]}
+\newcommand{\auLossTen}{\ensuremath{-}0.002\ [\ensuremath{-}0.009, +0.005]}
 \newcommand{\auAvgFive}{0.818}
 \newcommand{\auProxFive}{0.821}
-\newcommand{\auLossFive}{-0.005\ [-0.014, +0.003]}
+\newcommand{\auLossFive}{\ensuremath{-}0.005\ [\ensuremath{-}0.014, +0.003]}
 \newcommand{\auAvgTwo}{0.800}
 \newcommand{\auProxTwo}{0.812}
-\newcommand{\auLossTwo}{-0.023\ [-0.038, -0.008]}
+\newcommand{\auLossTwo}{\ensuremath{-}0.023\ [\ensuremath{-}0.038, \ensuremath{-}0.008]}
 \newcommand{\auAvgOne}{0.761}
 \newcommand{\auProxOne}{0.789}
-\newcommand{\auLossOne}{-0.063\ [-0.087, -0.038]}
+\newcommand{\auLossOne}{\ensuremath{-}0.063\ [\ensuremath{-}0.087, \ensuremath{-}0.038]}
 \newcommand{\auAvgHalf}{0.691}
 \newcommand{\auProxHalf}{0.720}
-\newcommand{\auLossHalf}{-0.132\ [-0.180, -0.085]}
+\newcommand{\auLossHalf}{\ensuremath{-}0.132\ [\ensuremath{-}0.180, \ensuremath{-}0.085]}
 \newcommand{\gridSup}{12}
 \newcommand{\gridCells}{20}
 \newcommand{\gridSupCtl}{3}
@@ -85,17 +85,17 @@
 \newcommand{\pflProxThree}{0.811}
 \newcommand{\pflPFLThree}{0.805}
 \newcommand{\pflGainThree}{+0.051\ [+0.015, +0.086]}
-\newcommand{\pflVsProxThree}{-0.006\ [-0.022, +0.011]}
+\newcommand{\pflVsProxThree}{\ensuremath{-}0.006\ [\ensuremath{-}0.022, +0.011]}
 \newcommand{\pflLocalFive}{0.796}
 \newcommand{\pflProxFive}{0.817}
 \newcommand{\pflPFLFive}{0.814}
-\newcommand{\pflGainFive}{+0.018\ [-0.021, +0.057]}
-\newcommand{\pflVsProxFive}{-0.003\ [-0.011, +0.005]}
+\newcommand{\pflGainFive}{+0.018\ [\ensuremath{-}0.021, +0.057]}
+\newcommand{\pflVsProxFive}{\ensuremath{-}0.003\ [\ensuremath{-}0.011, +0.005]}
 \newcommand{\pflLocalTen}{0.785}
 \newcommand{\pflProxTen}{0.841}
 \newcommand{\pflPFLTen}{0.838}
 \newcommand{\pflGainTen}{+0.053\ [+0.010, +0.096]}
-\newcommand{\pflVsProxTen}{-0.003\ [-0.014, +0.007]}
+\newcommand{\pflVsProxTen}{\ensuremath{-}0.003\ [\ensuremath{-}0.014, +0.007]}
 \newcommand{\shRhoTenThree}{0.68}
 \newcommand{\shRhoHalfThree}{0.25}
 \newcommand{\shTSTenThree}{0.79}
@@ -124,7 +124,7 @@
 \newcommand{\miaOne}{0.510\ [0.484, 0.537]}
 \newcommand{\miaHalf}{0.512\ [0.490, 0.534]}
 \newcommand{\miaCtl}{0.659\ [0.640, 0.678]}
-\newcommand{\miaGap}{+0.017\ [-0.007, +0.041]}
+\newcommand{\miaGap}{+0.017\ [\ensuremath{-}0.007, +0.041]}
 \newcommand{\shiftCovTwo}{0.765}
 \newcommand{\shiftConTwo}{0.498}
 \newcommand{\shiftBase}{0.826}
@@ -135,3 +135,533 @@
 \newcommand{\abDPOne}{0.787}
 \newcommand{\abPreop}{0.659}
 \newcommand{\abProt}{0.682}
+\newcommand{\pNineN}{5{,}610}
+\newcommand{\pNinePos}{2{,}146}
+\newcommand{\pNineHosp}{19}
+\newcommand{\pNineCountries}{8}
+\newcommand{\pNinePrevLo}{12}
+\newcommand{\pNinePrevHi}{60}
+\newcommand{\pNinePrev}{38.3}
+\newcommand{\pNineReps}{50}
+\newcommand{\pRepNohBL}{0.827}
+\newcommand{\pRepNohLOC}{0.818}
+\newcommand{\pRepNohCEN}{0.827}
+\newcommand{\pRepNohFL}{0.826}
+\newcommand{\pRepNohFR}{0.827}
+\newcommand{\pRepEttBL}{0.792}
+\newcommand{\pRepEttLOC}{0.799}
+\newcommand{\pRepEttCEN}{0.813}
+\newcommand{\pRepEttFL}{0.803}
+\newcommand{\pRepEttFR}{0.803}
+\newcommand{\pSLOC}{0.829}
+\newcommand{\pWLOC}{0.857}
+\newcommand{\pSFL}{0.824}
+\newcommand{\pWFL}{0.856}
+\newcommand{\pSProx}{0.821}
+\newcommand{\pWProx}{0.853}
+\newcommand{\pSCEN}{0.825}
+\newcommand{\pWCEN}{0.856}
+\newcommand{\pSFR}{0.822}
+\newcommand{\pWFR}{0.854}
+\newcommand{\pSNoh}{0.834}
+\newcommand{\pWNoh}{0.850}
+\newcommand{\pSEtt}{0.795}
+\newcommand{\pWEtt}{0.832}
+\newcommand{\pDFLminusLOC}{\ensuremath{-}0.005\ [\ensuremath{-}0.015, +0.006]}
+\newcommand{\pDFRminusFL}{\ensuremath{-}0.002\ [\ensuremath{-}0.002, \ensuremath{-}0.001]}
+\newcommand{\pDCENminusFL}{+0.002\ [\ensuremath{-}0.001, +0.004]}
+\newcommand{\pDFLminusNoh}{\ensuremath{-}0.010\ [\ensuremath{-}0.016, \ensuremath{-}0.005]}
+\newcommand{\pDFLminusEtt}{+0.029\ [+0.023, +0.035]}
+\newcommand{\pDProxminusFL}{\ensuremath{-}0.003\ [\ensuremath{-}0.005, \ensuremath{-}0.000]}
+\newcommand{\pGainSig}{4}
+\newcommand{\pLossSig}{4}
+\newcommand{\pGainSizeRho}{\ensuremath{-}0.26}
+\newcommand{\pLcFrOne}{0.769}
+\newcommand{\pLcFrFive}{0.815}
+\newcommand{\pLcFrLast}{0.830}
+\newcommand{\pFrOE}{0.99}
+\newcommand{\pFrSlope}{1.03}
+\newcommand{\pDriftRed}{30.8}
+\newcommand{\pDpLossHalf}{\ensuremath{-}0.005\ [\ensuremath{-}0.011, +0.001]}
+\newcommand{\pDpLossOne}{\ensuremath{-}0.004\ [\ensuremath{-}0.008, +0.001]}
+\newcommand{\pDpLossFive}{\ensuremath{-}0.002\ [\ensuremath{-}0.007, +0.003]}
+\newcommand{\pProxHalfMax}{0.001}
+\newcommand{\pSigmaHalf}{97}
+\newcommand{\pPflSmall}{+0.039\ [+0.013, +0.065]}
+\newcommand{\pPflAll}{+0.010\ [+0.005, +0.016]}
+\newcommand{\pPflLarge}{+0.001\ [+0.000, +0.001]}
+\newcommand{\pPflLargeLoc}{\ensuremath{-}0.005\ [\ensuremath{-}0.007, \ensuremath{-}0.004]}
+\newcommand{\pNSmall}{4}
+\newcommand{\pMiaNoDP}{0.500}
+\newcommand{\pMiaCtl}{0.937}
+\newcommand{\pLocoAvgNoh}{+0.001\ [\ensuremath{-}0.011, +0.012]}
+\newcommand{\pLocoDpFive}{\ensuremath{-}0.005\ [\ensuremath{-}0.010, \ensuremath{-}0.000]}
+\newcommand{\pLocoAvgCen}{\ensuremath{-}0.000\ [\ensuremath{-}0.001, +0.001]}
+\newcommand{\pSlopeNoDP}{1.12\ [0.95, 1.30]}
+\newcommand{\pSlopeDpFive}{0.81\ [0.70, 0.92]}
+\newcommand{\pSlopeDpOne}{0.80\ [0.69, 0.91]}
+\newcommand{\pSlopeNoh}{0.97\ [0.79, 1.14]}
+\newcommand{\pRecalOeRaw}{0.263}
+\newcommand{\pRecalOeInt}{0.071}
+\newcommand{\pRecalOeDiff}{\ensuremath{-}0.193\ [\ensuremath{-}0.347, \ensuremath{-}0.038]}
+\newcommand{\pRecalSlopeDpRaw}{0.81}
+\newcommand{\pRecalSlopeDpLog}{0.99}
+\newcommand{\pOeMin}{0.47}
+\newcommand{\pOeMax}{1.30}
+\newcommand{\pShRhoTen}{0.94}
+\newcommand{\pShRhoHalf}{0.64}
+\newcommand{\pShTSTen}{0.75}
+\newcommand{\pShTSHalf}{0.40}
+\newcommand{\pShRhoTwo}{0.91}
+\newcommand{\pShRhoOne}{0.85}
+\newcommand{\pShPhiMin}{0.029}
+\newcommand{\pShPhiMax}{0.042}
+\newcommand{\pShNineRhoFive}{0.90}
+\newcommand{\pShNineRhoOne}{0.76}
+\newcommand{\pShNineTSFive}{0.45}
+\newcommand{\pShNineTSOne}{0.45}
+\newcommand{\pShNineCoal}{1{,}777}
+\newcommand{\pShLooRho}{0.66\ [0.56, 0.77]}
+\newcommand{\pShSizeRho}{0.60}
+\newcommand{\osaRhoTen}{0.90}
+\newcommand{\osaRhoTwo}{0.89}
+\newcommand{\osaRhoOne}{0.80}
+\newcommand{\osaRhoHalf}{0.54}
+\newcommand{\bmRhoTwo}{0.18}
+\newcommand{\bmRhoTen}{0.47}
+\newcommand{\bmRhoOne}{0.10}
+\newcommand{\prRhoTen}{0.94}
+\newcommand{\prRhoOne}{0.76}
+\newcommand{\trueEpsOne}{33}
+\newcommand{\trueEpsFive}{334}
+\newcommand{\trueEpsTen}{988}
+\newcommand{\osaVsBmTwo}{+0.71\ [+0.58, +0.84]}
+\newcommand{\osaVsPrTwo}{\ensuremath{-}0.02\ [\ensuremath{-}0.06, +0.03]}
+\newcommand{\osaVsPrOne}{+0.04\ [\ensuremath{-}0.05, +0.13]}
+\newcommand{\osaNoDP}{0.96}
+\newcommand{\osaSteps}{30}
+\newcommand{\osaNineRhoFive}{0.95}
+\newcommand{\osaNineRhoOne}{0.80}
+\newcommand{\osaNineTSFive}{0.80}
+\newcommand{\osaNineTSOne}{0.65}
+\newcommand{\osaNineSize}{0.48}
+\newcommand{\tOsaTwo}{0.39}
+\newcommand{\tPrTwo}{0.52}
+\newcommand{\tBmTwo}{\ensuremath{-}0.03}
+\newcommand{\tOsaTen}{0.63}
+\newcommand{\tPrTen}{0.72}
+\newcommand{\tBmTen}{0.25}
+\newcommand{\tOsaOne}{0.26}
+\newcommand{\tPrOne}{0.44}
+\newcommand{\tOsaNoDP}{0.91}
+\newcommand{\mrRhoNoDP}{0.74}
+\newcommand{\orRhoNoDP}{0.42}
+\newcommand{\osaVsMrNoDP}{+0.22\ [+0.18, +0.27]}
+\newcommand{\osaVsOrNoDP}{+0.54\ [+0.44, +0.65]}
+\newcommand{\tMrRhoNoDP}{0.67}
+\newcommand{\tOsaVsMrNoDP}{+0.24\ [+0.17, +0.31]}
+\newcommand{\tHoOsaVsMrNoDP}{+0.29\ [+0.15, +0.42]}
+\newcommand{\mrRhoTwo}{0.75}
+\newcommand{\orRhoTwo}{0.51}
+\newcommand{\osaVsMrTwo}{+0.14\ [+0.08, +0.19]}
+\newcommand{\osaVsOrTwo}{+0.37\ [+0.26, +0.48]}
+\newcommand{\tMrRhoTwo}{0.48}
+\newcommand{\tOsaVsMrTwo}{\ensuremath{-}0.09\ [\ensuremath{-}0.27, +0.08]}
+\newcommand{\tHoOsaVsMrTwo}{\ensuremath{-}0.23\ [\ensuremath{-}0.38, \ensuremath{-}0.09]}
+\newcommand{\mrRhoOne}{0.65}
+\newcommand{\orRhoOne}{0.50}
+\newcommand{\osaVsMrOne}{+0.15\ [+0.03, +0.26]}
+\newcommand{\osaVsOrOne}{+0.31\ [+0.18, +0.44]}
+\newcommand{\tMrRhoOne}{0.39}
+\newcommand{\tOsaVsMrOne}{\ensuremath{-}0.13\ [\ensuremath{-}0.32, +0.07]}
+\newcommand{\tHoOsaVsMrOne}{\ensuremath{-}0.32\ [\ensuremath{-}0.51, \ensuremath{-}0.14]}
+\newcommand{\mrRhoHalf}{0.37}
+\newcommand{\orRhoHalf}{0.39}
+\newcommand{\osaVsMrHalf}{+0.16\ [+0.04, +0.29]}
+\newcommand{\osaVsOrHalf}{+0.14\ [+0.00, +0.28]}
+\newcommand{\tMrRhoHalf}{0.26}
+\newcommand{\tOsaVsMrHalf}{\ensuremath{-}0.07\ [\ensuremath{-}0.28, +0.15]}
+\newcommand{\tHoOsaVsMrHalf}{\ensuremath{-}0.21\ [\ensuremath{-}0.46, +0.03]}
+\newcommand{\mrRhoFive}{0.72}
+\newcommand{\orRhoFive}{0.53}
+\newcommand{\osaVsMrFive}{+0.18\ [+0.14, +0.22]}
+\newcommand{\osaVsOrFive}{+0.37\ [+0.27, +0.47]}
+\newcommand{\tMrRhoFive}{0.55}
+\newcommand{\tOsaVsMrFive}{\ensuremath{-}0.03\ [\ensuremath{-}0.18, +0.12]}
+\newcommand{\tHoOsaVsMrFive}{\ensuremath{-}0.12\ [\ensuremath{-}0.23, \ensuremath{-}0.00]}
+\newcommand{\corrHosp}{es6}
+\newcommand{\corrOsaTwo}{100\%}
+\newcommand{\corrMrTwo}{70\%}
+\newcommand{\corrOrTwo}{100\%}
+\newcommand{\corrPrTwo}{100\%}
+\newcommand{\corrBmTwo}{60\%}
+\newcommand{\corrOsaOne}{95\%}
+\newcommand{\corrMrOne}{80\%}
+\newcommand{\corrOrOne}{100\%}
+\newcommand{\corrPrOne}{100\%}
+\newcommand{\corrBmOne}{45\%}
+\newcommand{\corrTruth}{100\%}
+\newcommand{\remOsa}{0.848}
+\newcommand{\remMr}{0.849}
+\newcommand{\remOr}{0.854}
+\newcommand{\remTruth}{0.848}
+\newcommand{\remRand}{0.853}
+\newcommand{\remAll}{0.854}
+\newcommand{\mlpOsaNoDP}{0.91}
+\newcommand{\mlpParNoDP}{0.67}
+\newcommand{\mlpMrNoDP}{0.78}
+\newcommand{\mlpOsaVsMrNoDP}{+0.13\ [+0.07, +0.19]}
+\newcommand{\mlpOsaTwo}{0.65}
+\newcommand{\mlpParTwo}{0.65}
+\newcommand{\mlpMrTwo}{0.82}
+\newcommand{\mlpOsaVsMrTwo}{\ensuremath{-}0.17\ [\ensuremath{-}0.25, \ensuremath{-}0.09]}
+\newcommand{\mlpOsaOne}{0.60}
+\newcommand{\mlpParOne}{0.60}
+\newcommand{\mlpMrOne}{0.78}
+\newcommand{\mlpOsaVsMrOne}{\ensuremath{-}0.18\ [\ensuremath{-}0.29, \ensuremath{-}0.07]}
+\newcommand{\mlpOsaFive}{0.68}
+\newcommand{\mlpParFive}{0.52}
+\newcommand{\mlpMrFive}{0.82}
+\newcommand{\mlpOsaVsMrFive}{\ensuremath{-}0.14\ [\ensuremath{-}0.19, \ensuremath{-}0.09]}
+\newcommand{\mlpOsaHalf}{0.42}
+\newcommand{\mlpParHalf}{0.44}
+\newcommand{\mlpMrHalf}{0.74}
+\newcommand{\mlpOsaVsMrHalf}{\ensuremath{-}0.32\ [\ensuremath{-}0.46, \ensuremath{-}0.18]}
+\newcommand{\mlpBmTwo}{0.16}
+\newcommand{\mlpOsaVsBmTwo}{+0.47\ [\ensuremath{-}0.34, +1.28]}
+\newcommand{\mlpTrueEpsTwo}{85}
+\newcommand{\mlpBmOne}{0.05}
+\newcommand{\mlpOsaVsBmOne}{+0.46\ [\ensuremath{-}0.42, +1.35]}
+\newcommand{\mlpTrueEpsOne}{33}
+\newcommand{\mlpBmSeeds}{5}
+\newcommand{\blAvg}{0.816}
+\newcommand{\blAvgLong}{0.818}
+\newcommand{\blAdam}{0.818}
+\newcommand{\blScaf}{0.816}
+\newcommand{\blMLP}{0.821}
+\newcommand{\blGB}{0.824}
+\newcommand{\blRF}{0.820}
+\newcommand{\blCMLP}{0.828}
+\newcommand{\blCLR}{0.819}
+\newcommand{\blDLong}{+0.002\ [+0.001, +0.003]}
+\newcommand{\blDAdam}{+0.002\ [+0.000, +0.005]}
+\newcommand{\blDMLP}{+0.005\ [+0.001, +0.009]}
+\newcommand{\blDGB}{+0.009\ [+0.004, +0.014]}
+\newcommand{\blDScaf}{\ensuremath{-}0.000\ [\ensuremath{-}0.001, +0.000]}
+\newcommand{\blLMLP}{+0.005\ [\ensuremath{-}0.000, +0.010]}
+\newcommand{\blLGB}{\ensuremath{-}0.003\ [\ensuremath{-}0.011, +0.004]}
+\newcommand{\blScafDrift}{65}
+\newcommand{\blProxDrift}{31}
+\newcommand{\blDpScaf}{+0.000\ [\ensuremath{-}0.000, +0.000]}
+\newcommand{\blDpAdam}{\ensuremath{-}0.004\ [\ensuremath{-}0.008, +0.000]}
+\newcommand{\blDpProx}{\ensuremath{-}0.001\ [\ensuremath{-}0.004, +0.001]}
+\newcommand{\btScafLow}{\ensuremath{-}0.004\ [\ensuremath{-}0.007, \ensuremath{-}0.001]}
+\newcommand{\btAdamLow}{\ensuremath{-}0.016\ [\ensuremath{-}0.033, +0.001]}
+\newcommand{\btMLPLow}{\ensuremath{-}0.013\ [\ensuremath{-}0.028, +0.001]}
+\newcommand{\btAvgLow}{0.827}
+\newcommand{\btScafMid}{+0.000\ [\ensuremath{-}0.002, +0.003]}
+\newcommand{\btAdamMid}{\ensuremath{-}0.012\ [\ensuremath{-}0.025, +0.002]}
+\newcommand{\btMLPMid}{\ensuremath{-}0.017\ [\ensuremath{-}0.030, \ensuremath{-}0.004]}
+\newcommand{\btAvgMid}{0.822}
+\newcommand{\btGB}{0.786}
+\newcommand{\btCLR}{0.825}
+\newcommand{\cvgFLminusLOC}{\ensuremath{-}0.005\ [\ensuremath{-}0.016, +0.006]}
+\newcommand{\cvgFLminusNoh}{\ensuremath{-}0.008\ [\ensuremath{-}0.013, \ensuremath{-}0.003]}
+\newcommand{\cvgFRminusFL}{\ensuremath{-}0.001\ [\ensuremath{-}0.001, \ensuremath{-}0.001]}
+\newcommand{\cvgCENminusFL}{+0.001\ [\ensuremath{-}0.000, +0.003]}
+\newcommand{\cvgFL}{0.826}
+\newcommand{\cvgWFL}{0.858}
+\newcommand{\cvgWNoh}{0.850}
+\newcommand{\ssSigFull}{49.0}
+\newcommand{\ssSigThree}{25.6}
+\newcommand{\ssSigOne}{15.6}
+\newcommand{\ssTThreeOne}{\ensuremath{-}0.009\ [\ensuremath{-}0.042, +0.025]}
+\newcommand{\ssTThreeHalf}{\ensuremath{-}0.010\ [\ensuremath{-}0.070, +0.051]}
+\newcommand{\ssTOneOne}{\ensuremath{-}0.009\ [\ensuremath{-}0.025, +0.008]}
+\newcommand{\ssPThreeOne}{+0.001\ [\ensuremath{-}0.003, +0.004]}
+\newcommand{\ssTFullOne}{0.761}
+\newcommand{\ssTThreeOneAbs}{0.752}
+\newcommand{\pxLSizeNoDP}{0.08}
+\newcommand{\pxdLSizeNoDP}{+0.88\ [+0.79, +0.97]}
+\newcommand{\pxLPosNoDP}{0.02}
+\newcommand{\pxdLPosNoDP}{+0.94\ [+0.85, +1.03]}
+\newcommand{\pxLStatNoDP}{\ensuremath{-}0.18}
+\newcommand{\pxdLStatNoDP}{+1.14\ [+1.06, +1.21]}
+\newcommand{\pxLOwnNoDP}{0.36}
+\newcommand{\pxdLOwnNoDP}{+0.60\ [+0.44, +0.76]}
+\newcommand{\pxLRefNoDP}{0.93}
+\newcommand{\pxdLRefNoDP}{+0.03\ [+0.01, +0.05]}
+\newcommand{\pxLLooNoDP}{0.85}
+\newcommand{\pxdLLooNoDP}{+0.12\ [+0.08, +0.15]}
+\newcommand{\pxLOsaNoDP}{0.96}
+\newcommand{\pxLMrNoDP}{0.74}
+\newcommand{\pxdLMrNoDP}{+0.22\ [+0.18, +0.27]}
+\newcommand{\pxLOrNoDP}{0.42}
+\newcommand{\pxdLOrNoDP}{+0.54\ [+0.44, +0.65]}
+\newcommand{\pxLSizeFive}{0.08}
+\newcommand{\pxdLSizeFive}{+0.82\ [+0.72, +0.92]}
+\newcommand{\pxLPosFive}{0.02}
+\newcommand{\pxdLPosFive}{+0.88\ [+0.78, +0.99]}
+\newcommand{\pxLStatFive}{\ensuremath{-}0.18}
+\newcommand{\pxdLStatFive}{+1.08\ [+1.00, +1.16]}
+\newcommand{\pxLOwnFive}{0.26}
+\newcommand{\pxdLOwnFive}{+0.64\ [+0.48, +0.80]}
+\newcommand{\pxLRefFive}{0.88}
+\newcommand{\pxdLRefFive}{+0.02\ [\ensuremath{-}0.01, +0.05]}
+\newcommand{\pxLLooFive}{0.79}
+\newcommand{\pxdLLooFive}{+0.12\ [+0.08, +0.15]}
+\newcommand{\pxLOsaFive}{0.90}
+\newcommand{\pxLMrFive}{0.72}
+\newcommand{\pxdLMrFive}{+0.18\ [+0.14, +0.22]}
+\newcommand{\pxLOrFive}{0.53}
+\newcommand{\pxdLOrFive}{+0.37\ [+0.27, +0.47]}
+\newcommand{\pxLSizeTwo}{0.08}
+\newcommand{\pxdLSizeTwo}{+0.80\ [+0.70, +0.91]}
+\newcommand{\pxLPosTwo}{0.02}
+\newcommand{\pxdLPosTwo}{+0.87\ [+0.76, +0.97]}
+\newcommand{\pxLStatTwo}{\ensuremath{-}0.18}
+\newcommand{\pxdLStatTwo}{+1.06\ [+0.98, +1.15]}
+\newcommand{\pxLOwnTwo}{0.25}
+\newcommand{\pxdLOwnTwo}{+0.64\ [+0.49, +0.79]}
+\newcommand{\pxLRefTwo}{0.85}
+\newcommand{\pxdLRefTwo}{+0.04\ [\ensuremath{-}0.00, +0.08]}
+\newcommand{\pxLLooTwo}{0.77}
+\newcommand{\pxdLLooTwo}{+0.11\ [+0.08, +0.15]}
+\newcommand{\pxLOsaTwo}{0.89}
+\newcommand{\pxLMrTwo}{0.75}
+\newcommand{\pxdLMrTwo}{+0.14\ [+0.08, +0.19]}
+\newcommand{\pxLOrTwo}{0.51}
+\newcommand{\pxdLOrTwo}{+0.37\ [+0.26, +0.48]}
+\newcommand{\pxLSizeOne}{0.08}
+\newcommand{\pxdLSizeOne}{+0.72\ [+0.61, +0.83]}
+\newcommand{\pxLPosOne}{0.02}
+\newcommand{\pxdLPosOne}{+0.78\ [+0.67, +0.90]}
+\newcommand{\pxLStatOne}{\ensuremath{-}0.18}
+\newcommand{\pxdLStatOne}{+0.98\ [+0.88, +1.08]}
+\newcommand{\pxLOwnOne}{0.26}
+\newcommand{\pxdLOwnOne}{+0.54\ [+0.42, +0.66]}
+\newcommand{\pxLRefOne}{0.71}
+\newcommand{\pxdLRefOne}{+0.10\ [+0.05, +0.14]}
+\newcommand{\pxLLooOne}{0.74}
+\newcommand{\pxdLLooOne}{+0.06\ [+0.01, +0.11]}
+\newcommand{\pxLOsaOne}{0.80}
+\newcommand{\pxLMrOne}{0.65}
+\newcommand{\pxdLMrOne}{+0.15\ [+0.03, +0.26]}
+\newcommand{\pxLOrOne}{0.50}
+\newcommand{\pxdLOrOne}{+0.31\ [+0.18, +0.44]}
+\newcommand{\pxSSizeNoDP}{0.74}
+\newcommand{\pxdSSizeNoDP}{+0.21\ [+0.19, +0.24]}
+\newcommand{\pxSPosNoDP}{0.50}
+\newcommand{\pxdSPosNoDP}{+0.46\ [+0.43, +0.49]}
+\newcommand{\pxSStatNoDP}{0.72}
+\newcommand{\pxdSStatNoDP}{+0.23\ [+0.17, +0.29]}
+\newcommand{\pxSOwnNoDP}{0.40}
+\newcommand{\pxdSOwnNoDP}{+0.55\ [+0.45, +0.65]}
+\newcommand{\pxSRefNoDP}{0.94}
+\newcommand{\pxdSRefNoDP}{+0.01\ [\ensuremath{-}0.02, +0.03]}
+\newcommand{\pxSLooNoDP}{0.59}
+\newcommand{\pxdSLooNoDP}{+0.37\ [+0.28, +0.45]}
+\newcommand{\pxSOsaNoDP}{0.95}
+\newcommand{\pxSMrNoDP}{0.86}
+\newcommand{\pxdSMrNoDP}{+0.10\ [+0.05, +0.14]}
+\newcommand{\pxSOrNoDP}{0.79}
+\newcommand{\pxdSOrNoDP}{+0.16\ [+0.12, +0.21]}
+\newcommand{\pxSSizeFive}{0.74}
+\newcommand{\pxdSSizeFive}{+0.11\ [+0.07, +0.16]}
+\newcommand{\pxSPosFive}{0.50}
+\newcommand{\pxdSPosFive}{+0.36\ [+0.31, +0.40]}
+\newcommand{\pxSStatFive}{0.72}
+\newcommand{\pxdSStatFive}{+0.13\ [+0.07, +0.19]}
+\newcommand{\pxSOwnFive}{0.49}
+\newcommand{\pxdSOwnFive}{+0.37\ [+0.23, +0.50]}
+\newcommand{\pxSRefFive}{0.85}
+\newcommand{\pxdSRefFive}{+0.00\ [\ensuremath{-}0.02, +0.02]}
+\newcommand{\pxSLooFive}{0.36}
+\newcommand{\pxdSLooFive}{+0.49\ [+0.40, +0.58]}
+\newcommand{\pxSOsaFive}{0.85}
+\newcommand{\pxSMrFive}{0.83}
+\newcommand{\pxdSMrFive}{+0.03\ [\ensuremath{-}0.00, +0.06]}
+\newcommand{\pxSOrFive}{0.81}
+\newcommand{\pxdSOrFive}{+0.04\ [\ensuremath{-}0.00, +0.08]}
+\newcommand{\pxSBmFive}{0.68}
+\newcommand{\pxdSBmFive}{+0.17\ [+0.09, +0.25]}
+\newcommand{\pxSSizeTwo}{0.74}
+\newcommand{\pxdSSizeTwo}{+0.05\ [\ensuremath{-}0.01, +0.10]}
+\newcommand{\pxSPosTwo}{0.50}
+\newcommand{\pxdSPosTwo}{+0.29\ [+0.24, +0.35]}
+\newcommand{\pxSStatTwo}{0.72}
+\newcommand{\pxdSStatTwo}{+0.06\ [\ensuremath{-}0.01, +0.14]}
+\newcommand{\pxSOwnTwo}{0.54}
+\newcommand{\pxdSOwnTwo}{+0.24\ [+0.12, +0.36]}
+\newcommand{\pxSRefTwo}{0.79}
+\newcommand{\pxdSRefTwo}{\ensuremath{-}0.00\ [\ensuremath{-}0.06, +0.06]}
+\newcommand{\pxSLooTwo}{0.34}
+\newcommand{\pxdSLooTwo}{+0.44\ [+0.34, +0.54]}
+\newcommand{\pxSOsaTwo}{0.79}
+\newcommand{\pxSMrTwo}{0.78}
+\newcommand{\pxdSMrTwo}{+0.00\ [\ensuremath{-}0.06, +0.06]}
+\newcommand{\pxSOrTwo}{0.74}
+\newcommand{\pxdSOrTwo}{+0.05\ [\ensuremath{-}0.03, +0.13]}
+\newcommand{\pxSBmTwo}{0.45}
+\newcommand{\pxdSBmTwo}{+0.34\ [+0.24, +0.44]}
+\newcommand{\pxSSizeOne}{0.74}
+\newcommand{\pxdSSizeOne}{\ensuremath{-}0.06\ [\ensuremath{-}0.15, +0.02]}
+\newcommand{\pxSPosOne}{0.50}
+\newcommand{\pxdSPosOne}{+0.18\ [+0.10, +0.27]}
+\newcommand{\pxSStatOne}{0.72}
+\newcommand{\pxdSStatOne}{\ensuremath{-}0.04\ [\ensuremath{-}0.15, +0.06]}
+\newcommand{\pxSOwnOne}{0.56}
+\newcommand{\pxdSOwnOne}{+0.12\ [\ensuremath{-}0.00, +0.24]}
+\newcommand{\pxSRefOne}{0.72}
+\newcommand{\pxdSRefOne}{\ensuremath{-}0.04\ [\ensuremath{-}0.10, +0.02]}
+\newcommand{\pxSLooOne}{0.34}
+\newcommand{\pxdSLooOne}{+0.34\ [+0.25, +0.44]}
+\newcommand{\pxSOsaOne}{0.68}
+\newcommand{\pxSMrOne}{0.74}
+\newcommand{\pxdSMrOne}{\ensuremath{-}0.06\ [\ensuremath{-}0.15, +0.03]}
+\newcommand{\pxSOrOne}{0.59}
+\newcommand{\pxdSOrOne}{+0.09\ [\ensuremath{-}0.01, +0.19]}
+\newcommand{\pxSBmOne}{0.29}
+\newcommand{\pxdSBmOne}{+0.39\ [+0.25, +0.52]}
+\newcommand{\pxCSizeNoDP}{0\%}
+\newcommand{\pxCStatNoDP}{0\%}
+\newcommand{\pxCOwnNoDP}{95\%}
+\newcommand{\pxCRefNoDP}{100\%}
+\newcommand{\pxCLooNoDP}{0\%}
+\newcommand{\pxCOsaNoDP}{100\%}
+\newcommand{\pxCSizeTwo}{0\%}
+\newcommand{\pxCStatTwo}{0\%}
+\newcommand{\pxCOwnTwo}{100\%}
+\newcommand{\pxCRefTwo}{100\%}
+\newcommand{\pxCLooTwo}{0\%}
+\newcommand{\pxCOsaTwo}{100\%}
+\newcommand{\pxCSizeOne}{0\%}
+\newcommand{\pxCStatOne}{0\%}
+\newcommand{\pxCOwnOne}{90\%}
+\newcommand{\pxCRefOne}{100\%}
+\newcommand{\pxCLooOne}{0\%}
+\newcommand{\pxCOsaOne}{95\%}
+\newcommand{\pxSmallMin}{16}
+\newcommand{\pxSmallMax}{266}
+\newcommand{\pxSmallHosp}{nl, it, es4, es5, de2, gb, es1, es8, es3, es2}
+\newcommand{\accMcNineteenOne}{52}
+\newcommand{\accMcTenOne}{34}
+\newcommand{\accMcFiftyOne}{103}
+\newcommand{\accFourOne}{2.9}
+\newcommand{\accFourTwo}{6.1}
+\newcommand{\hrSizeNoDP}{\ensuremath{-}0.38}
+\newcommand{\hrdSizeNoDP}{+1.30\ [+1.12, +1.48]}
+\newcommand{\hrStatNoDP}{\ensuremath{-}0.38}
+\newcommand{\hrdStatNoDP}{+1.30\ [+1.12, +1.48]}
+\newcommand{\hrOwnNoDP}{\ensuremath{-}0.18}
+\newcommand{\hrdOwnNoDP}{+1.10\ [+0.84, +1.36]}
+\newcommand{\hrRefNoDP}{0.76}
+\newcommand{\hrdRefNoDP}{+0.16\ [\ensuremath{-}0.01, +0.33]}
+\newcommand{\hrLooNoDP}{0.82}
+\newcommand{\hrdLooNoDP}{+0.10\ [\ensuremath{-}0.00, +0.20]}
+\newcommand{\hrOsaNoDP}{0.92}
+\newcommand{\hrMrNoDP}{0.70}
+\newcommand{\hrdMrNoDP}{+0.22\ [+0.05, +0.39]}
+\newcommand{\hrOrNoDP}{0.23}
+\newcommand{\hrdOrNoDP}{+0.69\ [+0.46, +0.92]}
+\newcommand{\hrSizeFive}{\ensuremath{-}0.38}
+\newcommand{\hrdSizeFive}{+0.89\ [+0.51, +1.27]}
+\newcommand{\hrStatFive}{\ensuremath{-}0.38}
+\newcommand{\hrdStatFive}{+0.89\ [+0.51, +1.27]}
+\newcommand{\hrOwnFive}{\ensuremath{-}0.17}
+\newcommand{\hrdOwnFive}{+0.68\ [+0.28, +1.08]}
+\newcommand{\hrRefFive}{0.42}
+\newcommand{\hrdRefFive}{+0.09\ [\ensuremath{-}0.05, +0.23]}
+\newcommand{\hrLooFive}{0.69}
+\newcommand{\hrdLooFive}{\ensuremath{-}0.18\ [\ensuremath{-}0.39, +0.03]}
+\newcommand{\hrOsaFive}{0.51}
+\newcommand{\hrMrFive}{0.64}
+\newcommand{\hrdMrFive}{\ensuremath{-}0.13\ [\ensuremath{-}0.38, +0.12]}
+\newcommand{\hrOrFive}{0.29}
+\newcommand{\hrdOrFive}{+0.22\ [+0.01, +0.43]}
+\newcommand{\hrBmFive}{\ensuremath{-}0.02}
+\newcommand{\hrdBmFive}{+0.53\ [+0.17, +0.89]}
+\newcommand{\hrPrFive}{0.34}
+\newcommand{\hrdPrFive}{+0.17\ [\ensuremath{-}0.18, +0.52]}
+\newcommand{\hrSizeTwo}{\ensuremath{-}0.38}
+\newcommand{\hrdSizeTwo}{+0.53\ [+0.28, +0.78]}
+\newcommand{\hrStatTwo}{\ensuremath{-}0.38}
+\newcommand{\hrdStatTwo}{+0.53\ [+0.28, +0.78]}
+\newcommand{\hrOwnTwo}{\ensuremath{-}0.31}
+\newcommand{\hrdOwnTwo}{+0.46\ [+0.19, +0.73]}
+\newcommand{\hrRefTwo}{\ensuremath{-}0.04}
+\newcommand{\hrdRefTwo}{+0.19\ [+0.05, +0.33]}
+\newcommand{\hrLooTwo}{0.42}
+\newcommand{\hrdLooTwo}{\ensuremath{-}0.27\ [\ensuremath{-}0.59, +0.05]}
+\newcommand{\hrOsaTwo}{0.15}
+\newcommand{\hrMrTwo}{0.45}
+\newcommand{\hrdMrTwo}{\ensuremath{-}0.30\ [\ensuremath{-}0.59, \ensuremath{-}0.01]}
+\newcommand{\hrOrTwo}{0.18}
+\newcommand{\hrdOrTwo}{\ensuremath{-}0.03\ [\ensuremath{-}0.34, +0.28]}
+\newcommand{\hrBmTwo}{\ensuremath{-}0.18}
+\newcommand{\hrdBmTwo}{+0.33\ [+0.05, +0.61]}
+\newcommand{\hrPrTwo}{\ensuremath{-}0.09}
+\newcommand{\hrdPrTwo}{+0.24\ [\ensuremath{-}0.04, +0.52]}
+\newcommand{\hrSizeOne}{\ensuremath{-}0.38}
+\newcommand{\hrdSizeOne}{+0.20\ [+0.02, +0.38]}
+\newcommand{\hrStatOne}{\ensuremath{-}0.38}
+\newcommand{\hrdStatOne}{+0.20\ [+0.02, +0.38]}
+\newcommand{\hrOwnOne}{\ensuremath{-}0.30}
+\newcommand{\hrdOwnOne}{+0.12\ [\ensuremath{-}0.16, +0.40]}
+\newcommand{\hrRefOne}{\ensuremath{-}0.34}
+\newcommand{\hrdRefOne}{+0.16\ [\ensuremath{-}0.01, +0.33]}
+\newcommand{\hrLooOne}{0.18}
+\newcommand{\hrdLooOne}{\ensuremath{-}0.36\ [\ensuremath{-}0.68, \ensuremath{-}0.04]}
+\newcommand{\hrOsaOne}{\ensuremath{-}0.18}
+\newcommand{\hrMrOne}{\ensuremath{-}0.35}
+\newcommand{\hrdMrOne}{+0.17\ [\ensuremath{-}0.05, +0.39]}
+\newcommand{\hrOrOne}{0.04}
+\newcommand{\hrdOrOne}{\ensuremath{-}0.22\ [\ensuremath{-}0.59, +0.15]}
+\newcommand{\hrBmOne}{\ensuremath{-}0.15}
+\newcommand{\hrdBmOne}{\ensuremath{-}0.03\ [\ensuremath{-}0.32, +0.26]}
+\newcommand{\hrPrOne}{\ensuremath{-}0.27}
+\newcommand{\hrdPrOne}{+0.09\ [\ensuremath{-}0.12, +0.30]}
+\newcommand{\hrCOsaTwo}{100\%}
+\newcommand{\hrCRefTwo}{100\%}
+\newcommand{\hrCSizeTwo}{0\%}
+\newcommand{\hrCOsaOne}{80\%}
+\newcommand{\hrCRefOne}{85\%}
+\newcommand{\hrCSizeOne}{0\%}
+\newcommand{\hrN}{920}
+\newcommand{\hrFeat}{20}
+\newcommand{\hrAuc}{0.85}
+\newcommand{\hrCorrupt}{Budapest}
+\newcommand{\hrPhiMin}{0.085}
+\newcommand{\hrPhiMax}{0.101}
+\newcommand{\hrTrueOne}{2.9}
+\newcommand{\hrTrueTwo}{6.1}
+\newcommand{\nuLarge}{114}
+\newcommand{\nuSmall}{45}
+\newcommand{\nuHeart}{43}
+\newcommand{\nuMlp}{26}
+\newcommand{\nsCrossTwo}{21}
+\newcommand{\nsCrossOneMax}{38}
+\newcommand{\nsCrossOneMin}{26}
+\newcommand{\nsSpear}{0.57}
+\newcommand{\nsLowerCount}{5}
+\newcommand{\nsAFortyFiveNu}{45}
+\newcommand{\nsAFortyFiveTwo}{+0.18\ [+0.08, +0.29]}
+\newcommand{\nsAFortyFiveOne}{+0.12\ [\ensuremath{-}0.04, +0.27]}
+\newcommand{\nsATwentyEightNu}{28}
+\newcommand{\nsATwentyEightTwo}{+0.12\ [+0.00, +0.24]}
+\newcommand{\nsATwentyEightOne}{+0.04\ [\ensuremath{-}0.07, +0.16]}
+\newcommand{\nsASeventeenNu}{17}
+\newcommand{\nsASeventeenTwo}{\ensuremath{-}0.09\ [\ensuremath{-}0.20, +0.03]}
+\newcommand{\nsASeventeenOne}{\ensuremath{-}0.18\ [\ensuremath{-}0.32, \ensuremath{-}0.03]}
+\newcommand{\nsASixtyEightNu}{68}
+\newcommand{\nsASixtyEightTwo}{+0.08\ [+0.00, +0.16]}
+\newcommand{\nsASixtyEightOne}{+0.14\ [+0.02, +0.26]}
+\newcommand{\nsBTwentyOneNu}{57}
+\newcommand{\nsBTwentyOneTwo}{+0.07\ [\ensuremath{-}0.03, +0.18]}
+\newcommand{\nsBTwentyOneOne}{+0.13\ [+0.01, +0.24]}
+\newcommand{\nsBFiftyNu}{40}
+\newcommand{\nsBFiftyTwo}{+0.05\ [\ensuremath{-}0.02, +0.12]}
+\newcommand{\nsBFiftyOne}{+0.01\ [\ensuremath{-}0.08, +0.10]}
+\newcommand{\nsBHundredNu}{29}
+\newcommand{\nsBHundredTwo}{+0.05\ [\ensuremath{-}0.02, +0.11]}
+\newcommand{\nsBHundredOne}{\ensuremath{-}0.07\ [\ensuremath{-}0.15, +0.00]}

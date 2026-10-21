@@ -53,3 +53,47 @@ training, Shapley axioms, fixed TS metric, MIA positive control, and reproducibi
 The app's *Validation* page shows the stored results and can re-run the checks live.
 
 `Paper/research_paper_before_fixes.tex` is the manuscript as it was before these changes.
+
+---
+
+## Upgrade: the base paper's own 19-hospital data (PCa-19)
+
+**Why.** TCGA-PRAD is small (347–493 patients), its "hospitals" are biobank contributors, its strongest predictors are
+post-surgical and it has no PSA. Reviewers at strong journals would treat that as a toy setting. The base paper
+(Kazlouski et al., 2025) released its full patient-level data in its public repository
+(github.com/phaseivai/Hospital-Participation-in-FL, MIT licence).
+
+**What was added**
+
+| Item | Where |
+| --- | --- |
+| 5,610 patients, 19 hospitals, 8 countries; label ISUP ≥ 2 at biopsy; age, PSA, prostate volume, PI-RADS | `datasets/PCa19/` (CSV + provenance + licence) |
+| Line-by-line re-implementation of the authors' protocol (sklearn LR, one-shot FedAvg, Ettala/Noh variables, their Monte-Carlo seeding) | `fl_study/multisite.py: reproduce_base_paper` |
+| Full DP-FPS framework on the real hospitals: strategies, learning curve, privacy grid with the step-size control, drift, personalisation, Shapley under DP, membership inference | `fl_study/multisite.py`, `run_pca19.py` |
+| External validation: leave-one-country-out, calibration (O/E, slope, Brier), decision curves, local recalibration | `multisite.loco` |
+| Exact Shapley for the 10 largest hospitals + stratified-sampling Shapley for all 19 (sizes 0 and K−1 exact) | `multisite.coalition_utilities_masks`, `stratified_shapley` |
+| 8 new validation checks (30 in total) | `fl_study/validate.py`, group "PCa-19" |
+| New app page "🌍 19 hospitals (PCa-19)"; PCa-19 verdicts on the Final-results page | `app.py`, `fl_study/claims.py` |
+| New paper section, 6 tables, 4 figures; abstract, introduction, discussion and conclusion rewritten | `Paper/sec_pca19.tex`, `Paper/generate_paper_assets.py` (old version: `research_paper_before_pca19.tex`) |
+
+**Things found along the way**
+
+* The base paper's text says "nine countries"; its Table I and released data contain **eight** (Finland and Turkey are
+  in its download script but not in the data). The validation check expects 8.
+* Plain permutation-sampling Shapley converges slowly here (max error 0.014 AUC with 400 permutations on 6 hospitals),
+  because a hospital placed first always gains ~0.35 AUC over a random model. Stratified sampling by coalition size,
+  with the two dominant strata computed exactly, cuts the error to 0.003 at similar cost.
+* Leave-one-country-out confidence intervals over seeds are almost zero-width (the held-out country is fully used, so
+  only the training draw varies). Inference therefore uses the 8 countries as independent units.
+
+---
+
+## Revision for Q1 submission
+
+| Item | What was done | Result |
+| --- | --- | --- |
+| New method: OSA-Shapley | `fl_study/private_valuation.py`; each hospital releases one DP-trained model; coalition models by size-weighted averaging (post-processing); exact Shapley over all coalitions. Local steps tuned on seeds 0-3, evaluated on seeds 20-39. | Retraining each coalition at "eps = 1 per run" really costs eps ~ 33 per hospital (10 hospitals). At an honest budget retraining loses the ranking (Spearman 0.10 at eps = 1); OSA-Shapley keeps it (0.80 at eps = 1, 0.89 at eps = 2) and is not significantly worse than per-run retraining that spends 28-42x more privacy. Exact 19-hospital valuation (524,287 coalitions) in about a minute. |
+| Subsampled DP accounting | Poisson-subsampled DP-SGD + sampled-Gaussian RDP (`fl.rdp_sampled_gaussian`) | Accountant matches numerical integration to 1e-13 and Abadi et al.'s eps = 1.26. Lower noise multipliers (49 -> 15.6 at eps = 1) but no utility gain on held-out seeds (TCGA -0.009, PCa-19 0.000). |
+| Stronger baselines | SCAFFOLD, FedAdam, federated MLP, converged FedAvg (400 steps), central gradient boosting / random forest / MLP; FedNova = FedAvg here | All federated variants within 0.006 AUC of FedAvg; SCAFFOLD removes 65% of drift with no AUC change; non-linear models do not transport better to unseen countries. Converged training changes no PCa-19 conclusion. |
+| IEEE template | Official IEEEtran.cls v1.8b and IEEEtran.bst v1.14 (two independent GitHub copies, identical to the official release) in `Paper/`; journal mode (IEEE JBHI style), main paper + supplement | Main paper 12 pages, supplement 8 pages; clean build. |
+| Reference check | Every BibTeX entry checked against Crossref, DBLP, arXiv and publisher pages (Google Scholar blocks automated queries) | Of 52 original entries: 13 correct, 28 corrected (authors, DOIs, titles, venues), 9 fabricated (removed or replaced by the real work), 2 pointing to a different paper (replaced). 16 new references added and verified. Old file kept as `Paper/references_before_verification.bib`. |
