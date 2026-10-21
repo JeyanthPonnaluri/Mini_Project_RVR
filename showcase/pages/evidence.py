@@ -18,6 +18,10 @@ def claims_page():
                 "“supported” only if the 95% confidence interval of the paired difference over the 20 splits excludes "
                 "zero in the claimed direction. Claims that failed are listed too.")
     rows = [r for r in CL.build(core.results()) if r["area"].startswith(AREAS)]
+    if not rows:
+        st.warning("The result files for the claims are not available in this deployment. "
+                   "Run `python run_pca19.py` to regenerate them.")
+        return
     df = pd.DataFrame([{"Area": AREA_SHORT.get(r["area"], r["area"]), "Claim": r["claim"].replace("eps", "ε"),
                         "Evidence (mean [95% CI])": r["evidence"].replace("eps", "ε").replace("rho", "ρ"),
                         "Verdict": MARK.get(r["verdict"], r["verdict"]), "_v": r["verdict"]} for r in rows])

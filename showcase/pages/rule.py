@@ -46,6 +46,8 @@ def render():
                 "No method wins everywhere, so a federation needs to know which one to use. We derived a rule from "
                 "the first results, wrote down where it predicts the switch-over, fingerprinted that prediction, "
                 "and only then ran the test. Two of six predictions failed, and we revised the rule.")
+    core.qa("Can a federation tell in advance which valuation to use?",
+            "Mostly. Patients per model parameter (ν) predicts the direction; 4 of 6 pre-registered predictions held, but the switch-over was at ν ≈ 21, not 50–100, so the rule was revised.")
 
     t1, t2, t3 = st.tabs(["Rule advisor", "The pre-registered test", "Integrity of the pre-registration"])
 

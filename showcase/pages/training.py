@@ -12,6 +12,8 @@ def render():
                 "Before valuing hospitals, we checked the federation that is valued: the base paper reproduced on "
                 "its own data, transport to unseen countries, the accuracy cost of privacy, stronger baselines and a "
                 "privacy audit. These results are summarised in the paper and detailed in its supplement.")
+    core.qa("Is the federation being valued a sound one?",
+            "Yes. The base study is reproduced to 10<sup>−14</sup>, the model transports to unseen countries, and privacy at ε = 0.5 costs under 0.02 AUC; calibration needs a local intercept update.")
     s = core.R("pca19_strategies"); d = s["diff"]
     k = st.columns(4)
     with k[0]:

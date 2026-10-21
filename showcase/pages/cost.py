@@ -28,6 +28,8 @@ def render():
                 "Exact Shapley values need a model for every coalition of hospitals. The common way to get them under "
                 "differential privacy retrains each coalition and reports the budget of a single run. But a hospital "
                 "takes part in many runs, and privacy losses add up.")
+    core.qa("If hospitals value each other by retraining every coalition with differential privacy, how much privacy do patients really spend?",
+            "Far more than reported. Each patient enters 2<sup>K−1</sup> private runs: with 10 hospitals a stated ε = 1 is really ε ≈ 33, and even 100 sampled permutations over 19 hospitals cost ε ≈ 52.")
 
     c = st.columns(3)
     with c[0]:

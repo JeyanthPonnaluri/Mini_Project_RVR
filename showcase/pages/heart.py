@@ -11,6 +11,8 @@ def render():
                 "We repeated the whole comparison on an independent federation, the four hospitals of the UCI Heart "
                 "Disease collection, with OSA-Shapley's settings unchanged. Without privacy noise it works; under "
                 "differential privacy it does not. We report this in full.")
+    core.qa("Does the result carry over to a second, smaller federation?",
+            "Only without privacy noise (ρ 0.92 vs 0.70). Under DP, reconstruction wins (0.45 vs 0.15 at ε = 2). We report this limit openly.")
     rho = hv["rho"]
     k = st.columns(4)
     with k[0]:

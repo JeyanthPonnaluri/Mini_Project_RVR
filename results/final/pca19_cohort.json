@@ -1,0 +1,211 @@
+{
+ "n": 5610,
+ "n_pos": 2146,
+ "hospitals": [
+  {
+   "hospital": "de1",
+   "country": "Germany",
+   "n": 763,
+   "prevalence": 0.4259501965923984,
+   "age_median": 65.0,
+   "psa_median": 8.04,
+   "pv_median": 47.0,
+   "pirads_ge4": 0.7352555701179554
+  },
+  {
+   "hospital": "es7",
+   "country": "Spain",
+   "n": 711,
+   "prevalence": 0.5049226441631505,
+   "age_median": 67.0,
+   "psa_median": 7.6,
+   "pv_median": 53.0,
+   "pirads_ge4": 0.5471167369901547
+  },
+  {
+   "hospital": "kr2",
+   "country": "South Korea",
+   "n": 590,
+   "prevalence": 0.3813559322033898,
+   "age_median": 68.0,
+   "psa_median": 7.0,
+   "pv_median": 42.0,
+   "pirads_ge4": 0.7169491525423729
+  },
+  {
+   "hospital": "ch2",
+   "country": "China",
+   "n": 530,
+   "prevalence": 0.330188679245283,
+   "age_median": 67.0,
+   "psa_median": 10.28,
+   "pv_median": 40.70326,
+   "pirads_ge4": 0.4207547169811321
+  },
+  {
+   "hospital": "kr1",
+   "country": "South Korea",
+   "n": 406,
+   "prevalence": 0.2512315270935961,
+   "age_median": 64.0,
+   "psa_median": 6.8,
+   "pv_median": 36.05,
+   "pirads_ge4": 0.27832512315270935
+  },
+  {
+   "hospital": "es6",
+   "country": "Spain",
+   "n": 346,
+   "prevalence": 0.43352601156069365,
+   "age_median": 69.0,
+   "psa_median": 7.574999999999999,
+   "pv_median": 52.5,
+   "pirads_ge4": 0.7832369942196532
+  },
+  {
+   "hospital": "ch1",
+   "country": "China",
+   "n": 312,
+   "prevalence": 0.266025641025641,
+   "age_median": 66.0,
+   "psa_median": 9.684999999999999,
+   "pv_median": 44.95062,
+   "pirads_ge4": 0.4326923076923077
+  },
+  {
+   "hospital": "us2",
+   "country": "USA",
+   "n": 310,
+   "prevalence": 0.4774193548387097,
+   "age_median": 65.2,
+   "psa_median": 7.3,
+   "pv_median": 46.0,
+   "pirads_ge4": 0.8193548387096774
+  },
+  {
+   "hospital": "us1",
+   "country": "USA",
+   "n": 280,
+   "prevalence": 0.45357142857142857,
+   "age_median": 62.0,
+   "psa_median": 5.455,
+   "pv_median": 45.0,
+   "pirads_ge4": 0.6214285714285714
+  },
+  {
+   "hospital": "nl",
+   "country": "Netherlands",
+   "n": 266,
+   "prevalence": 0.2593984962406015,
+   "age_median": 66.55,
+   "psa_median": 11.1,
+   "pv_median": 56.0,
+   "pirads_ge4": 0.35714285714285715
+  },
+  {
+   "hospital": "it",
+   "country": "Italy",
+   "n": 218,
+   "prevalence": 0.12385321100917432,
+   "age_median": 65.0,
+   "psa_median": 8.030000000000001,
+   "pv_median": 54.0,
+   "pirads_ge4": 0.38073394495412843
+  },
+  {
+   "hospital": "es4",
+   "country": "Spain",
+   "n": 200,
+   "prevalence": 0.345,
+   "age_median": 69.0,
+   "psa_median": 7.645,
+   "pv_median": 55.0,
+   "pirads_ge4": 0.555
+  },
+  {
+   "hospital": "es5",
+   "country": "Spain",
+   "n": 200,
+   "prevalence": 0.47,
+   "age_median": 70.0,
+   "psa_median": 10.6,
+   "pv_median": 56.0,
+   "pirads_ge4": 0.795
+  },
+  {
+   "hospital": "de2",
+   "country": "Germany",
+   "n": 162,
+   "prevalence": 0.4691358024691358,
+   "age_median": 65.0,
+   "psa_median": 6.55,
+   "pv_median": 40.0,
+   "pirads_ge4": 0.6975308641975309
+  },
+  {
+   "hospital": "gb",
+   "country": "United Kingdom",
+   "n": 133,
+   "prevalence": 0.2857142857142857,
+   "age_median": 64.0,
+   "psa_median": 7.6,
+   "pv_median": 45.0,
+   "pirads_ge4": 0.48120300751879697
+  },
+  {
+   "hospital": "es1",
+   "country": "Spain",
+   "n": 79,
+   "prevalence": 0.4177215189873418,
+   "age_median": 69.0,
+   "psa_median": 6.35,
+   "pv_median": 61.0,
+   "pirads_ge4": 0.9746835443037974
+  },
+  {
+   "hospital": "es8",
+   "country": "Spain",
+   "n": 58,
+   "prevalence": 0.3793103448275862,
+   "age_median": 70.0,
+   "psa_median": 6.5,
+   "pv_median": 55.5,
+   "pirads_ge4": 0.8103448275862069
+  },
+  {
+   "hospital": "es3",
+   "country": "Spain",
+   "n": 30,
+   "prevalence": 0.6,
+   "age_median": 69.0,
+   "psa_median": 9.0,
+   "pv_median": 50.0,
+   "pirads_ge4": 0.9666666666666667
+  },
+  {
+   "hospital": "es2",
+   "country": "Spain",
+   "n": 16,
+   "prevalence": 0.375,
+   "age_median": 64.0,
+   "psa_median": 277.0,
+   "pv_median": 81.0,
+   "pirads_ge4": 0.6875
+  }
+ ],
+ "n_hospitals": 19,
+ "n_countries": 8,
+ "features": [
+  "age",
+  "log_psa",
+  "log_pv",
+  "pirads_3",
+  "pirads_4",
+  "pirads_5"
+ ],
+ "prevalence_range": [
+  0.12385321100917432,
+  0.6
+ ],
+ "source": "github.com/phaseivai/Hospital-Participation-in-FL (MIT), data/data.pkl"
+}

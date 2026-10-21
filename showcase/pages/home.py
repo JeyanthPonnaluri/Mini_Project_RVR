@@ -11,14 +11,32 @@ def render():
     L = vq["large10"]["rho"]
 
     st.markdown(f"""
-<div class='sc-hero'>
-  <div class='sc-kicker'>Research showcase · IEEE J-BHI manuscript</div>
+<div class='sc-paper'>
+  <div class='sc-venue'>Research showcase · manuscript for IEEE Journal of Biomedical and Health Informatics</div>
   <h1>{core.TITLE}</h1>
-  <p>Hospitals that train a clinical model together need to know what each one contributes. Under differential
-  privacy, the usual way of measuring this secretly multiplies the privacy cost. We count that cost, compare every
-  valuation that pays it only once, and test in advance when each one should be used.</p>
-  <div class='sc-auth'>{core.AUTHORS}<br>{core.AFFIL}</div>
+  <div class='sc-authors'>{core.AUTHORS}</div>
+  <div class='sc-affil'>{core.AFFIL}</div>
+  <div class='sc-abstract'><b>In brief</b>Hospitals that train a clinical model together need to know what each one
+  contributes. Under differential privacy, the usual way of measuring this, retraining every coalition of hospitals,
+  secretly multiplies the privacy cost. We count that cost exactly, compare every valuation that pays it only once
+  against cheap proxies on two real hospital federations, and test in advance when each method should be used.</div>
+  <div class='sc-tags'><span class='sc-tag'>Federated learning</span><span class='sc-tag'>Differential privacy</span>
+  <span class='sc-tag'>Shapley values</span><span class='sc-tag'>Privacy accounting</span>
+  <span class='sc-tag'>Prostate cancer</span><span class='sc-tag'>Coronary artery disease</span>
+  <span class='sc-tag'>Pre-registered test</span></div>
 </div>""", unsafe_allow_html=True)
+
+    b = st.columns([1, 1, 1, 1.6])
+    pdf = core.file_bytes(core.os.path.join(core.PAPER_DIR, "research_paper.pdf"))
+    with b[0]:
+        if pdf:
+            st.download_button("Download paper (PDF)", pdf, "Hidden_Privacy_Cost_Valuing_Hospitals.pdf",
+                               "application/pdf", icon=":material/download:", use_container_width=True)
+    with b[1]:
+        st.link_button("Source code", core.REPO_URL, icon=":material/code:", use_container_width=True)
+    with b[2]:
+        core.link("lab", "Try the valuation lab", ":material/science:")
+    st.write("")
 
     k = st.columns(5)
     with k[0]:

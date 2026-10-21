@@ -39,6 +39,8 @@ def render():
                 "cost is already counted, or by cheap proxies that cost nothing. Which of them recovers the true "
                 "ranking? The reference is the exact non-private Shapley ranking, obtained by retraining every coalition "
                 "without noise.")
+    core.qa("Which valuation should a federation use if it pays the privacy budget only once?",
+            "For the 19 prostate-cancer hospitals, OSA-Shapley: ρ = 0.89 with the exact ranking at ε = 2, against 0.75 for reconstruction, 0.18 for honest retraining and 0.08 for hospital size.")
 
     with st.expander("The six contenders", expanded=False):
         cols = st.columns(3)

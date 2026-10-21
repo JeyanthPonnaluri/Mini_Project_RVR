@@ -9,40 +9,62 @@ The previous version of this app is kept as app_previous.py.
 """
 import streamlit as st
 
-st.set_page_config(page_title="Valuing Hospitals, Privately", page_icon="🏥", layout="wide",
-                   initial_sidebar_state="expanded")
+st.set_page_config(page_title="The Hidden Privacy Cost of Valuing Hospitals", page_icon=":material/biotech:",
+                   layout="wide", initial_sidebar_state="expanded")
 
 from showcase import core  # noqa: E402
 from showcase.pages import cost, earlier, evidence, federations, heart, home, lab, methods, paper, rule, training  # noqa: E402
 
 core.inject_css()
 
-P = {
-    "home": st.Page(home.render, title="Overview", icon=":material/home:", url_path="overview", default=True),
-    "federations": st.Page(federations.render, title="The two federations", icon=":material/local_hospital:",
-                           url_path="federations"),
-    "training": st.Page(training.render, title="Federated training & privacy", icon=":material/model_training:",
-                        url_path="training"),
-    "cost": st.Page(cost.render, title="The hidden privacy cost", icon=":material/payments:", url_path="privacy-cost"),
-    "methods": st.Page(methods.render, title="Valuation methods compared", icon=":material/leaderboard:",
-                       url_path="methods"),
-    "heart": st.Page(heart.render, title="Second federation: heart", icon=":material/cardiology:", url_path="heart"),
-    "rule": st.Page(rule.render, title="Decision rule (pre-registered)", icon=":material/rule:", url_path="decision-rule"),
-    "lab": st.Page(lab.render, title="Valuation lab", icon=":material/science:", url_path="lab"),
-    "claims": st.Page(evidence.claims_page, title="Claims & verdicts", icon=":material/fact_check:", url_path="claims"),
-    "repro": st.Page(evidence.repro_page, title="Reproducibility", icon=":material/verified:", url_path="reproducibility"),
-    "paper": st.Page(paper.render, title="Paper & citation", icon=":material/description:", url_path="paper"),
-    "earlier": st.Page(earlier.render, title="Earlier work (TCGA)", icon=":material/history:", url_path="earlier-work"),
-}
-core.register(P)
+# (key, render function, title, icon, url) in reading order, grouped into the parts of the talk.
+SECTIONS = [
+    ("I · Introduction", [
+        ("home", home.render, "Overview", ":material/home:", "overview"),
+    ]),
+    ("II · Data and setting", [
+        ("federations", federations.render, "The two federations", ":material/local_hospital:", "federations"),
+        ("training", training.render, "Federated training & privacy", ":material/model_training:", "training"),
+    ]),
+    ("III · Contributions", [
+        ("cost", cost.render, "1 · The hidden privacy cost", ":material/payments:", "privacy-cost"),
+        ("methods", methods.render, "2 · Valuation methods compared", ":material/leaderboard:", "methods"),
+        ("heart", heart.render, "3 · Second federation: heart", ":material/cardiology:", "heart"),
+        ("rule", rule.render, "4 · Decision rule, tested in advance", ":material/rule:", "decision-rule"),
+    ]),
+    ("IV · Interactive", [
+        ("lab", lab.render, "Valuation lab", ":material/science:", "lab"),
+    ]),
+    ("V · Evidence", [
+        ("claims", evidence.claims_page, "Claims & verdicts", ":material/fact_check:", "claims"),
+        ("repro", evidence.repro_page, "Reproducibility", ":material/verified:", "reproducibility"),
+        ("paper", paper.render, "Paper & citation", ":material/description:", "paper"),
+    ]),
+    ("Appendix", [
+        ("earlier", earlier.render, "Earlier work (TCGA)", ":material/history:", "earlier-work"),
+    ]),
+]
 
-nav = st.navigation({
-    "Start": [P["home"]],
-    "Data and setting": [P["federations"], P["training"]],
-    "Contributions": [P["cost"], P["methods"], P["heart"], P["rule"]],
-    "Try it": [P["lab"]],
-    "Evidence": [P["claims"], P["repro"], P["paper"]],
-    "Archive": [P["earlier"]],
-})
+
+def _page(key, fn):
+    """Wrap a page: breadcrumb context before, previous/next pager after."""
+    def run():
+        core.set_current(key)
+        fn()
+        core.pager()
+    run.__name__ = f"page_{key}"
+    return run
+
+
+P, nav_spec, order = {}, {}, []
+for part, items in SECTIONS:
+    nav_spec[part] = []
+    for key, fn, title, icon, url in items:
+        P[key] = st.Page(_page(key, fn), title=title, icon=icon, url_path=url, default=(key == "home"))
+        nav_spec[part].append(P[key])
+        order.append((key, part, title, icon))
+core.register(P, order)
+
+nav = st.navigation(nav_spec)
 core.sidebar()
 nav.run()

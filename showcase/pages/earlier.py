@@ -52,9 +52,7 @@ def _e(s):
 
 
 def show(fig):
-    import matplotlib.pyplot as plt
-    st.pyplot(fig)
-    plt.close(fig)
+    core.show(fig)
 
 
 def verdict_badge(v):

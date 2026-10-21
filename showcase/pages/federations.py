@@ -10,6 +10,8 @@ def render():
     core.header("The data", "Two real federations",
                 "Every hospital in this study is a real institution, used exactly as its data were released. "
                 "Nothing is simulated and no pooled data set is split into artificial hospitals.")
+    core.qa("What data is the study built on?",
+            "Two real federations used exactly as released: 19 prostate-cancer hospitals in 8 countries (5,610 men) and 4 heart-disease hospitals in 3 countries (920 patients).")
 
     k = st.columns(4)
     with k[0]:
