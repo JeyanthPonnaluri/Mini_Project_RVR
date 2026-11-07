@@ -8,7 +8,9 @@ Hospitals that train a model together need to know what each one contributes. Un
 way of computing Shapley values (retraining every coalition) secretly multiplies the privacy cost: with ten hospitals a
 reported per-run ε = 1 really costs ε ≈ 33. We make that cost explicit, compare every valuation that pays it only once
 (OSA-Shapley, reconstruction from the training run, a single-model score) with cheap proxies such as hospital size on
-two real federations, and test a decision rule for choosing between them in a pre-registered experiment.
+two real federations, and test a decision rule for choosing between them in an internally pre-registered experiment. The paper is an empirical
+study: its propositions are short consequences of standard DP facts, OSA-Shapley is a simple baseline that wins under DP
+only for low-dimensional convex models, and all models studied are low-dimensional tabular models.
 
 ## Interactive showcase
 
@@ -45,10 +47,13 @@ The pre-registration of the decision-rule test is `results/preregistration_nu_sw
 
 ## Repository
 
-* `app.py`, `showcase/` — the Streamlit showcase (`app_previous.py` is the earlier version)
+* `app.py`, `showcase/` — the Streamlit showcase
 * `fl_study/` — tested research code (`private_valuation.py` = OSA-Shapley and the reconstruction baselines,
   `multisite.py` = PCa-19 experiments, `heart.py`, `nu_sweep.py`, `validate.py`)
 * `results/final/` — every result (20 held-out splits, paired 95% CIs)
 * `Paper/` — LaTeX sources and PDFs of the paper and supplement
+* `archive/` — the project's first phase (TCGA-PRAD pipeline in `archive/src/`, earlier apps, reports and notebook);
+  kept for the record, superseded by `fl_study/` and not used by the paper. Earlier drafts and superseded notes are in
+  the git history (tag `pre-cleanup-2026-11`)
 * `docs/README_project_history.md` — the earlier stages of the project (including the TCGA-PRAD work, which is not
   part of the paper)

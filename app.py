@@ -5,7 +5,7 @@ Research showcase for
 
 Run:  streamlit run app.py          (Streamlit >= 1.40)
 Data: validated results in results/final/ (regenerate with  python run_pca19.py)
-The previous version of this app is kept as app_previous.py.
+The previous version of this app is kept as archive/app_previous.py.
 """
 import streamlit as st
 

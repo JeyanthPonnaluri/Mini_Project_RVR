@@ -1,0 +1,164 @@
+\documentclass[journal]{IEEEtran}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{array}
+\usepackage{siunitx}
+\input{generated/numbers}
+\usepackage{xr}
+\externaldocument[S-]{jbhi_supp}
+
+\begin{document}
+
+\title{The Hidden Privacy Cost of Valuing Hospitals in Federated Learning: Accounting, a Decision Rule, and Evidence from Real Federations}
+
+\author{Ponnaluri~Jeyanth,
+        Pudota~Jaideep,
+        and~M.~V.~P.~Chandra~Sekhara~Rao%
+\thanks{P. Jeyanth and P. Jaideep are with the Department of Computer Science and Engineering (Data Science), R.V.R. \& J.C. College of Engineering, Guntur, India (e-mail: jeyanthponnaluri08@gmail.com; pudotajaideep@gmail.com).}%
+\thanks{M. V. P. Chandra Sekhara Rao is Professor and Head of the Department of Computer Science and Engineering (Data Science), R.V.R. \& J.C. College of Engineering, Guntur, India (e-mail: manukondach@gmail.com).}%
+\thanks{Code, data provenance and all results: \protect\url{https://github.com/JeyanthPonnaluri/Mini_Project_RVR}.}}
+
+\markboth{Manuscript submitted to IEEE Journal of Biomedical and Health Informatics}%
+{Jeyanth \MakeLowercase{\textit{et al.}}: The Hidden Privacy Cost of Valuing Hospitals in Federated Learning}
+
+\maketitle
+
+\begin{abstract}
+Hospitals that train a model together need to know what each contributes. Under differential privacy (DP), Shapley values are usually computed by retraining coalitions of hospitals, and the privacy cost of the valuation itself is rarely counted. This empirical study measures that cost and asks which valuations remain useful once it is paid honestly. The accounting is a direct consequence of standard DP composition: a hospital whose patients enter $r$ private runs pays for all of them, so with ten hospitals a reported per-run $\varepsilon=1$ costs $\varepsilon\approx\trueEpsOne$ for exact Shapley values and $\approx\accMcTenOne$ with 100 sampled permutations, and holding the true budget needs $\sqrt r$ times the noise, which destroys the ranking. We therefore compare valuations that only post-process releases whose cost is already counted (reconstruction from the DP training run, the basis of GTG-Shapley; a single-model score; and OSA-Shapley, a simple baseline that averages one DP-trained model per hospital) with cheap proxies such as hospital size, on two real federations: 19 prostate-cancer hospitals (\pNineN{} men) and four heart-disease hospitals (\hrN{} patients). No method wins everywhere. OSA-Shapley is the most accurate without DP, but under DP it leads only in the most favourable setting we studied, a seven-parameter logistic model on the ten largest prostate-cancer hospitals (Spearman $\rho=\osaRhoTwo$ with the exact ranking at $\varepsilon=2$, against \mrRhoTwo{} for reconstruction and \pxLSizeTwo{} for size); it ties reconstruction for small hospitals and loses to it for a neural network and in the heart-disease federation. Size and summary statistics are unreliable and never detect a hospital with random labels. Patients per hospital relative to the square root of the number of parameters predicts which valuation to use in direction; in an internally pre-registered test the predicted threshold was wrong, and we revise it. All models studied are low-dimensional tabular models.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Federated learning, contribution valuation, Shapley value, differential privacy, privacy accounting, prostate cancer, coronary artery disease.
+\end{IEEEkeywords}
+
+\section{Introduction}
+\IEEEPARstart{R}{isk} calculators that decide, for example, whether a man with a raised PSA needs a prostate biopsy need data from many hospitals, but patient records cannot be pooled across institutions and countries. Federated learning (FL) lets hospitals train one model while records stay local \cite{Rieke2020DigitalHealth, McMahan2017FedAvg}. On 19 real prostate-cancer cohorts, large hospitals gained little from joining and non-contributors obtained almost the same model as contributors \cite{Kazlouski2025HospitalParticipation}, so a lasting federation needs a fair way to credit each hospital, for instance to share costs or rewards.
+
+The Shapley value is the standard answer: the only allocation that is efficient, symmetric and gives nothing to a hospital that never helps \cite{Shapley1953, Ghorbani2019DataShapley}. Hospitals also need differential privacy (DP), because shared updates can reveal patients \cite{Shokri2017MIA, Abadi2016DPSGD}. The two interact badly. Exact Shapley values need a model for every coalition, and studies of valuation under DP usually retrain each coalition with DP-SGD and report a per-run budget. Every hospital then contributes its patients to $2^{K-1}$ private runs, so its real privacy loss is far larger than reported, and holding it at the stated budget requires so much noise that the ranking is lost. Hospitals could instead share sizes or summary statistics; whether such proxies suffice is an empirical question. Reconstructing coalition models from one training run \cite{Song2019BlockchainFL, Liu2022GTG} and re-using one private release \cite{Zhou2025Data} point to a way out, but neither has been evaluated on real hospitals at an honestly accounted budget. This is primarily an empirical study: its propositions are short consequences of standard DP facts (composition, post-processing and the variance of a weighted average), and its contribution lies in applying them, at an honestly counted budget, to real federations. Our contributions are:
+\begin{itemize}
+    \item \textbf{The hidden cost, made explicit.} The arithmetic is elementary, but it is rarely applied to valuation. Proposition~2 gives the composed cost of any retraining-based valuation in which a hospital's patients enter $r$ private runs, and the $\sqrt r$-fold noise needed to keep it honest (Table~\ref{tab:accounting}). A per-run $\varepsilon=1$ costs about \trueEpsOne{} for exact Shapley values over ten hospitals, and \accMcNineteenOne{} for 19 hospitals even with 100 sampled permutations.
+    \item \textbf{A decision rule, tested in advance.} On two real federations without simulated silos we compare every valuation that costs the budget once, and proxies that cost nothing. Accuracy depends mainly on training patients per hospital relative to the square root of the number of parameters, the signal-to-noise ratio of a DP release (Proposition~3). We wrote down where the switch-over should lie before testing it; four of six internally pre-registered hypotheses held, the threshold did not, and we revise the rule.
+    \item \textbf{OSA-Shapley, a simple baseline.} Combining one-shot averaging \cite{Zhang2013AVGM} with exact enumeration, each hospital releases one DP-trained model and every coalition model is the size-weighted average of these releases, so exact valuation of all $2^K$ coalitions costs the budget once (Proposition~1). It is the most accurate valuation without DP in every setting and, for the ten largest prostate-cancer hospitals, also under DP ($\rho=\osaRhoTwo$ at $\varepsilon=2$). Its advantage under DP is confined to this favourable setting; we do not claim it as a general-purpose method.
+    \item \textbf{Honest negative results.} Size, case counts and summary statistics do not identify contributions reliably and never detect bad data; with few patients per parameter OSA-Shapley loses to reconstruction (heart disease, a federated MLP).
+\end{itemize}
+
+\section{Related Work}
+\label{sec:related}
+Cross-silo FL trains clinical models across institutions \cite{Rieke2020DigitalHealth, Sheller2020MedicineFL, Li2021SurveyFLMedical}; hospitals differ in case mix, so local models drift \cite{Kairouz2021FLAdvances, Zhao2018NonIID}, which FedProx and SCAFFOLD address \cite{Li2020FedProx, Karimireddy2020Scaffold}. Real-silo benchmarks such as FLamby keep the natural hospital split \cite{Terrail2022FLamby}. DP bounds the influence of any record \cite{Dwork2006CalibratingNoise, Dwork2008DPSurvey}; DP-SGD clips per-record gradients and adds Gaussian noise \cite{Abadi2016DPSGD}, R\'enyi DP composes it tightly \cite{Mironov2017RDP}, and Poisson subsampling amplifies privacy \cite{Mironov2019SampledGaussian}.
+
+The Shapley value \cite{Shapley1953} has been adapted to data valuation \cite{Ghorbani2019DataShapley, Jia2019KNNShapley} and to federated clients \cite{Song2019BlockchainFL, Wei2020DataValuation, Lyu2020FairnessFL}; leave-one-out gives near-zero value to redundant clients \cite{Ghorbani2019DataShapley}. Because it needs a model per coalition, federated valuation samples coalitions \cite{Maleki2013Bounding, Jia2020EfficientShapley} or reconstructs coalition models from one training run: the multi-round (MR) and one-round (OR) reconstructions of Song \emph{et al.}\ \cite{Song2019BlockchainFL} and their truncated Monte-Carlo approximation GTG-Shapley \cite{Liu2022GTG}. Zhou \emph{et al.}\ \cite{Zhou2025Data} show that independent DP noise makes data values unreliable and that re-using released private gradients avoids this at no extra privacy cost. Jaramillo Velez \emph{et al.}\ \cite{JaramilloVelez2026Beyond} evaluate contributions under secure aggregation, where the server sees only coalition aggregates, with marginal-difference scores that keep Shapley-like properties; their privacy notion is compatibility with secure aggregation rather than a DP bound on the valuation, which is the cost we count. Studies of valuation under DP usually retrain coalitions at a per-run budget; to our knowledge, retraining, reconstruction and other post-processing valuations have not been compared at the same true budget on real hospitals, nor against cheap proxies (Table~\ref{tab:lit_comparison}).
+
+\begin{table}[t]
+\caption{Position of this work. \emph{Cost counted}: the privacy cost of the valuation itself is accounted. $^{\ast}$Secure aggregation, no DP.}
+\centering\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{lcccccc}
+\toprule
+Study & Real & DP & Valua- & Cost & vs recon- & vs cheap \\
+ & hospitals & & tion & counted & struction & proxies \\
+\midrule
+McMahan \emph{et al.}\ \cite{McMahan2017FedAvg} & No & No & No & -- & -- & No \\
+Abadi \emph{et al.}\ \cite{Abadi2016DPSGD} & No & Yes & No & -- & -- & No \\
+Ghorbani \& Zou \cite{Ghorbani2019DataShapley} & No & No & Yes & -- & No & No \\
+Song \emph{et al.}\ \cite{Song2019BlockchainFL} & No & No & Yes & -- & -- & No \\
+Liu \emph{et al.}\ (GTG) \cite{Liu2022GTG} & No & No & Yes & -- & -- & No \\
+Zhou \emph{et al.}\ \cite{Zhou2025Data} & No & Yes & Yes & Yes & No & No \\
+Jaramillo Velez \emph{et al.}\ \cite{JaramilloVelez2026Beyond} & No & No$^{\ast}$ & Yes & -- & Yes & No \\
+Kazlouski \emph{et al.}\ \cite{Kazlouski2025HospitalParticipation} & Yes & No & No & -- & -- & No \\
+\textbf{This work} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} & \textbf{Yes} \\
+\bottomrule
+\end{tabular}
+\label{tab:lit_comparison}
+\end{table}
+
+\section{Setting and Methods}
+\label{sec:method}
+\label{sec:system}
+\subsection{Federation, Model and Privacy}
+A federation has $K$ hospitals and a server. Hospital $k$ holds $n_k$ patients with features $x_i\in\mathbb R^d$ and outcome $y_i\in\{0,1\}$ and minimises the $L_2$-regularised ($\lambda=10^{-3}$) cross-entropy of a logistic model $p_i=\sigma(x_i^Tw+b)$; FedAvg averages local models with weights $n_k/n$ after $E$ local epochs. Privacy is patient-level (add/remove adjacency). Each per-patient gradient is clipped to norm $C$ and the released gradient is $\tilde g = (\sum_i \bar g_i + z)/n_k$, $z\sim\mathcal N(0,\sigma^2C^2I)$. Updates are full-batch, so no amplification is claimed, and every patient enters all $N=T\times E$ steps of its own hospital. The R\'enyi accountant gives
+\begin{equation}
+\epsilon = \min_{\alpha} \left\{ N \frac{\alpha}{2 \sigma^2} + \frac{\ln(1/\delta)}{\alpha - 1} \right\},
+\end{equation}
+which agrees with the closed form $\rho+2\sqrt{\rho\ln(1/\delta)}$, $\rho=N/(2\sigma^2)$, to 0.01\%. For $N=100$, $\delta=10^{-5}$: $\sigma=\sigmaTen, \sigmaFive, \sigmaTwo, \sigmaOne, \sigmaHalf$ for $\varepsilon=10, 5, 2, 1, 0.5$. Subsampled accounting is a sensitivity analysis (Supplementary Section~\ref{S-sec:methods_more}). Fig.~\ref{fig:architecture} summarises the system.
+
+\begin{figure*}[!t]
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/figure2_architecture.pdf}
+    \caption{System architecture. Hospitals train locally with per-patient clipping and Gaussian noise and the server aggregates under a Rényi-DP accountant. The federated model is evaluated within hospitals and on held-out countries (Supplementary Material). Hospitals are valued with OSA-Shapley, which post-processes one DP-trained model per hospital, and compared with retraining and with reconstruction from the training run.}
+    \label{fig:architecture}
+\end{figure*}
+
+\subsection{Shapley Valuation and Its Privacy Cost}
+The Shapley value of hospital $k$ is
+\begin{equation}
+\phi_k = \sum_{S \subseteq \mathcal{N} \setminus \{k\}} \frac{|S|!(K - |S| - 1)!}{K!} \left[ v(S \cup \{k\}) - v(S) \right],
+\end{equation}
+where $v(S)$ is the AUC, on a reference set held by the server, of a model representing coalition $S$ ($v(\emptyset)=0.5$). For $K\le10$ we compute it \emph{exactly} by training all $2^K-1$ coalitions, so no Monte-Carlo error confounds the effect of DP. Under DP each coalition run draws independent noise, so this standard \emph{retraining} approach puts each hospital into $2^{K-1}$ private runs.
+
+\emph{Proposition 2 (cost of retraining-based valuation).} Suppose a valuation trains $r_k$ DP models that use the patients of hospital $k$, each with $N$ full-batch Gaussian steps of multiplier $\sigma$. Then hospital $k$'s total RDP is that of a single run with multiplier $\sigma/\sqrt{r_k}$; keeping the total at the stated $(\varepsilon,\delta)$ requires multiplier $\sqrt{r_k}\,\sigma$ in every run. Exact Shapley values have $r_k=2^{K-1}$ (a factor of 22.6 for $K=10$); $M$ sampled permutations without caching have $r_k=M(K+1)/2$ on average.
+
+\emph{Proof.} RDP of the Gaussian mechanism is $\alpha/(2\sigma^2)$ per step and composes additively, so $r_kN$ steps give $N\alpha/(2(\sigma/\sqrt{r_k})^2)$. In a random permutation hospital $k$ is equally likely at each of the $K$ positions and joins every later prefix, $(K+1)/2$ on average. $\square$
+
+\input{generated/tab_accounting}
+
+Table~\ref{tab:accounting} evaluates Proposition~2. With 19 hospitals exact retraining is out of reach, and even 100 permutations cost $\varepsilon\approx\accMcNineteenOne$ per hospital; sampling reduces $r$ only for large $K$.
+
+\subsection{OSA-Shapley}
+\label{sec:osa}
+We propose \emph{one-shot-averaging Shapley} (OSA-Shapley): (i) each hospital releases one model $\hat w_k$ trained locally by DP gradient descent at budget $\varepsilon_v$ (\osaSteps{} full-batch steps, $C=1$; the release averages the second half of the iterates); (ii) the server forms every coalition model as $w_S=\sum_{k\in S}(n_k/n_S)\hat w_k$, which for a convex model approximates the coalition's FedAvg solution \cite{Zhang2013AVGM}; (iii) $v(S)$ is the AUC of $w_S$ on the reference set, and exact Shapley values follow from all $2^K-1$ utilities. Only $K$ local trainings are needed; all 19 PCa-19 hospitals ($524{,}287$ coalitions) take about a minute on one CPU core. The number of local steps was chosen on four tuning splits disjoint from the evaluation splits. \emph{Approximation.} For i.i.d.\ data and smooth, strongly convex losses the one-shot average has mean-squared error $O(n^{-1} + (n/m)^{-2})$ for $n$ samples on $m$ sites \cite{Zhang2013AVGM}. Hospitals are not i.i.d., so we measure the approximation directly: without DP, OSA-Shapley reproduces the retraining Shapley ranking with $\rho=\osaNoDP$ for the ten largest and \pxSOsaNoDP{} for the ten smallest PCa-19 hospitals. \emph{Assumption.} As for retraining, the reference set is held by the server (for example a curated or consented validation set); the guarantees below protect the hospitals' training patients only, not the reference patients (Section~\ref{sec:discussion}).
+
+\emph{Proposition 1 (privacy).} If each $\hat w_k$ is $(\varepsilon_v,\delta)$-DP with respect to the patients of hospital $k$, all utilities and Shapley values are jointly $(\varepsilon_v,\delta)$-DP with respect to every training patient, for any $K$. \emph{Proof.} Hospitals hold disjoint patients, so a patient affects one release, and everything else is a deterministic function of the releases and the reference set; DP is closed under post-processing \cite{Dwork2008DPSurvey}. $\square$
+
+\emph{Proposition 3 (noise of coalition models).} If $\hat w_k=w_k+\xi_k$ with independent zero-mean $\xi_k$ of per-coordinate standard deviation at most $s_k=\eta\sigma C\sqrt N/n_k$ ($N$ steps of step size $\eta$), then
+\begin{equation}
+\mathrm{sd}(\hat w_S - w_S) = \frac{1}{n_S}\Big(\sum_{k\in S} n_k^2 s_k^2\Big)^{1/2} \le \frac{\eta\sigma C\sqrt{|S|\,N}}{n_S}.
+\label{eq:prop3}
+\end{equation}
+\emph{Proof.} The variance of the weighted sum of independent terms is $\sum_{k\in S}(n_k/n_S)^2s_k^2$. $\square$
+
+The coalition noise does not depend on $K$, whereas budget-matched retraining multiplies it by $2^{(K-1)/2}$; it is largest for a single small hospital and grows with the number of parameters (validation: observed 0.39--0.49 of the bound). Because all coalitions share the same releases, the noise is common to them and largely cancels in marginal contributions, the mechanism exploited by Zhou \emph{et al.}\ \cite{Zhou2025Data}.
+
+\subsection{Competitors and Proxies at the Same Cost}
+In DP-FedAvg each hospital releases a noisy model in every round, already covered by the accountant, so coalition models can be reconstructed at no extra cost. We implement the reconstructions of Song \emph{et al.}\ \cite{Song2019BlockchainFL} exactly: \emph{MR} sums, over rounds, exact Shapley values of $v_t(S)=\mathrm{AUC}(\sum_{k\in S}(n_k/n_S)\hat w_k^t)$, and is the idealised exact version of GTG-Shapley \cite{Liu2022GTG}; \emph{OR} rebuilds $w_S$ from the accumulated updates. Both use the DP-FedAvg run that trains the federated model. As proxies we use (i) hospital size, (ii) the number of cases, (iii) the similarity of summary statistics to the pooled ones, (iv) a self-reported AUC of the hospital's own model, (v) the AUC of its single DP release on the reference set and (vi) the leave-one-out value of the averaged releases; (v) and (vi) use OSA's releases and cost the same $\varepsilon$. Each valuation's ranking is compared with the exact non-private retraining Shapley ranking by Spearman's $\rho$, and we report how often a hospital given random labels is ranked last.
+
+\subsection{Data and Protocol}
+\label{sec:data}
+\label{sec:silos}
+\emph{PCa-19} is the patient-level collection of the base study, released under the MIT licence \cite{Kazlouski2025HospitalParticipation}: \pNineN{} men from \pNineHosp{} hospitals in eight countries (Table~\ref{S-tab:pca19_cohort}), \pNinePrev\% with clinically significant cancer (\pNinePrevLo--\pNinePrevHi\% per hospital). Features are age, $\log$ PSA, $\log$ prostate volume and PI-RADS 3/4/5 indicators, all available before biopsy; the logarithms keep the extreme PSA values of one hospital (median 277~ng/mL) from dominating. The base study's text states nine countries, but its released data contain eight; we use the released data unchanged, and for the reproduction of its protocol we use its exact Ettala and Noh variables. The \emph{UCI Heart Disease} collection \cite{Janosi1988HeartDisease, Detrano1989Heart} has \hrN{} patients referred for angiography at four hospitals (Cleveland 303, Budapest 294, Zurich/Basel 123, Long Beach 200); the target is coronary artery disease (prevalence 36--93\%), and preprocessing (Supplementary Section~\ref{S-sec:heart_prep}) gives \hrFeat{} features. OSA-Shapley keeps its PCa-19 settings, so this cohort is an out-of-sample test.
+
+Every client is a real hospital as released; nothing is simulated or partitioned. Patients are split 80/20 within each hospital, stratified by outcome, with standardisation from training rows only. We value the ten largest (266--763 patients) and the ten smallest (\pxSmallMin--\pxSmallMax) PCa-19 hospitals, for which exact non-private references are computable (the Dutch hospital belongs to both groups), and all four heart-disease hospitals; the reference set is the pooled test patients. The ``useless hospital'' is a real hospital whose training labels are replaced by random labels (\corrHosp{}; \hrCorrupt{}). Settings: $T=20$, $E=5$, $\eta=0.5$, $\mu=0.5$, $C=1$, $\delta=10^{-5}$. Valuation results use 20 splits (seeds 20--39) not used for tuning; differences are paired by split and called significant only if the 95\% $t$-interval excludes zero.
+
+\input{jbhi_results}
+
+\section{Discussion}
+\label{sec:discussion}
+The main lesson is about accounting. A hospital whose data enter $2^{K-1}$ coalition runs pays for all of them: on ten real hospitals a stated $\varepsilon=1$ becomes $\varepsilon\approx\trueEpsOne$, and when the budget is held honestly the ranking collapses. Payment or cost-sharing schemes built on such valuations either over-spend privacy or reward the wrong hospitals; valuation should post-process releases whose cost is already counted.
+
+\emph{Is it practical?} OSA-Shapley asks each hospital for one DP-trained model, here seven numbers, the size of a single update in the DP-FedAvg run the federation performs anyway, and the coalition evaluations take about a minute for 19 hospitals. Sharing sizes or statistics is cheaper but unreliable: uninformative for the large prostate-cancer hospitals ($\rho\le\pxLSizeNoDP$), anti-correlated with contribution in the heart-disease federation ($\rho=\hrSizeNoDP$), and blind to useless data, because what a hospital adds depends on its case mix relative to the others. Within the privacy-honest class no method is best: single releases are as good as their noise, which grows with parameters and shrinks with patients, whereas reconstruction trades some bias for averaging over the whole federation in every round. We therefore avoid general statements about $\varepsilon$: the same budget barely changes the seven-parameter prostate calculator but degrades the heart-disease model and the MLP considerably.
+
+\subsection{Threats to Validity}
+\emph{Internal.} OSA-Shapley's local steps were tuned on four splits and evaluated on twenty disjoint ones. The exact non-private reference exists only for up to ten hospitals; for all 19 we report agreement with the non-private OSA ranking. PCa-19 was harmonised by the base study's authors from published supplementary files, and two hospitals have fewer than 50 patients.
+
+\emph{External.} All evaluations are retrospective and use two federations and two clinical tasks; with four hospitals, $\rho$ moves in steps of 0.2, so the heart-disease estimates are coarse. One-shot averaging approximates the federated solution well for regularised logistic regression; for a federated MLP it is accurate without DP but loses under DP, and deeper networks are untested. All models are low-dimensional tabular models (logistic regression with 7--107 parameters and a 16-unit MLP); for imaging or other deep models $\nu$ is orders of magnitude smaller, our results suggest that OSA-Shapley would not be the right choice there, and the rule has not been tested in that regime. Shapley values depend on the reference population, and we have not tested a reference set from outside the federation.
+
+\emph{Privacy.} The guarantee is per patient and treats hospital sizes and preprocessing statistics as public. OSA-Shapley's guarantee covers the valuation release; if the training run is also released, the two budgets compose. Like every Shapley method, it scores coalitions on a reference set held by the server, and the patients of that set are not protected: every utility $v(S)$ is a deterministic function of their records. Our experiments use the pooled test patients in this role, which is more than a real server would hold. In deployment the reference set should be public, consented for this use or itself privately released, or the utilities should be released with their own DP noise, whose cost then composes with $\varepsilon_v$; we have not evaluated these options.
+
+\emph{Statistical.} Comparisons are paired over 20 splits of the same patients, so CIs describe variability across splits rather than across federations.
+
+\subsection{Data, Code, Ethics and Conflicts}
+
+Both data sets are public and de-identified and were used as released (PCa-19 \cite{Kazlouski2025HospitalParticipation}; UCI Heart Disease, doi:10.24432/C52P4X \cite{Janosi1988HeartDisease}); no ethics approval was required. The authors declare no conflicts of interest and received no external funding. Every number is regenerated from code, which passes 41 automated checks: \url{https://github.com/JeyanthPonnaluri/Mini_Project_RVR}.
+
+\section{Conclusion}
+\label{sec:conclusion}
+Valuing hospitals by retraining coalitions under DP spends the privacy budget hundreds of times over and, at an honest budget, loses the ranking. Among valuations that pay once, none wins everywhere: OSA-Shapley is the most accurate without DP and, under DP, when hospitals hold many patients per parameter; reconstruction is better for a neural network and in the heart-disease federation; size and summary statistics are unreliable. Patients per hospital relative to $\sqrt{p}$ predicts the choice in direction, and an internally pre-registered test placed the switch-over near 30 at $\varepsilon=2$ and 40 at $\varepsilon=1$. OSA-Shapley should be read as a strong baseline for low-dimensional convex models, not as a general method. Explaining the heart-disease exception, testing the revised rule on a new federation under a public pre-registration, and OSA variants for neural networks are the next steps.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

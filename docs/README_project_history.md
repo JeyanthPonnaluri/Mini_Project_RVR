@@ -29,7 +29,7 @@ Main files:
   Build: run pdflatex + bibtex on `supplementary.tex` and `research_paper.tex`, then pdflatex both twice (they
   cross-reference each other via the `xr` package). `Paper/references.bib` was checked entry by entry.
 * `FIXES_AND_VALIDATION.md` - what was wrong before and what changed
-* `app_legacy.py` - the previous app (kept for reference; uses the older `src/` code)
+* `archive/app_legacy.py` - the previous app (kept for reference; uses the older code in `archive/src/`)
 
 ---
 

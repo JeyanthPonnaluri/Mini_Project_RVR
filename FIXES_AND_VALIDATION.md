@@ -8,7 +8,7 @@ are generated from `results/final/*.json`.
 
 ```bash
 pip install -r requirements.txt
-streamlit run app.py                    # the showcase app (old app kept as app_legacy.py)
+streamlit run app.py                    # the showcase app (old app kept as archive/app_legacy.py)
 python run_all.py                       # re-run every experiment (~25 min on 2 cores)
 python -m fl_study.validate             # 22 automated correctness checks
 python Paper/generate_paper_assets.py   # regenerate paper numbers, tables and figures
@@ -52,7 +52,7 @@ noise calibration, empirical noise scale, clipping bound, vectorised vs per-coal
 training, Shapley axioms, fixed TS metric, MIA positive control, and reproducibility.
 The app's *Validation* page shows the stored results and can re-run the checks live.
 
-`Paper/research_paper_before_fixes.tex` is the manuscript as it was before these changes.
+The manuscript as it was before these changes (`Paper/research_paper_before_fixes.tex`) is in the git history under the tag `pre-cleanup-2026-11`.
 
 ---
 

@@ -52,3 +52,13 @@ Thumbs.db
 /scratch/
 *.tgz
 Batch_1_updated.pptx
+
+# LaTeX build files
+Paper/*.aux
+Paper/*.log
+Paper/*.blg
+Paper/*.out
+Paper/*.synctex.gz
+
+# Third-party papers (copyright stays with their publishers)
+/Research Papers/Hospital_Participation_in_Federated_Learning_Evaluating_Sustainability_and_Clinical_Utility.docx
